@@ -20,19 +20,20 @@ def _s():
 
     max_iterations = 1000
     save_mod = 100
+    also_save = [10, 50, 150]
 
-    particle_count = 1000000 // 1
-    decay_rate = 0.9
+    particle_count = 10000000 // 4
+    decay_rate = 0.1
 
-    view_angle = tau / 8
-    view_distance = 1.414 * 100
+    view_angle = tau / 5
+    view_distance = 1.414 * 140
 
-    direction_count = 4
-    turn_amount = tau / direction_count * 1.2
-    move_distance = 1.414 * 3
+    direction_count = 12
+    turn_amount = tau / 6#direction_count
+    move_distance = 1.414 * 2
 
-    blur_size = 5
-    blur_sigma = 1
+    blur_size = 1
+    blur_sigma = 1.5
 
     dtype = torch.double
     ctype = torch.cdouble
@@ -115,6 +116,9 @@ def _main(settings):
 
         # render
         if iteration % save_mod == 0 and iteration != 0:
+            msave(world[0], f"{run_dir}/{iteration}")
+
+        if iteration in also_save:
             msave(world[0], f"{run_dir}/{iteration}")
 
         # decay

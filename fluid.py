@@ -8,17 +8,17 @@ from util import *
 
 @settings
 def _s():
-    scale = 2**8
+    scale = 2**11
     w = scale
     h = scale
 
-    max_iterations = 10000
-    save_every = 10
+    max_iterations = 100000
+    save_every = 100
 
     v_diffusion_rate = 2000
     m_diffusion_rate = 0.5
-    m_timescale = 0.1
-    timescale = 0.01
+    m_timescale = 0.01
+    timescale = 0.001
 
     name = "fluid"
 
@@ -132,7 +132,7 @@ def _main(settings):
 
     #velocities = torch.zeros([2, h, w])
     upsample = torch.nn.Upsample(size=[h, w], mode='bilinear')
-    velocities = torch.randn([2, h//32, w//32]) * 100
+    velocities = torch.randn([2, h//32, w//32]) * 1 #* 100
     densities = torch.ones([1, h, w]) * 0.1
 
     cg = cgrid(h, w, 0 + 0j, 4 + 4j, dtype=torch.float, ctype=torch.cfloat)
@@ -165,12 +165,12 @@ def _main(settings):
     border_mask[:,1:h-1,1:w-1] = 0;
 
     for iteration in range(max_iterations):
-        velocities[0,3 * h//4 - 10:(3*h//4),w//2-10:w//2+10] = -100
-        velocities[1,3 * h//4:(3*h//4)+10,w//2-10:w//2+10] = -90
-        velocities[0,h//4:(h//4)+10,w//2-3:w//2+3] = 100
-        velocities[1,h//4:(h//4)+10,w//2-3:w//2+3] = 200
+        velocities[0,3 * h//4 - 10:(3*h//4),w//2-10:w//2+10] = -10 * 40
+        velocities[1,3 * h//4:(3*h//4)+10,w//2-10:w//2+10] = -9 * 40
+        velocities[0,h//4:(h//4)+10,w//2-3:w//2+3] = 10 * 40
+        velocities[1,h//4:(h//4)+10,w//2-3:w//2+3] = 20 * 40
         velocities[0] += 0.01
-        densities[0,3*h//4-10:(3*h//4),w//2-9:w//2+9] += 0.1
+        #densities[0,3*h//4-10:(3*h//4),w//2-9:w//2+9] += 0.1
         #densities[0,h//4:(h//4)+10,w//2+30:w//2+55] += 0.1
         densities += 0.001
         velocities[0] = diffuse(velocities[0], v_diffusion_rate, opposed_h_boundary, timescale, h, w)
@@ -180,7 +180,7 @@ def _main(settings):
         project(velocities, h, w)
         densities = diffuse(densities[0], m_diffusion_rate, continuous_boundary, m_timescale, h, w).unsqueeze(0)
         densities = advect(densities, velocities, m_timescale, h, w)
-        densities *= 0.999
+        densities *= 0.99
         if iteration % save_every == 0:
             #res = torch.cat((velocities * 0.5 + 0.5, densities), dim=0)
             #save(res, f"{run_dir}/{iteration}")

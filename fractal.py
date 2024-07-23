@@ -7,29 +7,29 @@ import math
 
 # Settings
 
-w = 512 * 2
+w = 2**13
 h = w
 
 #x_range = [-1.8, -1.7]
 #y_range = [-0.095, 0.005]
 
 #ship
-#x_start = -1.8
-#x_span = 0.1
-#y_start = -0.095
-#y_span = 0.1
+x_start = -1.8
+x_span = 0.1
+y_start = -0.095
+y_span = 0.1
 
-x_start = -math.e / 2
-x_span = 1.54
-y_start = -2
-y_span = 2
+#x_start = -math.e / 2
+#x_span = 1.54
+#y_start = -2
+#y_span = 2
 
 alpha = 2.5
 
 x_range = [x_start, x_start + x_span]
 y_range = [y_start, y_start + y_span]
 
-final_file = "gauss_1"
+final_file = "ship_big"
 
 device = "cuda"
 ctype = torch.cfloat
@@ -88,9 +88,9 @@ if __name__ == "__main__":
         mask = torch.abs(z) < limit
         iters = torch.zeros_like(mask, dtype=torch.uint8)
         for i in range(iterations):
-            #im = torch.abs(z.imag) * j
-            #z = (torch.abs(z.real) + im)**2 + c_n
-            z = torch.exp(-alpha * z) + c_n
+            im = torch.abs(z.imag) * j
+            z = (torch.abs(z.real) + im)**2 + c_n
+            #z = torch.exp(-alpha * z) + c_n
 
             if do_jitter:
                 z += jitter

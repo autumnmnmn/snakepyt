@@ -7,12 +7,12 @@ from util import msave
 out_file = "qjulia_11_40"
 
 # 2**10 = 1024
-scale = 2 ** 11
+scale = 2 ** 10
 w = 2 * scale // 3
 h = scale
 
 max_steps = 500
-mandel_iters = 20#50
+mandel_iters = 40#50
 max_samples = 4
 
 noise_scale = 1. / (2 * scale)
