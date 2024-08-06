@@ -199,7 +199,7 @@ def enforce_conservation(field):
     divergence = convolve(field[1], horizontal_projection_kernel)
     divergence += convolve(field[0], vertical_projection_kernel)
     divergence *= 0.5
-    #continuous_boundary(divergence)
+    continuous_boundary(divergence)
     p = torch.zeros_like(field[0])
     for i in range(conservation_solver_steps):
         p[1:h-1,1:w-1] = (divergence + convolve(p, diffusion_kernel)) / 4
