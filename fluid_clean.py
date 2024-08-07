@@ -1,5 +1,6 @@
-# pytorch adaptation of the method described here:
-# https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/GDC03.pdf
+# pytorch adaptation of the methods described here:
+# https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/GDC03.pdf (overall design)
+# https://www.karlsims.com/fluid-flow.html (divergence clearing step)
 
 # only dependencies are pillow and pytorch
 
@@ -18,22 +19,22 @@ Path(result_directory).mkdir(parents=True, exist_ok=True)
 Path(result_directory + "/velocities").mkdir(parents=True, exist_ok=True)
 Path(result_directory + "/densities").mkdir(parents=True, exist_ok=True)
 
-scale = 2
-w = 1920 // scale
-h = 1080 // scale
+scale = 10
+w = 2**scale
+h = 2**scale
 
 max_iterations = 100000
-save_every = 60
+save_every = 1
 
-velocity_diffusion_rate = 10#100
-density_diffusion_rate = 1
+velocity_diffusion_rate = 20
+density_diffusion_rate = None
 density_timescale = 0.005
-timescale = 0.005
+timescale = 0.01
 
 torch.set_default_device("cuda")
 
-diffusion_solver_steps = 1
-conservation_solver_steps = 50
+diffusion_solver_steps = 10
+divergence_clearing_steps = 20
 
 
 # save images
@@ -67,8 +68,6 @@ def save(tensor, filename):
 # skipping points where the window would hang off the edge of the field. thus, we end up with
 # a result that's slightly smaller than the field
 
-# the paper this was based on doesn't mention convolution, but many of its deeply nested for loops are doing just that
-
 def convolve(field, kernel):
     # conv2d works in batches & we only ever need to do a 1-element batch
     # "unsqueeze" is pytorch's absolutely bizarre term for wrapping a tensor with another dimension. like going from [1,2] to [[1,2]]
@@ -83,23 +82,25 @@ diffusion_kernel = torch.tensor([[[
     [0, 1, 0]
 ]]], dtype=torch.float)
 
-# difference of values of horizontal neighbors
-horizontal_projection_kernel = torch.tensor([[[
-    [0, 0,  0],
-    [1, 0, -1],
-    [0, 0,  0]
+# gradient of divergence in the x direction
+x_div_kernel = torch.tensor([[[
+    [ 1, 2, 1],
+    [-2,-4,-2],
+    [ 1, 2, 1]
 ]]], dtype=torch.float)
 
-# difference of values of vertical neighbors
-vertical_projection_kernel = torch.tensor([[[
-    [0,  1, 0],
-    [0,  0, 0],
-    [0, -1, 0]
+div_opp_kernel = torch.tensor([[[
+    [ 1, 0,-1],
+    [ 0, 0, 0],
+    [-1, 0, 1]
 ]]], dtype=torch.float)
 
-
-
-
+# gradient of divergence in the y direction
+y_div_kernel = torch.tensor([[[
+    [ 1,-2, 1],
+    [ 2,-4, 2],
+    [ 1,-2, 1]
+]]], dtype=torch.float)
 
 # various boundary conditions
 
@@ -157,7 +158,7 @@ next_indices = indices_int.clone()
 
 
 # advection
-# this is where i deviate from the original paper.
+# this is a point where i deviate from the original paper.
 # i take the velocity at every point, and add a scaled version of that to the index at each point
 # to find where that velocity will carry whatever is being advected along it in one timestep.
 # that will be a point that i decompose into the integer component & fractional component. like (3.4, 1.2) -> (3,1) + (0.4, 0.2)
@@ -193,24 +194,16 @@ def advect(field, velocities, timescale):
         opposed_vertical_boundary(res[0])
     return res
 
-
-
-def enforce_conservation(field):
-    divergence = convolve(field[1], horizontal_projection_kernel)
-    divergence += convolve(field[0], vertical_projection_kernel)
-    divergence *= 0.5
-    continuous_boundary(divergence)
-    p = torch.zeros_like(field[0])
-    for i in range(conservation_solver_steps):
-        p[1:h-1,1:w-1] = (divergence + convolve(p, diffusion_kernel)) / 4
-        continuous_boundary(p)
-    field[1,1:h-1,1:w-1] += 0.5 * convolve(p, horizontal_projection_kernel)
-    field[0,1:h-1,1:w-1] += 0.5 * convolve(p, vertical_projection_kernel)
-    #field[1,1:h-1,1:w-1] += 0.5 * convolve(field[1], horizontal_projection_kernel)
-    #field[0,1:h-1,1:w-1] += 0.5 * convolve(field[0], vertical_projection_kernel)
-    opposed_horizontal_boundary(field[1])
-    opposed_vertical_boundary(field[0])
-
+def clear_divergence(field):
+    opposed_horizontal_boundary(field[0])
+    opposed_vertical_boundary(field[1])
+    for i in range(divergence_clearing_steps):
+        x_op = convolve(field[0], div_opp_kernel)
+        y_op = convolve(field[1], div_opp_kernel)
+        field[1,1:h-1,1:w-1] += (convolve(field[1], y_div_kernel) + x_op) / 8
+        field[0,1:h-1,1:w-1] += (convolve(field[0], x_div_kernel) + y_op) / 8
+        opposed_horizontal_boundary(field[0])
+        opposed_vertical_boundary(field[1])
 
 
 
@@ -218,67 +211,64 @@ def enforce_conservation(field):
 # initialize a small field of random velocities, then upscale it interpolating between those velocities,
 # so that the variation in velocity is somewhat smooth instead of pure per-pixel noise,
 # which would lead to a less interesting simulation
-velocities = torch.randn([2, h//128, w//128]) * 30
+velocities = torch.randn([2, h//32, w//32]) * 120
 upsample = torch.nn.Upsample(size=[h, w], mode='bilinear')
 velocities = upsample(velocities.unsqueeze(0))[0]
 
-# initialize "dye" densities to a uniform field of 0.1
-densities = torch.ones([1, h, w]) * 0.1
+# initialize "dye" densities to a uniform field
+densities = torch.ones([1, h, w]) * 0.3
 # add lines
-for x in range(20):
-    densities[0,:,x*w//20] += 0.8
-for y in range(20):
-    densities[0,y*h//20,:] += 0.8
+#for x in range(20):
+#    densities[0,:,x*w//20] += 0.8
+#for y in range(20):
+#    densities[0,y*h//20,:] += 0.8
 
 frame_index = 0
 
 last_frame = time.perf_counter()
 
-limit = 1 / (math.sqrt(2) * timescale)
+limit = 1 / (timescale * 2 * math.sqrt(2))
 
 # core loop of the simulation
 for iteration in range(max_iterations):
     # add a tiny bit of "dye" to the fluid at all points
-    densities += 0.003
-    if iteration % (30 * save_every) == 0:
-        for x in range(20):
-            densities[0,:,x*w//20] += 0.5
-        for y in range(20):
-            densities[0,y*h//20,:] += 0.5
+    densities.add_(0.003)
+    #if iteration % (30 * save_every) == 0:
+    #    for x in range(20):
+    #        densities[0,:,x*w//20] += 0.3
+    #    for y in range(20):
+    #        densities[0,y*h//20,:] += 0.3
 
 
-    velocities[1,h//12+h//3:h//12+2*h//3,w//8] += 50 + 50 * math.sin(iteration * 0.005)
+    #velocities[1,h//12+h//3:h//12+2*h//3,w//8] += 50 + 50 * math.sin(iteration * 0.005)
     #velocities[1,h//3-h//12:2*h//3-h//12,7*w//8] -= 20 + 70 * math.sin(iteration * 0.01)
     #velocities[0,7*h//8,4*w//6:5*w//6] -= 60 + 50 * math.sin(iteration * 0.03)
 
     # diffuse the velocities in both directions, enforcing a boundary
     # condition that maintains a constant inward velocity matching the outward velocity along the edges. that is, a wall
-    velocities.clamp_(-limit, limit)
     velocities[0] = diffuse(velocities[0], velocity_diffusion_rate, opposed_horizontal_boundary, timescale)
     velocities[1] = diffuse(velocities[1], velocity_diffusion_rate, opposed_vertical_boundary, timescale)
-    enforce_conservation(velocities)
+    clear_divergence(velocities)
+    velocities.clamp_(-limit, limit)
 
     # let the velocity field flow along itself
     velocities = advect(velocities, velocities, timescale)
-    enforce_conservation(velocities)
+    clear_divergence(velocities)
 
     # diffuse the densities & let them flow along the velocity field
-    # in the source paper this is done at the same timescale as the fluid simulation itself, but i got better results
-    # with a separate timescale
-    #densities = diffuse(densities[0], density_diffusion_rate, continuous_boundary, density_timescale).unsqueeze(0)
+    if density_diffusion_rate is not None:
+        densities = diffuse(densities[0], density_diffusion_rate, continuous_boundary, density_timescale).unsqueeze(0)
     densities = advect(densities, velocities, density_timescale)
 
     # remove a little density
-    densities -= 0.003
+    densities.sub_(0.003)
     densities.clamp_(0,1)
 
     if iteration % save_every == 0:
         frame_index += 1
         frame_time = time.perf_counter() - last_frame
         image = torch.cat((0.5 + 0.5 * velocities / torch.sqrt(velocities[0]**2 + velocities[1]**2), torch.zeros((1,h,w))), dim=0)
-        #save(image, f"velocities/{iteration}")
         save(image, f"velocities/{frame_index:06d}")
-        #monochrome_save(densities[0], f"densities/{iteration}")
         monochrome_save(densities[0], f"densities/{frame_index:06d}")
 
         print(f"frame {frame_index:06d}: {frame_time:06f}")
