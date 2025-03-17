@@ -1,5 +1,6 @@
 
 import inspect
+import traceback
 from argparse import ArgumentParser as ArgParser
 from importlib import import_module as load
 from time import perf_counter
@@ -28,7 +29,8 @@ def run(seed, fns, partial_id, outer_settings):
     try:
         settings.update(sandbox[fns[0][0]]()) # run the fn, dump its locals into the inner settings context
     except Exception as e:
-        print(f"[Error in {fns[0][0]}: {e}]\n")
+        traceback.print_exception(e)
+        #print(f"[Error in {fns[0][0]}: {e}]\n")
         return
     if len(fns) == 1:
         print(f"[begin {run_id}]")
@@ -36,7 +38,8 @@ def run(seed, fns, partial_id, outer_settings):
         try:
             exec(sketch.run.__code__, globals=settings)
         except Exception as e:
-            print(f"Error: {e}")
+            traceback.print_exception(e)
+            #print(f"Error: {e}")
         #print(f"[done in {perf_counter() - t0:.3f}s]\n")
         print()
     else:

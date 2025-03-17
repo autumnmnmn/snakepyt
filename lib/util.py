@@ -4,31 +4,6 @@ from PIL import Image
 from safetensors.torch import save_file as sft_save
 import io
 
-class Settings(dict):
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
-    def __init__(self, _vars):
-        for key in _vars:
-            self[key] = _vars[key]
-
-class _Settings():
-    def __init__(self, _get, _src):
-        self.get = _get
-        self.src = _src
-
-def settings(f):
-    import inspect
-    f_src = inspect.getsource(f)
-    f_lines = f_src.split('\n')
-    f_lines = [l for l in f_lines if f"@settings" not in l]
-    f_lines.append("    return Settings(vars())")
-    new_src = "\n".join(f_lines)
-    evaluation_scope = {}
-    exec(new_src, locals=evaluation_scope)
-    return _Settings(eval(f.__name__, locals=evaluation_scope),new_src)
-
 def first(l, p):
     return next((idx,value) for idx,value in enumerate(l) if p(value))
 
