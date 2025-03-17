@@ -25,8 +25,9 @@ def settings(f):
     f_lines = [l for l in f_lines if f"@settings" not in l]
     f_lines.append("    return Settings(vars())")
     new_src = "\n".join(f_lines)
-    exec(new_src)
-    return _Settings(eval(f.__name__),new_src)
+    evaluation_scope = {}
+    exec(new_src, locals=evaluation_scope)
+    return _Settings(eval(f.__name__, locals=evaluation_scope),new_src)
 
 def first(l, p):
     return next((idx,value) for idx,value in enumerate(l) if p(value))
@@ -124,3 +125,5 @@ def gauss_seidel(a, b):
             return xn, it
         x = xn
     return x, -1
+
+
