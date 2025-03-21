@@ -4,6 +4,9 @@ from PIL import Image
 from safetensors.torch import save_file as sft_save
 import io
 
+def badfunc():
+    return 1 / 0
+
 def first(l, p):
     return next((idx,value) for idx,value in enumerate(l) if p(value))
 

@@ -9,7 +9,9 @@ import torch
 from lib.util import *
 from lib.spaces import insert_at_coords, map_space
 
-seeds = range(50)
+def init():
+    schedule(settings_1, range(8))
+
 name = "blus"
 
 device = "cuda"
@@ -24,11 +26,11 @@ randomize = False
 random_range = tau #/ 50
 show_gridlines = False
 
-particle_count = 300000
+particle_count = 100000
 
 
 # 2 ** 9 = 512; 10 => 1024; 11 => 2048
-scale_power = 11
+scale_power = 10
 scale = 2 ** scale_power
 
 origin = 0, 0
@@ -44,9 +46,9 @@ p_positions = (torch.rand([particle_count], device=device, dtype=t_complex) - (0
 p_colors = torch.ones([particle_count,3], device=device, dtype=t_real)
 color_rotation = torch.linspace(0, tau / 4, particle_count)
 
-p_colors[:,0] = p_positions.real / 4 + 0.5
-p_colors[:,2] = p_positions.imag / 4 + 0.5
-p_colors[:,1] *= 0
+p_colors[:,0] = torch.frac((p_positions.real / 4 + 0.5) * 10)
+p_colors[:,2] = torch.frac((p_positions.imag / 4 + 0.5) * 10)
+p_colors[:,1] = (1 - (p_colors[:,0] + p_colors[:,2])).clamp(0,1)
 
 ones = torch.ones_like(p_positions)
 
@@ -67,7 +69,7 @@ def get_transformation(direction, flow, ebb, rescaling):
     return transformation
 
 
-def settings_0():
+def _settings_0():
     if seed % 3 == 0:
         ebb = 0
         iterations = 90
@@ -86,6 +88,22 @@ def settings_0():
     angle = 0 #if seed < 2 else tau / 4
     direction = torch.polar(ones.real, 1 * tau * ones.real)
     next_positions = get_transformation(direction, flow, ebb, rescaling)
+
+def settings_1(idx):
+    if idx % 2 == 0:
+        iterations = 60
+        ebb = 0
+        flow = 1 / iterations
+    else:
+        iterations = 30
+        ebb = 1 / iterations
+        flow = 0
+    rescaling = False
+    angle = (idx // 2) * (tau / 4)
+    direction = torch.polar(ones.real, angle * ones.real)
+    next_positions = get_transformation(direction, flow, ebb, rescaling)
+    settings = run, None
+
 
 
 
@@ -117,4 +135,5 @@ def run():
             save(scratch.permute(2,0,1).sqrt(), f"{run_dir}/frame/{frame_index[0]:06d}")
 
         p_positions.copy_(next_positions(p_positions))
+
 

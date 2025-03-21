@@ -1,21 +1,18 @@
 
-import torch
+def persistent():
+    persist = [0]
 
-seeds = [1,2,0]
+def init():
+    outer = [0]
+    schedule(per_idx, [1,0])
 
-def settings_0():
-    t = torch.ones(1)
-    word = ["foo", "bar"][seed]
-    seeds = "abc"
-
-def settings_1():
-    combo = f"{word} {seed}"
-    seeds = [True, False]
-
-def settings_2():
-    pi = 3 if seed else 4
+def per_idx(idx):
+    inner = [0]
+    schedule(run, None)
 
 def run():
-    if pi == 4: raise Exception("pi != 4")
-    print(f"{combo}")
+    persist[0] += 1
+    outer[0] += 1
+    inner[0] += 1
+    print(f"{persist} {outer} {inner}")
 
