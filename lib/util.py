@@ -73,7 +73,7 @@ def save(x, f):
     pilify(x).save(f"out/{f}.png")
 
 # grid of complex numbers
-def cgrid(h,w,center,span,ctype=torch.cdouble,dtype=torch.double,**_):
+def cgrid_legacy(h,w,center,span,ctype=torch.cdouble,dtype=torch.double,**_):
     g = torch.zeros([h, w], dtype=ctype)
 
     low = center - span / 2
@@ -88,6 +88,7 @@ def cgrid(h,w,center,span,ctype=torch.cdouble,dtype=torch.double,**_):
         g[:, _y] += yspace * 1j
 
     return g
+
 
 # result, iterations; iterations == -1 if no convergence before limit
 def gauss_seidel(a, b):

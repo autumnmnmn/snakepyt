@@ -99,7 +99,7 @@ def run():
             frame_index[0] += 1
             scratch *= 0
             insert_at_coords(p_projected, alt_colors, scratch, mapping)
-            save(scratch.permute(2,0,1), f"{run_dir}/{frame_index[0]:06d}")
+            #save(scratch.permute(2,0,1), f"{run_dir}/{frame_index[0]:06d}")
 
         p_positions.copy_(rk4_curried(p_positions))
 

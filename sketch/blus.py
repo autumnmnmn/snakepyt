@@ -102,7 +102,7 @@ def settings_1(idx):
     angle = (idx // 2) * (tau / 4)
     direction = torch.polar(ones.real, angle * ones.real)
     next_positions = get_transformation(direction, flow, ebb, rescaling)
-    settings = run, None
+    schedule(run, None)
 
 
 
@@ -132,7 +132,7 @@ def run():
             if show_gridlines:
                 scratch[:,:,1] += gridlines
                 scratch[:,:,2] += gridlines
-            save(scratch.permute(2,0,1).sqrt(), f"{run_dir}/frame/{frame_index[0]:06d}")
+            #save(scratch.permute(2,0,1).sqrt(), f"{run_dir}/frame/{frame_index[0]:06d}")
 
         p_positions.copy_(next_positions(p_positions))
 

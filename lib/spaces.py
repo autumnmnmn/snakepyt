@@ -31,6 +31,11 @@ def insert_at_coords(coords, values, target, mapping: region_mapping):
 
     target.index_put_((indices[:,0],indices[:,1]), values_filtered, accumulate=True)
 
+def center_span(xrange, yrange):
+    span = (xrange[1] - xrange[0]), (yrange[1] - yrange[0])
+    center = (xrange[0] + span[0] / 2), (yrange[0] + span[1] / 2)
+    return center, span
+
 # maps a 2d region of space to a canvas
 def map_space(origin, span, zooms, stretch, scale) -> region_mapping:
     x_min = origin[0] - (span[0] / 2)
@@ -57,5 +62,22 @@ def map_space(origin, span, zooms, stretch, scale) -> region_mapping:
     y_range = (y_min, y_max)
     region = (x_range, y_range)
     return (region, (h,w))
+
+# grid of complex numbers
+def cgrid(mapping, ctype=torch.cdouble, dtype=torch.double):
+    region, (h, w) = mapping
+    (xmin, xmax), (ymin, ymax) = region
+
+    grid = torch.zeros([h, w], dtype=ctype)
+
+    yspace = torch.linspace(ymin, ymax, h, dtype=dtype)
+    xspace = torch.linspace(xmin, xmax, w, dtype=dtype)
+
+    for _x in range(h):
+        grid[_x] += xspace
+    for _y in range(w):
+        grid[:, _y] += yspace * 1j
+
+    return grid
 
 
