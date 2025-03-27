@@ -26,23 +26,25 @@ def establish_scheduler():
         schedule.append((fn, args))
     return (schedule, _schedule)
 
-def modify_to_dump_locals(fn, deftime_globals, log):
+def modify_to_dump_locals(fn, deftime_globals, log, sources):
     instructions = dis.get_instructions(fn)
     for instruction in instructions:
         if instruction.opcode == dis.opmap["RETURN_VALUE"]:
             return (False, "encountered return instruction")
-    fn_source = inspect.getsource(fn)
+    fn_source = sources[fn.__name__]
     fn_source_modified = f"{fn_source}\n    return locals()"
     sandbox = {}
     try:
         exec(fn_source_modified, globals=deftime_globals, locals=sandbox)
+    except KeyboardInterrupt:
+        raise
     except:
         log.indented().trace(source=fn)
         return (False, "error in definition")
     return (True, sandbox[fn.__name__])
 
 
-def run(fn, arg, partial_id, outer_scope, log):
+def run(fn, arg, partial_id, outer_scope, log, sources, finalizer=None):
     scope = dict(outer_scope)
     schedule, schedule_fn = establish_scheduler()
     scope["schedule"] = schedule_fn
@@ -54,7 +56,7 @@ def run(fn, arg, partial_id, outer_scope, log):
         if instruction.opcode == dis.opmap["RETURN_VALUE"]:
             log(f"{fn_name} cannot be scheduled because it has a return instruction", mode="error")
             return False
-    fn_source = inspect.getsource(fn)
+    fn_source = sources[fn.__name__]
     fn_source_modified = f"{fn_source}\n    return locals()"
     sandbox = {}
     try:
@@ -65,32 +67,44 @@ def run(fn, arg, partial_id, outer_scope, log):
         else:
             fn_locals = fn_modified()
         scope.update(fn_locals)
+    except KeyboardInterrupt:
+        raise
     except:
         log.indented().trace(source=fn)
         return False
     for (fn, args) in schedule:
         if args is not None:
             for arg in args:
-                run(fn, arg, run_id, scope, log.indented())
+                run(fn, arg, run_id, scope, log.indented(), sources)
         else:
             t0 = perf_counter()
             log(f"begin {fn.__name__} {run_id}")
-            success = run(fn, None, run_id, scope, log.indented())
+            success = run(fn, None, run_id, scope, log.indented(), sources)
             log(f"done in {perf_counter() - t0:.3f}s", mode="success" if success else "error")
             log.blank()
+    if finalizer is not None:
+        try:
+            exec(finalizer, globals=scope)
+        except KeyboardInterrupt:
+            raise
+        except:
+            log.indented().trace(source=fn)
+            return False
     return True
 
 persistent_state = {}
 persistent_hashes = {}
-def handle_persistent(persistent_fn, module_globals, log):
+def handle_persistent(persistent_fn, module_globals, log, sources):
     bytecode_hash = hashlib.sha256(persistent_fn.__code__.co_code).hexdigest()
     if sketch_name in persistent_hashes:
         if bytecode_hash == persistent_hashes[sketch_name]:
             return True
-    (success, fn_or_err) = modify_to_dump_locals(persistent_fn, module_globals, log)
+    (success, fn_or_err) = modify_to_dump_locals(persistent_fn, module_globals, log, sources)
     if success:
         try:
             fn_locals = fn_or_err()
+        except KeyboardInterrupt:
+            raise
         except:
             log.indented().trace(source=persistent_fn)
             return False
@@ -140,17 +154,26 @@ while repl_continue:
                 del sys.modules[module_name]
             sketch = import_module(module_name)
         except ModuleNotFoundError:
+            pyt_print.indented().trace()
             pyt_print("no such sketch", mode="error", indent=4).blank()
+            continue
+        except KeyboardInterrupt:
+            pyt_print("aborted", mode="info").blank()
             continue
         except:
             pyt_print.indented().trace()
             continue
 
+        sources = { name : inspect.getsource(member)
+                    for name, member in inspect.getmembers(sketch)
+                    if inspect.isfunction(member) and member.__module__ == module_name
+                   }
+
         log = pyt_print.tag(sketch_name).mode("info")
 
         t0 = perf_counter()
         if hasattr(sketch, "persistent"):
-            if not handle_persistent(sketch.persistent, sketch.__dict__, log):
+            if not handle_persistent(sketch.persistent, sketch.__dict__, log, sources):
                 log.blank()
                 continue
 
@@ -161,7 +184,15 @@ while repl_continue:
         Path("out/" + run_dir).mkdir(parents=True, exist_ok=True)
 
         if hasattr(sketch, "init"):
-            run(sketch.init, None, (), sketch.__dict__, log)
+            if hasattr(sketch, "final"):
+                finalizer = sketch.final.__code__
+            else:
+                finalizer = None
+            try:
+                run(sketch.init, None, (), sketch.__dict__, log, sources, finalizer)
+            except KeyboardInterrupt:
+                pyt_print.blank().log("aborted", mode="info").blank()
+                continue
         else:
             log("sketch has no init function", mode="error", indent=4)
             #run(None, settings_functions, (), sketch.__dict__)

@@ -36,8 +36,7 @@ def center_span(xrange, yrange):
     center = (xrange[0] + span[0] / 2), (yrange[0] + span[1] / 2)
     return center, span
 
-# maps a 2d region of space to a canvas
-def map_space(origin, span, zooms, stretch, scale) -> region_mapping:
+def apply_zooms(origin, span, zooms):
     x_min = origin[0] - (span[0] / 2)
     y_min = origin[1] - (span[1] / 2)
 
@@ -49,7 +48,13 @@ def map_space(origin, span, zooms, stretch, scale) -> region_mapping:
     x_max = x_min + span[0]
     y_max = y_min + span[1]
 
-    aspect = span[0] * stretch[0] / (span[1] * stretch[1])
+    return ((x_min, x_max), (y_min, y_max))
+
+# maps a 2d region of space to a canvas
+def map_space(origin, span, zooms, target_aspect, scale) -> region_mapping:
+    ((x_min, x_max), (y_min, y_max)) = apply_zooms(origin, span, zooms)
+
+    aspect = span[0] / span[1]
 
     if aspect < 1:
         h = scale

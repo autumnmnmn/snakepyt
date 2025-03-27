@@ -47,6 +47,9 @@ def mpilify(z):
     z_np = _z.unsqueeze(2).expand(-1, -1, 3).type(torch.uint8).cpu().numpy()
     return Image.fromarray(z_np)
 
+def mstreamify(z):
+    return torch.clone(z).clamp_(0,1).mul_(255).round().unsqueeze(2).expand(-1,-1,3).type(torch.uint8).cpu().numpy().tobytes()
+
 def msave_cpu(x, f):
     mpilify_cpu(x).save(f"out/{f}.png")
 
