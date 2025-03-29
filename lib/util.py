@@ -72,8 +72,18 @@ def pilify(z):
     z_bytes = (z_np * 255).round().astype("uint8")
     return Image.fromarray(z_bytes)
 
+def load_image_tensor(path):
+    with Image.open(path) as pil_image:
+        np_image = np.array(pil_image).astype(np.float32) / 255.0
+    return torch.from_numpy(np_image).permute(2,0,1)
+
 def save(x, f):
     pilify(x).save(f"out/{f}.png")
+
+def streamify(z):
+    z_norm = z.clamp(0, 1)
+    z_np = z_norm.detach().cpu().permute(1, 2, 0).numpy()
+    return (z_np * 255).round().astype("uint8").tobytes()
 
 # grid of complex numbers
 def cgrid_legacy(h,w,center,span,ctype=torch.cdouble,dtype=torch.double,**_):

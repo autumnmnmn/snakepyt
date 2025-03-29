@@ -2,6 +2,7 @@
 .git
 .venv
 __pycache__
+in
 out
 sketch/.old
 sketch/scratch.py

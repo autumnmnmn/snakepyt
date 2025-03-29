@@ -1,7 +1,7 @@
 
 import subprocess
 
-from lib.util import mstreamify
+from lib.util import mstreamify, streamify
 
 class VideoWriter:
     def __init__(self, dims, fps, outfile, logfile):
@@ -36,5 +36,8 @@ class VideoWriter:
     def mframe(self, mtensor):
         """ monochrome frame, as torch tensor """
         self.frame_bytes(mstreamify(mtensor))
+
+    def frame(self, tensor):
+        self.frame_bytes(streamify(tensor))
 
 
