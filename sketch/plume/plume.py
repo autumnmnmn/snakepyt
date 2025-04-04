@@ -10,7 +10,7 @@ from lib.util import *
 from lib.spaces import insert_at_coords, map_space
 
 def init():
-    schedule(settings_1, range(8))
+    schedule(_settings_0, range(30))
 
 name = "blus"
 
@@ -69,18 +69,18 @@ def get_transformation(direction, flow, ebb, rescaling):
     return transformation
 
 
-def _settings_0():
-    if seed % 3 == 0:
+def _settings_0(seed):
+    if seed % 2 == 0:
         ebb = 0
-        iterations = 90
+        iterations = 1
         flow = 2 / iterations
         rescaling = False
-    elif seed % 3 == 1:
+    elif seed % 2 == 1:
         flow = 0
-        iterations = 30
-        ebb = 1.8 / iterations
+        iterations = 1
+        ebb = 0.333 / iterations
         rescaling = False
-    elif seed % 3 == 2:
+    elif False:#seed % 3 == 2:
         flow = 0
         ebb = 0
         iterations = 10
@@ -88,6 +88,7 @@ def _settings_0():
     angle = 0 #if seed < 2 else tau / 4
     direction = torch.polar(ones.real, 1 * tau * ones.real)
     next_positions = get_transformation(direction, flow, ebb, rescaling)
+    schedule(run, None)
 
 def settings_1(idx):
     if idx % 2 == 0:
@@ -109,12 +110,8 @@ def settings_1(idx):
 
 frame_index = [0]
 
-run_dir = time.strftime(f"%d.%m.%Y/{name}_t%H.%M.%S")
 mapping = map_space(origin, span, zooms, stretch, scale)
 (_, (h,w)) = mapping
-Path("out/" + run_dir).mkdir(parents=True, exist_ok=True)
-Path("out/" + run_dir + "/aggregate").mkdir(parents=True, exist_ok=True)
-Path("out/" + run_dir + "/frame").mkdir(parents=True, exist_ok=True)
 
 def run():
     scratch = torch.zeros([h, w, 3], device=device, dtype=t_real)
@@ -132,7 +129,7 @@ def run():
             if show_gridlines:
                 scratch[:,:,1] += gridlines
                 scratch[:,:,2] += gridlines
-            #save(scratch.permute(2,0,1).sqrt(), f"{run_dir}/frame/{frame_index[0]:06d}")
+            save(scratch.permute(2,0,1).sqrt(), f"{run_dir}/{frame_index[0]:06d}")
 
         p_positions.copy_(next_positions(p_positions))
 

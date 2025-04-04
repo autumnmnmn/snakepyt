@@ -9,11 +9,12 @@ from diffusers import AutoencoderKL
 t_fp = torch.double
 
 def persistent():
-    vae = AutoencoderKL.from_pretrained(
-        "/ssd/0/ml_models/ql/hf-diff/stable-diffusion-xl-base-0.9", subfolder="vae"
-    )
-    vae.to("cuda")
-    vae.to(torch.float)
+    pass
+    #vae = AutoencoderKL.from_pretrained(
+    #    "/ssd/0/ml_models/ql/hf-diff/stable-diffusion-xl-base-0.9", subfolder="vae"
+    #)
+    #vae.to("cuda")
+    #vae.to(torch.float)
 
 def decode(l, vae):
     l = l.to(vae.dtype)
