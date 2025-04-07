@@ -22,7 +22,7 @@ randomize = False
 random_range = tau #/ 50
 
 # 2 ** 9 = 512; 10 => 1024; 11 => 2048
-scale_power = 12
+scale_power = 13
 scale = 2 ** scale_power
 
 
@@ -39,15 +39,29 @@ def proj(u, v):
         out[:,dim] *= scale
     return out
 
+def bad_proj(u, v):
+    dot = (u * v).sum(dim=1)
+    scale = (dot / v.norm(p=2, dim=1))
+    out = v.clone()
+    for dim in range(out.shape[1]):
+        out[:,dim] *= scale
+    return out
+
 def proj_shift(a, b):
     return a + proj(b, a)
 
+def bad_proj_shift(a, b):
+    return a + bad_proj(b, a)
+
 def get_transformation(direction, flow, ebb, rescaling):
     def transformation(p):
+        d = direction
+        d[:,0] += torch.rand_like(direction[:,0]) * 0.0001
         if flow == 0:
             result = p - direction * ebb
         else:
-            result = proj_shift(p, direction * flow) - direction * ebb
+            result = proj_shift(p, d * flow)
+            result -= direction * ebb #proj_shift(result, direction * ebb)
         if rescaling:
             result /= result.norm(p=2,dim=1).max()
         return result
@@ -61,12 +75,12 @@ def eerp(a,b,t):
     return math.pow(b/a, t)*a
 
 def per_t(t):
-    origin = 0, -1
+    origin = 0.0625, -0.15
 
     #s = eerp(1000, 0.001, t)
-    s = 2
-    x_range = 1.2 * s
-    y_range = 1.2 * s
+    s = 0.25
+    x_range = 0.5 * s
+    y_range = 1 * s
 
     span = x_range, y_range
     mapping = map_space(origin, span, zooms, stretch, scale)
@@ -82,14 +96,17 @@ def per_t(t):
     direction = torch.ones_like(p_positions)
     direction[:,0] = 0
 
-    iterations = 100
+    iterations = 1301
     #show_frame = lambda i: i == iterations - 1
-    show_frame = lambda i: i % 10 == 0#True
+    show_frame = lambda i: i % 100 == 0#True
     #show_frame = lambda i: True
 
-    ebb = 0.804#0.9000469530469531 - 0.001 + 0.002 * t
+    #ebb = 0.804#0.9000469530469531 - 0.001 + 0.002 * t
+    #ebb = 1 + 0.4 * t
+    #ebb = 0.4
+    ebb = 0.83314# + (0.001 * t)
     #ebb = (0.5 + 0.5 * t)#0.804#482 / 600
-    #ebb =0.9000469530469531 #0.9000595404595405
+    #ebb = 0.0 + 0.01 * t #0.9000469530469531 #+ 0.00001 * t #0.9000595404595405
     flow = 1
     rescaling = False
 
@@ -122,16 +139,17 @@ def run():
         #diff /= diff.max()
 
         if show_frame(iteration):
+            #diff_avg = diff
             frame_index[0] += 1
             print(f"{frame_index[0]}: ebb={ebb}")
 
             #pos_reshape = p_positions.reshape((h,w,2))
-            #scratch[:,:,0] = pos_reshape[:,:,0]
-            #scratch[:,:,2] = pos_reshape[:,:,1]
+            #scratch[:,:,0] = pos_reshape[:,:,0] + 0.5
+            #scratch[:,:,1] = pos_reshape[:,:,1] + 0.5
 
             #scratch += 0.5
             #scratch *= 2
-            scratch[:,:,0] = diff_avg.nan_to_num().reshape((h,w))
+            scratch[:,:,2] = diff_avg.nan_to_num().reshape((h,w))
             #scratch[:,:,2] = diff_avg.nan_to_num().reshape((h,w))
 
             scratch[scratch < 0] = 0
@@ -139,11 +157,11 @@ def run():
             #scratch[:,:,0] = scratch[:,:,0].pow(2)
             #scratch[:,:,2] = scratch[:,:,2].pow(0.5)
 
-            scratch[:,:,0] -= scratch[:,:,0].mean()
-            scratch[:,:,0] /= scratch[:,:,0].std() * 6
+            scratch[:,:,2] -= scratch[:,:,2].mean()
+            scratch[:,:,2] /= scratch[:,:,2].std() * 6
             #scratch[:,:,2] /= scratch[:,:,2].max()
 
-            scratch[:,:,0] += 0.5
+            scratch[:,:,2] += 0.5
 
             #scratch[:,:,1] = diff.reshape((h,w)) / diff.max()
 

@@ -63,8 +63,12 @@ class Logger:
             if file == "<string>" and source is not None:
                 file = inspect.getfile(source)
                 lines, first_line = inspect.getsourcelines(source)
-                line = lines[line_number-1].strip()
-                line_number = first_line + line_number - 1
+                if line_number < len(lines):
+                    line = lines[line_number-1].strip()
+                    line_number = first_line + line_number - 1
+                else:
+                    # TODO fix this!!
+                    _log(f"SNAKEPYT", "TRACING ERROR", mode="error", indent=self._indent+8)
             file_end = file.split("/")[-1]
             _log(f"in {file_end} {line_number}", line, mode="error", indent=self._indent+4)
         return self

@@ -6,6 +6,7 @@ import hashlib
 import sys
 import os
 import time
+import shutil
 from pathlib import Path
 from argparse import ArgumentParser as ArgParser
 from importlib import import_module, reload
@@ -19,6 +20,7 @@ parser = ArgParser("snakepyt")
 #parser.add_argument("sketch", help="the sketch to run", type=str)
 args = parser.parse_args()
 
+snakepyt_version = (0, 0)
 
 def establish_scheduler():
     schedule = []
@@ -144,6 +146,10 @@ while repl_continue:
         persistent_state = {}
         persistent_hashes = {}
         pyt_print("state flushed")
+    if command in ["exit", "quit", ":q", ",q"]:
+        pyt_print.blank().log("goodbye <3").blank()
+        repl_continue = False
+        continue
     if command == "run":
         sketch_name, remainder = lsnap(remainder)
 
@@ -182,6 +188,11 @@ while repl_continue:
         run_dir = time.strftime(f"%d.%m.%Y/{sketch_name}_t%H.%M.%S")
         sketch.__dict__["run_dir"] = run_dir
         Path("out/" + run_dir).mkdir(parents=True, exist_ok=True)
+
+        shutil.copy(sketch.__file__, f"out/{run_dir}/{sketch_name}.py")
+
+        with open(f"out/{run_dir}/.snakepyt", "w") as metadata:
+            metadata.write(f"snakepyt version {snakepyt_version[0]}.{snakepyt_version[1]}\n")
 
         if hasattr(sketch, "init"):
             if hasattr(sketch, "final"):
