@@ -150,6 +150,8 @@ while repl_continue:
         pyt_print.blank().log("goodbye <3").blank()
         repl_continue = False
         continue
+    if command == "crash":
+        raise Exception("crashing on purpose :3")
     if command == "run":
         sketch_name, remainder = lsnap(remainder)
 
