@@ -1,4 +1,10 @@
+
 .git
+.venv
 __pycache__
+in
 out
-scratch.py
+sketch/.old
+sketch/scratch.py
+_design
+
