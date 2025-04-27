@@ -1,16 +1,17 @@
-Various visualizations and simulations using pytorch
+A python interactive environment, mainly for making various visualizations and simulations using pytorch.
 
-Fluid simulation:
-[4096 x 2048 video](https://www.youtube.com/watch?v=-dA5eCxqJGM)
-![fluid simulation](examples/fluid.png)
+![examples](examples/collage.png)
 
-Burning ship fractal:
-![burning ship fractal](examples/ship.png)
+- Lyapunov fractals
+- Physarum simulation
+- Atomic orbitals
+- Quaternionic julia sets
+- Fluid simulation
+- Chirikov-Taylor map
+- Laplacian growth
+- Strange attractors and other ODEs
+- & Many other dynamical systems
 
-"Physarum" simulation:
-![physarum](examples/slime_a.png)
-![physarum](examples/slime_b.png)
-![physarum](examples/slime_c.png)
+An assortment of renders can be found in the examples folder.
 
-Quaternionic Julia set:
-![julia fractal](examples/julia_q.png)
+

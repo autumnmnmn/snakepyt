@@ -1,10 +1,14 @@
 
+_design
+in
+out
+
+sketch/.old
+sketch/scratch.py
+
 .git
 .venv
 __pycache__
-in
-out
-sketch/.old
-sketch/scratch.py
-_design
+*.egg-info
+build
 
