@@ -1,0 +1,101 @@
+/* Ficscript-specific tokens */
+
+.token.fic-comment {
+  color: var(--ficscript-comment);
+}
+
+.token.fic-brackets {
+  color: var(--ficscript-brackets);
+}
+
+.token.fic-accessors {
+  color: var(--ficscript-accessors);
+  font-weight: bolder;
+}
+
+.token.fic-string {
+  color: var(--ficscript-string);
+  font-style: italic;
+}
+
+.token.fic-variable {
+  color: var(--ficscript-variable);
+}
+
+.token.fic-method {
+  color: var(--ficscript-method);
+}
+
+/* TODO: switch to just using standard tokens wherever possible */
+
+/* Prism.js standard tokens */
+
+.token.string {
+  color: var(--ficscript-string);
+}
+
+.token.block-comment,.token.cdata,.token.comment,.token.doctype,.token.prolog
+{
+  color: var(--ficscript-comment);
+}
+
+.token.punctuation
+{
+  color: var(--ficscript-brackets);
+}
+
+.token.attr-name,.token.deleted,.token.namespace,.token.tag
+
+{
+  color: var(--ficscript-variable);
+}
+
+.token.function-name
+{
+  color: var(--ficscript-method);
+}
+
+.token.boolean,.token.function,.token.number
+{
+  color: var(--ficscript-method);
+}
+
+.token.class-name,.token.constant,.token.property,.token.symbol
+{
+  color: var(--ficscript-variable);
+}
+
+.token.atrule,.token.builtin,.token.important,.token.keyword,.token.selector
+{
+  color: var(--ficscript-accessors);
+}
+
+.token.attr-value,.token.char,.token.regex,.token.string,.token.variable
+{
+  color: var(--ficscript-string);
+}
+
+.token.entity,.token.operator,.token.url
+{
+  color: var(--markdown-link)
+}
+
+.token.bold,.token.important
+{
+  font-weight:700
+}
+
+.token.italic
+{
+  font-style:italic
+}
+
+.token.entity
+{
+  cursor:help
+}
+
+.token.inserted
+{
+  color:green
+}

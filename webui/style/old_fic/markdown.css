@@ -1,0 +1,137 @@
+pre {
+    color: var(--plaintext);
+    line-height: 1.5em;
+}
+
+pre p {
+    color: var(--plaintext);
+    line-height: 1.5em;
+}
+
+pre p:not(:last-child) {
+    padding-bottom: 0.5em; 
+}
+
+pre code {
+    background-color: var(--markdown-code);
+    border-radius: 0.5em;
+    border-left: 0.5em solid var(--markdown-code);
+    border-right: 0.5em solid var(--markdown-code);
+
+
+}
+
+pre pre {
+    margin: 0;
+    background-color: var(--markdown-code);
+    border-radius: 0.5em;
+    line-height: 1.5em;
+}
+
+pre pre code {
+    border: 0;
+    background-color: transparent;
+}
+
+pre hr {
+    border: 0;
+    border-top: 1px solid var(--pane-divider);
+    line-height: 1.5em;
+}
+
+a {
+    color: var(--markdown-link);
+    line-height: 1.5em;
+}
+
+ul li {
+    list-style-type: square;
+    list-style-position: inside;
+    line-height: 1.5em;
+    margin: 0;
+}
+
+ul {
+    padding-left: 0.5em;
+    line-height: 1.5em;
+    margin: 0;
+}
+
+ol {
+    padding-left: 0.5em;
+    line-height: 1.5em;
+    margin: 0;
+}
+
+ol li {
+    list-style-type: decimal;
+    list-style-position: inside;
+    line-height: 1.5em;
+    margin: 0;
+}
+
+h1 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+h2 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+h3 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+h4 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+h5 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+h6 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+blockquote {
+    margin: 0;
+    padding: 0.5em;
+    line-height: 1.5em;
+}
+
+hr {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-bottom: 0.75em;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5em;
+}
+
+thead {
+    border-bottom: 1px solid var(--pane-divider);
+}
+
+th {
+    padding: 0.5em;
+    padding-bottom: 0;
+    padding-top: 0;
+}

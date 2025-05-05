@@ -20,7 +20,7 @@ parser = ArgParser("snakepyt")
 #parser.add_argument("sketch", help="the sketch to run", type=str)
 args = parser.parse_args()
 
-snakepyt_version = (0, 1)
+snakepyt_version = (0, 0)
 
 def establish_scheduler():
     schedule = []
@@ -51,25 +51,19 @@ def run(fn, arg, partial_id, outer_scope, log, sources, finalizer=None):
     schedule, schedule_fn = establish_scheduler()
     scope["schedule"] = schedule_fn
     scope["print"] = inner_log(source=fn, indent=4)
-    #fn_name = fn.__name__
+    fn_name = fn.__name__
     run_id = partial_id + (arg,)
-    #instructions = dis.get_instructions(fn)
-    #for instruction in instructions:
-    #    if instruction.opcode == dis.opmap["RETURN_VALUE"]:
-    #        log(f"{fn_name} cannot be scheduled because it has a return instruction", mode="error")
-    #        return False
-    #fn_source = sources[fn.__name__]
-    #fn_source_modified = f"{fn_source}\n    return locals()"
-    #sandbox = {}
-
-    (succ, fn_or_err) = modify_to_dump_locals(fn, scope, log, sources)
-    if not succ:
-        log.indented().log(fn_or_err, mode="error")
-        return False
-    fn_modified = fn_or_err
+    instructions = dis.get_instructions(fn)
+    for instruction in instructions:
+        if instruction.opcode == dis.opmap["RETURN_VALUE"]:
+            log(f"{fn_name} cannot be scheduled because it has a return instruction", mode="error")
+            return False
+    fn_source = sources[fn.__name__]
+    fn_source_modified = f"{fn_source}\n    return locals()"
+    sandbox = {}
     try:
-        #exec(fn_source_modified, globals=scope, locals=sandbox)
-        #fn_modified = sandbox[fn_name]
+        exec(fn_source_modified, globals=scope, locals=sandbox)
+        fn_modified = sandbox[fn_name]
         if arg is not None:
             fn_locals = fn_modified(arg)
         else:
