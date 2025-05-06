@@ -46,11 +46,9 @@ def build_response(status_code, body=b"", content_type="text/plain"):
 def route(req_path):
     if req_path == "/":
         return "content/main.html"
-    s = req_path.split(os.sep)
-    if s[1] == "style":
-        return req_path[1:]
-    if s[-1].endswith(".js"):
-        return f"behavior/{req_path}"
+    if req_path.endswith(".js"):
+        return f"js/{req_path}"
+    return req_path[1:]
 
 def handle_request(request_data):
     try:

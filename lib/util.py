@@ -7,8 +7,8 @@ import io
 def badfunc():
     return 1 / 0
 
-def first(l, p):
-    return next((idx,value) for idx,value in enumerate(l) if p(value))
+def lerp(a, b, t):
+    return (1-t)*a + t*b
 
 def timed(f):
     import time

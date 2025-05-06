@@ -4,7 +4,7 @@ import torch
 if not torch.cuda.is_available():
     raise RuntimeError("cudacanvas requires torch with CUDA")
 
-import glfw
+#import glfw
 
 from . import cudacanvas_cpp as _cpp
 

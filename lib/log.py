@@ -114,3 +114,13 @@ def trace(indent=0, source=None):
         file_end = file.split("/")[-1]
         _log(f"in {file_end} {line_number}", line, mode="error", indent=indent+4)
 
+class Timer(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __enter__(self):
+        self.t = time.perf_counter()
+
+    def __exit__(self, *args):
+        print(f"{self.name}: {time.perf_counter() - self.t}")
+
