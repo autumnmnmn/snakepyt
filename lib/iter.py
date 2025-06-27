@@ -2,6 +2,7 @@
 def first(l, p):
     return next((idx,value) for idx,value in enumerate(l) if p(value))
 
+# just use itertools.pairwise
 def pairs(l):
     return zip(l, l[1:])
 

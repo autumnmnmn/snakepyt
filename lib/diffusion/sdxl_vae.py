@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as func
 from safetensors import safe_open as st_open
+from PIL import Image
 
 class Attention(nn.Module):
     def __init__(self):
@@ -152,4 +153,34 @@ class Decoder(nn.Module):
         with st_open(path, framework="pt") as file:
             for key in sd.keys():
                 sd[key].copy_(file.get_tensor(key))
+
+approximation_matrix = [
+    [0.85, 0.85, 0.6], # seems to be mainly value
+    [-0.35, 0.2, 0.5], # mainly blue? maybe a little green, def not red
+    [0.15, 0.15, 0], # yellow. but mainly encoding texture not color, i think
+    [0.15, -0.35, -0.35] # inverted value? but also red
+]
+
+def save_approx_decode(latents, path):
+    lmin = latents.min()
+    l = latents - lmin
+    lmax = latents.max()
+    l = latents / lmax
+    l = l.float().mul_(0.5).add_(0.5)
+    ims = []
+    for lat in l:
+        apx_mat = torch.tensor(approximation_matrix).to("cuda")
+        approx_decode = torch.einsum("...lhw,lr -> ...rhw", lat, apx_mat).mul_(255).round()
+        #lat -= lat.min()
+        #lat /= lat.max()
+        im_data = approx_decode.permute(1,2,0).detach().cpu().numpy().astype("uint8")
+        #im_data = im_data.round().astype("uint8")
+        im = Image.fromarray(im_data).resize(size=(im_data.shape[1]*8,im_data.shape[0]*8), resample=Image.NEAREST)
+        ims += [im]
+
+    #clear_output()
+    for im in ims:
+        #im.save(f"out/tmp_approx_decode/{index:06d}.bmp")
+        im.save(path)
+        #display(im)
 

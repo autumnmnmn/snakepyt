@@ -15,6 +15,7 @@ from time import perf_counter
 from lib import util
 from lib.log import Logger, inner_log
 from lib.internal.parse import lsnap
+from lib.internal.witchery import try_dump_locals
 
 parser = ArgParser("snakepyt")
 #parser.add_argument("sketch", help="the sketch to run", type=str)
@@ -28,58 +29,27 @@ def establish_scheduler():
         schedule.append((fn, args))
     return (schedule, _schedule)
 
-def modify_to_dump_locals(fn, deftime_globals, log, sources):
-    instructions = dis.get_instructions(fn)
-    for instruction in instructions:
-        if instruction.opcode == dis.opmap["RETURN_VALUE"]:
-            return (False, "encountered return instruction")
-    fn_source = sources[fn.__name__]
-    fn_source_modified = f"{fn_source}\n    return locals()"
-    sandbox = {}
-    try:
-        exec(fn_source_modified, globals=deftime_globals, locals=sandbox)
-    except KeyboardInterrupt:
-        raise
-    except:
-        log.indented().trace(source=fn)
-        return (False, "error in definition")
-    return (True, sandbox[fn.__name__])
-
-
 def run(fn, arg, partial_id, outer_scope, log, sources, finalizer=None):
     scope = dict(outer_scope)
     schedule, schedule_fn = establish_scheduler()
     scope["schedule"] = schedule_fn
     scope["print"] = inner_log(source=fn, indent=4)
-    #fn_name = fn.__name__
     run_id = partial_id + (arg,)
-    #instructions = dis.get_instructions(fn)
-    #for instruction in instructions:
-    #    if instruction.opcode == dis.opmap["RETURN_VALUE"]:
-    #        log(f"{fn_name} cannot be scheduled because it has a return instruction", mode="error")
-    #        return False
-    #fn_source = sources[fn.__name__]
-    #fn_source_modified = f"{fn_source}\n    return locals()"
-    #sandbox = {}
 
-    (succ, fn_or_err) = modify_to_dump_locals(fn, scope, log, sources)
-    if not succ:
-        log.indented().log(fn_or_err, mode="error")
-        return False
-    fn_modified = fn_or_err
-    try:
-        #exec(fn_source_modified, globals=scope, locals=sandbox)
-        #fn_modified = sandbox[fn_name]
-        if arg is not None:
-            fn_locals = fn_modified(arg)
+    args = [] if arg is None else [arg]
+    (success, locals_or_err) = try_dump_locals(fn, sources[fn.__name__], args, {}, scope, log)
+    if success:
+        scope.update(locals_or_err)
+    else:
+        err = locals_or_err
+        errs = try_dump_locals.errs
+        if err == errs.NON_DICT_RETURN:
+            log.indented().log("could not extract locals. check for an early return", mode="warning")
         else:
-            fn_locals = fn_modified()
-        scope.update(fn_locals)
-    except KeyboardInterrupt:
-        raise
-    except:
-        log.indented().trace(source=fn)
-        return False
+            log.indented().log(locals_or_err, mode="error")
+            return False
+
+
     for (fn, args) in schedule:
         if args is not None:
             for arg in args:
@@ -107,19 +77,13 @@ def handle_persistent(persistent_fn, module_globals, log, sources):
     if sketch_name in persistent_hashes:
         if bytecode_hash == persistent_hashes[sketch_name]:
             return True
-    (success, fn_or_err) = modify_to_dump_locals(persistent_fn, module_globals, log, sources)
+    (success, locals_or_err) = try_dump_locals(persistent_fn, sources[persistent_fn.__name__], [], {}, module_globals, log)
     if success:
-        try:
-            fn_locals = fn_or_err()
-        except KeyboardInterrupt:
-            raise
-        except:
-            log.indented().trace(source=persistent_fn)
-            return False
         persistent_hashes[sketch_name] = bytecode_hash
-        persistent_state.update(fn_locals)
+        persistent_state.update(locals_or_err)
     else:
-        log(f"failed to run persistent function: {fn_or_err}", mode="error")
+        log(f"failed to run persistent function: {locals_or_err}", mode="error")
+
     return success
 
 
@@ -144,20 +108,48 @@ while repl_continue:
     if "prefix" in persistent_state:
         message = " ".join([persistent_state["prefix"], message])
 
+    message = message.lstrip()
+
+    if message.startswith("."):
+        if message.rstrip() == ".":
+            pyt_print(persistent_state)
+        else:
+            segments = [segment.strip() for segment in message.split(".")][1:]
+            selection = ("base scope", persistent_state)
+            for segment in segments:
+                if segment == "":
+                    pyt_print("repeated dots (..) are redundant", mode="warning")
+                    continue
+                try:
+                    selection = (segment, selection[1][segment])
+                    pyt_print(f"{selection[0]}: {selection[1]}")
+                except KeyError:
+                    pyt_print(f"no \"{segment}\" in {selection[0]}", mode="error")
+                    continue
+                except TypeError:
+                    pyt_print(f"{selection[0]} is not a scope", mode="error")
+                    pyt_print.indented()(f"{selection[0]}: {selection[1]}", mode="info")
+
+        continue
+
+
     (command, remainder) = lsnap(message)
 
-    if command == "state":
-        pyt_print(persistent_state)
     if command == "flush":
         persistent_state = {}
         persistent_hashes = {}
         pyt_print("state flushed")
+        continue
     if command in ["exit", "quit", ":q", ",q"]:
         pyt_print.blank().log("goodbye <3").blank()
         repl_continue = False
         continue
+    if command in ["hello", "hi"]:
+        pyt_print("hiii :3")
+        continue
     if command == "crash":
         raise Exception("crashing on purpose :3")
+        continue
     if command == "run":
         sketch_name, remainder = lsnap(remainder)
 
@@ -202,19 +194,21 @@ while repl_continue:
         with open(f"out/{run_dir}/.snakepyt", "w") as metadata:
             metadata.write(f"snakepyt version {snakepyt_version[0]}.{snakepyt_version[1]}\n")
 
-        if hasattr(sketch, "init"):
+        if hasattr(sketch, "main"):
             if hasattr(sketch, "final"):
                 finalizer = sketch.final.__code__
             else:
                 finalizer = None
             try:
-                run(sketch.init, None, (), sketch.__dict__, log, sources, finalizer)
+                run(sketch.main, None, (), sketch.__dict__, log, sources, finalizer)
             except KeyboardInterrupt:
                 pyt_print.blank().log("aborted", mode="info").blank()
                 continue
         else:
             log("sketch has no init function", mode="error", indent=4)
-            #run(None, settings_functions, (), sketch.__dict__)
 
         log(f"finished all runs in {perf_counter() - t0:.3f}s")
+        continue
+
+    pyt_print(f"command: {command}", mode="info")
 

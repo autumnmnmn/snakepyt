@@ -83,7 +83,7 @@ def handle_request(request_data):
     except Exception as e:
         return build_response(500, f"Server error: {e}".encode())
 
-def run():
+def main():
     ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ssl_ctx.load_cert_chain(certfile=SSL_CERT, keyfile=SSL_KEY)
 
@@ -94,7 +94,13 @@ def run():
         print(f"Serving HTTPS on {HOST}:{PORT}")
         with ssl_ctx.wrap_socket(server, server_side=True) as ssock:
             while True:
-                conn, addr = ssock.accept()
+                try:
+                    conn, addr = ssock.accept()
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    print("exc")
+                    continue
                 with conn:
                     request = conn.recv(4096)
                     response = handle_request(request)

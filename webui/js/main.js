@@ -38,3 +38,7 @@ window.userPreferences.setTheme(localStorage.getItem('theme'));
 window.userPreferences.setLoadButton(localStorage.getItem('loadButton'));
 
 
+import("/prompt.js").then(
+    module => module.main(document.body)
+)
+
