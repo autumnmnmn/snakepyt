@@ -57,16 +57,23 @@ export function main(target, n = 2) {
                 const relativeX = e.clientX - containerRect.left;
                 const percent = (relativeX / containerRect.width) * 100;
 
-                // Calculate total width of targets to the left of this splitter
-                let leftTotal = 0;
-                for (let j = 0; j <= i; j++) {
-                    if (j === i) {
-                        const newWidth = Math.max(1, Math.min(99, percent - leftTotal));
-                        targets[j].style.width = newWidth + '%';
-                    } else {
-                        leftTotal += parseFloat(targets[j].style.width);
-                    }
+                // Get current widths of the two adjacent panes
+                const leftWidth = parseFloat(targets[i].style.width) || (100/n);
+                const rightWidth = parseFloat(targets[i + 1].style.width) || (100/n);
+                const totalAdjacent = leftWidth + rightWidth;
+
+                // Calculate how much of the adjacent space we're at
+                let adjacentStart = 0;
+                for (let j = 0; j < i; j++) {
+                    adjacentStart += parseFloat(targets[j].style.width) || (100/n);
                 }
+
+                const adjacentPercent = Math.max(0, Math.min(100, percent - adjacentStart));
+                const leftRatio = Math.max(1, Math.min(totalAdjacent - 1, adjacentPercent));
+                const rightRatio = totalAdjacent - leftRatio;
+
+                targets[i].style.width = leftRatio + '%';
+                targets[i + 1].style.width = rightRatio + '%';
             }
 
             function cleanup() {

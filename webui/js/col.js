@@ -57,16 +57,23 @@ export function main(target, n = 2) {
                 const relativeY = e.clientY - containerRect.top;
                 const percent = (relativeY / containerRect.height) * 100;
 
-                // Calculate total height of targets above this splitter
-                let topTotal = 0;
-                for (let j = 0; j <= i; j++) {
-                    if (j === i) {
-                        const newHeight = Math.max(1, Math.min(99, percent - topTotal));
-                        targets[j].style.height = newHeight + '%';
-                    } else {
-                        topTotal += parseFloat(targets[j].style.height);
-                    }
+                // Get current heights of the two adjacent panes
+                const topHeight = parseFloat(targets[i].style.height) || (100/n);
+                const bottomHeight = parseFloat(targets[i + 1].style.height) || (100/n);
+                const totalAdjacent = topHeight + bottomHeight;
+
+                // Calculate how much of the adjacent space we're at
+                let adjacentStart = 0;
+                for (let j = 0; j < i; j++) {
+                    adjacentStart += parseFloat(targets[j].style.height) || (100/n);
                 }
+
+                const adjacentPercent = Math.max(0, Math.min(100, percent - adjacentStart));
+                const topRatio = Math.max(1, Math.min(totalAdjacent - 1, adjacentPercent));
+                const bottomRatio = totalAdjacent - topRatio;
+
+                targets[i].style.height = topRatio + '%';
+                targets[i + 1].style.height = bottomRatio + '%';
             }
 
             function cleanup() {
