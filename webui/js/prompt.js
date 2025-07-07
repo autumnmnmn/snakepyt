@@ -1,5 +1,5 @@
 
-export function main(target) {
+export async function main(target) {
     const container = document.createElement('div');
 
     const input = document.createElement('input');
@@ -12,20 +12,9 @@ export function main(target) {
         const moduleName = inputSplit[0];
         const args = inputSplit.slice(1);
 
-        try {
-            const module = await import(`/${moduleName}.js`);
-            if ("main" in module) {
-                const result = await module.main(target, ...args);
-                if (result?.targets?.length) {
-                    for (const targetElement of result.targets) {
-                        main(targetElement);
-                    }
-                    container.remove();
-                }
-            }
-
-        } catch (error) {
-            console.error('Failed to load module:', error.message);
+        const result = await $mod(moduleName, target, args);
+        if (result?.replace) {
+            container.remove();
         }
     }
 
@@ -38,5 +27,9 @@ export function main(target) {
     container.appendChild(input);
     target.appendChild(container);
     input.focus();
+
+    return {
+        replace: true
+    };
 }
 

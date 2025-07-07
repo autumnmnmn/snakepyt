@@ -21,6 +21,7 @@ body {
     height: 100vh;
     width: 100vw;
     padding: 1rem;
+    background-color: var(--main-background);
 }
 
 .target {
@@ -61,7 +62,7 @@ input:focus {
     background-color: var(--main-faded);
 }
 
-.nothing {
+.nothing_old {
     position: absolute;
     font-family: var(--code-font);
     color: var(--main-solid);

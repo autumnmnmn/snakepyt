@@ -1,7 +1,14 @@
 
 const sheet = new CSSStyleSheet();
 sheet.replaceSync(`
-    .hsplitter {
+    .column {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+    }
+
+    .column > .splitter {
         height: 1px;
         background-color: var(--main-faded);
         cursor: row-resize;
@@ -10,70 +17,76 @@ sheet.replaceSync(`
         overflow: visible;
     }
 
-    .hsplitter::before {
+    .column > .splitter::before {
         content: '';
         position: relative;
         display: inline-block;
-        top: -6px;
+        top: -8px;
         left: 0;
         width: 100%;
-        height: 13px;
+        height: 17px;
         /*background-color: rgba(255, 0, 0, 0.1);*/
     }
 
-    .target.top {
-        padding-bottom: 1rem;
+    .column > :first-child {
+        margin-bottom: 1rem;
+        height: calc(var(--current-portion) - 0.5px - 1rem);
     }
 
-    .target.bottom {
-        padding-top: 1rem;
+    .column > :not(.splitter):not(:first-child):not(:last-child) {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        height: calc(var(--current-portion) - 1px - 2rem);
     }
 
-    .target.middle {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
+    .column > :last-child {
+        margin-top: 1rem;
+        height: calc(var(--current-portion) - 0.5px - 1rem);
     }
 `);
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
-export function main(target, n = 2) {
+export async function main(target, n = 2) {
     n = parseInt(n, 10);
     if (!Number.isInteger(n) || n < 2) {
         n = 2;
     }
 
     const container = document.createElement('div');
-    container.style.cssText = 'display: flex; flex-direction: column; height: 100%; width: 100%;';
+    container.className = "column";
 
     const targets = [];
     const splitters = [];
 
+    const minPercent = 3;
+
     function createDragHandler(splitter, i) {
         splitter.onmousedown = (e) => {
+            if (e.button !== 0) return;
             e.preventDefault();
 
             function resizeCallback(e) {
                 const containerRect = container.getBoundingClientRect();
-                const relativeY = e.clientY - containerRect.top;
+                const relativeY = e.clientY - containerRect.top - 1; // TODO: figure out *why* this "- 1" is required for perfect pointer alignment
                 const percent = (relativeY / containerRect.height) * 100;
 
                 // Get current heights of the two adjacent panes
-                const topHeight = parseFloat(targets[i].style.height) || (100/n);
-                const bottomHeight = parseFloat(targets[i + 1].style.height) || (100/n);
+                const topHeight = parseFloat(targets[i].style.getPropertyValue('--current-portion')) || (100/n);
+                const bottomHeight = parseFloat(targets[i + 1].style.getPropertyValue('--current-portion')) || (100/n);
                 const totalAdjacent = topHeight + bottomHeight;
 
                 // Calculate how much of the adjacent space we're at
                 let adjacentStart = 0;
                 for (let j = 0; j < i; j++) {
-                    adjacentStart += parseFloat(targets[j].style.height) || (100/n);
+                    adjacentStart += parseFloat(targets[j].style.getPropertyValue('--current-portion')) || (100/n);
                 }
 
                 const adjacentPercent = Math.max(0, Math.min(100, percent - adjacentStart));
-                const topRatio = Math.max(1, Math.min(totalAdjacent - 1, adjacentPercent));
+                const topRatio = Math.max(minPercent, Math.min(totalAdjacent - minPercent, adjacentPercent));
                 const bottomRatio = totalAdjacent - topRatio;
 
-                targets[i].style.height = topRatio + '%';
-                targets[i + 1].style.height = bottomRatio + '%';
+                targets[i].style.setProperty('--current-portion', topRatio + '%');
+                targets[i + 1].style.setProperty('--current-portion', bottomRatio + '%');
             }
 
             function cleanup() {
@@ -90,17 +103,9 @@ export function main(target, n = 2) {
 
     for (let i = 0; i < n; i++) {
         const target = document.createElement('div');
-        target.style.height = `${100/n}%`;
+        target.style.setProperty('--current-portion', `${100/n}%`);
 
-        if (i === 0) {
-            target.className = "target top";
-        } else if (i === n - 1) {
-            target.className = "target bottom";
-            target.style.flex = '1'; // Last one gets flex to handle rounding
-            target.style.height = 'auto';
-        } else {
-            target.className = "target middle";
-        }
+        await $mod("nothing", target);
 
         targets.push(target);
         container.appendChild(target);
@@ -108,7 +113,7 @@ export function main(target, n = 2) {
         if (i === n - 1) continue;
 
         const splitter = document.createElement('div');
-        splitter.className = 'hsplitter';
+        splitter.className = 'splitter';
         splitters.push(splitter);
         container.appendChild(splitter);
 
@@ -118,6 +123,7 @@ export function main(target, n = 2) {
     target.appendChild(container);
 
     return {
+        replace: true,
         targets: targets
     };
 }

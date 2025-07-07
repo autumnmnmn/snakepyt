@@ -1,27 +1,11 @@
 "use strict";
 
 window.userPreferences = {
-    setTheme: (theme) => {
-        if (theme === null)
-            theme = 'void';
-        userPreferences.theme = theme;
-        localStorage.setItem('theme', theme);
-        const themeLink = document.getElementById('themeLink');
-        themeLink.href = `style/theme/${theme}.css`;
-    },
     setLoadButton: (show) => {
         if (show === null)
             show = 'show';
         userPreferences.loadButton = show;
         localStorage.setItem('loadButton', show);
-    },
-    toggleTheme: () => {
-        if (userPreferences.theme === 'void') {
-            userPreferences.setTheme('parchment');
-        }
-        else {
-            userPreferences.setTheme('void');
-        }
     },
     toggleLoadButton: () => {
         if (userPreferences.loadButton === 'show') {
@@ -33,12 +17,20 @@ window.userPreferences = {
     }
 };
 
-
-window.userPreferences.setTheme(localStorage.getItem('theme'));
 window.userPreferences.setLoadButton(localStorage.getItem('loadButton'));
 
+window.$mod = async function(moduleName, targetElement, args = []) {
+    try {
+        const module = await import(`/${moduleName}.js`);
+        if ("main" in module) {
+            return await module.main(targetElement, ...args);
+        }
+    } catch (error) {
+        console.error('Failed to load module:', error.message);
+    }
+    return null;
+};
 
-import("/prompt.js").then(
-    module => module.main(document.body)
-)
+$mod("theme", document.head);
+$mod("nothing", document.body);
 
