@@ -205,7 +205,7 @@ while repl_continue:
                 pyt_print.blank().log("aborted", mode="info").blank()
                 continue
         else:
-            log("sketch has no init function", mode="error", indent=4)
+            log("sketch has no main function", mode="error", indent=4)
 
         log(f"finished all runs in {perf_counter() - t0:.3f}s")
         continue

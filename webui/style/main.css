@@ -15,12 +15,14 @@
     -webkit-box-sizing: border-box;
 
     font-family: var(--main-font);
+
+    --panel-margin: 0.5rem;
 }
 
 body {
     height: 100vh;
     width: 100vw;
-    padding: 1rem;
+    padding: 0rem;
     background-color: var(--main-background);
 }
 

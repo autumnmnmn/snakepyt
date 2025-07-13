@@ -46,6 +46,8 @@ def build_response(status_code, body=b"", content_type="text/plain"):
 def route(req_path):
     if req_path == "/":
         return "content/main.html"
+    if any(req_path.endswith(x) for x in [".html", ".png"]):
+        return f"content/{req_path}"
     if req_path.endswith(".js"):
         return f"js/{req_path}"
     return req_path[1:]

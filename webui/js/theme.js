@@ -1,33 +1,34 @@
 
-export function main(target, initialTheme = null) {
-    const storedTheme = localStorage.getItem('theme');
-    let theme = initialTheme || storedTheme || 'void';
-
-    if (!target.setTheme) {
-        const themeLink = document.createElement('link');
-        themeLink.rel = 'stylesheet';
-        themeLink.type = 'text/css';
-
-        target.appendChild(themeLink);
-
-        target.setTheme = (newTheme) => {
-            themeLink.href = `style/theme/${newTheme}.css`;
-
-            theme = newTheme;
-            if (target === document.head) {
-                localStorage.setItem('theme', theme);
-            }
-        };
-        target.toggleTheme = () => {
-            const newTheme = theme === 'void' ? 'parchment' : 'void';
-            target.setTheme(newTheme);
-        };
+function checkForParentTheme(element, theme) {
+    let parent = element.parentElement;
+    while (parent) {
+        //if (parent.classList.contains('target')) {
+            const parentTheme = parent.getAttribute('theme');
+            //if (!parentTheme) return false;
+            if (parentTheme)
+            return parentTheme !== theme;
+        //}
+        parent = parent.parentElement;
     }
 
-    target.setTheme(theme);
+    return false;
+}
 
-    return {
-        replace: false,
-    };
+export function main(target, initialTheme = null) {
+    const storedTheme = localStorage.getItem('theme');
+    let theme = initialTheme || storedTheme || 'blackboard';
+    target.setAttribute("theme", theme);
+
+    if (target === document.body) {
+        localStorage.setItem("theme", theme);
+    }
+
+    if (checkForParentTheme(target, theme)) {
+        target.setAttribute("theme-changed", "");
+    } else {
+        target.removeAttribute("theme-changed");
+    }
+
+    return { replace: false };
 }
 

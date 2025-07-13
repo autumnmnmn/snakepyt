@@ -6,6 +6,8 @@ sheet.replaceSync(`
         flex-direction: row;
         height: 100%;
         width: 100%;
+        overflow: visible;
+        padding: 0rem;
     }
 
     .row > .splitter {
@@ -29,22 +31,64 @@ sheet.replaceSync(`
     }
 
     .row > :first-child {
-        margin-right: 1rem;
-        width: calc(var(--current-portion) - 0.5px - 1rem);
+        margin-right: var(--panel-margin);
+        width: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
     .row > :not(.splitter):not(:first-child):not(:last-child) {
-        margin-left: 1rem;
-        margin-right: 1rem;
-        width: calc(var(--current-portion) - 1px - 2rem);
+        margin-left: var(--panel-margin);
+        margin-right: var(--panel-margin);
+        width: calc(var(--current-portion) - 1px - 2 * var(--panel-margin));
     }
 
     .row > :last-child {
-        margin-left: 1rem;
-        width: calc(var(--current-portion) - 0.5px - 1rem);
+        margin-left: var(--panel-margin);
+        width: calc(var(--current-portion) - 0.5px - var(--panel-margin));
+    }
+
+    .row > .portion {
+        overflow: visible;
+        position: relative;
+    }
+
+    .row > .portion > .target {
+        content: '';
+        position: absolute;
+        top: 0rem;
+        left: 0rem;
+        width: 100%;
+        height: 100%;
+        background-color: var(--main-background);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .row > .portion > .target[theme-changed] {
+        top: 0.5rem;
+        height: calc(100% - 1rem);
+    }
+
+    .row > :first-child > .target[theme-changed] {
+        left: 0.5rem;
+        width: calc(100% - 0.5rem);
+    }
+
+    .row > :last-child > .target[theme-changed] {
+        width: calc(100% - 0.5rem);
     }
 `);
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+
+function focusableDescendent(element) {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT,
+        (node) => {
+            if (node.tabIndex >= 0) {
+                return NodeFilter.FILTER_ACCEPT;
+            }
+            return NodeFilter.FILTER_SKIP;
+        });
+    return walker.nextNode();
+}
 
 export async function main(target, n = 2) {
     n = parseInt(n, 10);
@@ -55,7 +99,26 @@ export async function main(target, n = 2) {
     const container = document.createElement('div');
     container.className = "row";
 
-    const targets = [];
+    container.addEventListener('keydown', (e) => {
+        if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
+
+        if (e.key === "h") {
+            const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
+            const prevIndex = (currentIndex - 1 + targets.length) % targets.length;
+            const prev = focusableDescendent(targets[prevIndex]);
+            if (prev) prev.focus();
+        }
+        else if (e.key === "l") {
+            const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
+            const nextIndex = (currentIndex + 1) % targets.length;
+            const next = focusableDescendent(targets[nextIndex]);
+            if (next) next.focus();
+        }
+
+        e.stopPropagation();
+    });
+
+    const portions = [];
     const splitters = [];
 
     const minPercent = 2;
@@ -75,22 +138,22 @@ export async function main(target, n = 2) {
                 const percent = (relativeX / width) * 100;
 
                 // Get current widths of the two adjacent panes
-                const leftWidth = parseFloat(targets[i].style.getPropertyValue('--current-portion')) || (100/n);
-                const rightWidth = parseFloat(targets[i + 1].style.getPropertyValue('--current-portion')) || (100/n);
+                const leftWidth = parseFloat(portions[i].style.getPropertyValue('--current-portion')) || (100/n);
+                const rightWidth = parseFloat(portions[i + 1].style.getPropertyValue('--current-portion')) || (100/n);
                 const totalAdjacent = leftWidth + rightWidth;
 
                 // Calculate how much of the adjacent space we're at
                 let adjacentStart = 0;
                 for (let j = 0; j < i; j++) {
-                    adjacentStart += parseFloat(targets[j].style.getPropertyValue('--current-portion')) || (100/n);
+                    adjacentStart += parseFloat(portions[j].style.getPropertyValue('--current-portion')) || (100/n);
                 }
 
                 const adjacentPercent = Math.max(0, Math.min(100, percent - adjacentStart));
                 const leftRatio = Math.max(minPercent, Math.min(totalAdjacent - minPercent, adjacentPercent));
                 const rightRatio = totalAdjacent - leftRatio;
 
-                targets[i].style.setProperty('--current-portion', leftRatio + '%');
-                targets[i + 1].style.setProperty('--current-portion', rightRatio + '%');
+                portions[i].style.setProperty('--current-portion', leftRatio + '%');
+                portions[i + 1].style.setProperty('--current-portion', rightRatio + '%');
             }
 
             function cleanup() {
@@ -105,14 +168,20 @@ export async function main(target, n = 2) {
         };
     }
 
-    for (let i = 0; i < n; i++) {
-        const target = document.createElement('div');
-        target.style.setProperty('--current-portion', `${100/n}%`);
+    const targets = [];
 
-        await $mod("nothing", target);
+    for (let i = 0; i < n; i++) {
+        const portion = document.createElement('div');
+        portion.className = "portion";
+        portion.style.setProperty('--current-portion', `${100/n}%`);
+
+        const target = document.createElement('div');
+        target.className = "target";
 
         targets.push(target);
-        container.appendChild(target);
+        portions.push(portion);
+        portion.appendChild(target);
+        container.appendChild(portion);
 
         if (i === n - 1) continue;
 
@@ -125,6 +194,10 @@ export async function main(target, n = 2) {
     }
 
     target.appendChild(container);
+
+    for (const target of targets.toReversed()) {
+        await $mod("nothing", target);
+    }
 
     return {
         replace: true

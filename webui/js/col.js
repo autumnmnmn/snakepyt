@@ -6,6 +6,8 @@ sheet.replaceSync(`
         flex-direction: column;
         height: 100%;
         width: 100%;
+        overflow: visible;
+        padding: 0rem;
     }
 
     .column > .splitter {
@@ -29,20 +31,52 @@ sheet.replaceSync(`
     }
 
     .column > :first-child {
-        margin-bottom: 1rem;
-        height: calc(var(--current-portion) - 0.5px - 1rem);
+        margin-bottom: var(--panel-margin);
+        height: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
     .column > :not(.splitter):not(:first-child):not(:last-child) {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-        height: calc(var(--current-portion) - 1px - 2rem);
+        margin-top: var(--panel-margin);
+        margin-bottom: var(--panel-margin);
+        height: calc(var(--current-portion) - 1px - 2 * var(--panel-margin));
     }
 
     .column > :last-child {
-        margin-top: 1rem;
-        height: calc(var(--current-portion) - 0.5px - 1rem);
+        margin-top: var(--panel-margin);
+        height: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
+
+    .column > .portion {
+        overflow: visible;
+        position: relative;
+    }
+
+    .column > .portion > .target {
+        content: '';
+        position: absolute;
+        top: 0rem;
+        left: 0rem;
+        width: 100%;
+        height: 100%;
+        background-color: var(--main-background);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .column > .portion > .target[theme-changed] {
+        left: 0.5rem;
+        width: calc(100% - 1rem);
+    }
+
+    .column > :first-child > .target[theme-changed] {
+        top: 0.5rem;
+        height: calc(100% - 0.5rem);
+    }
+
+    .column > :last-child > .target[theme-changed] {
+        height: calc(100% - 0.5rem);
+    }
+
 `);
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
@@ -55,7 +89,7 @@ export async function main(target, n = 2) {
     const container = document.createElement('div');
     container.className = "column";
 
-    const targets = [];
+    const portions = [];
     const splitters = [];
 
     const minPercent = 3;
@@ -71,22 +105,22 @@ export async function main(target, n = 2) {
                 const percent = (relativeY / containerRect.height) * 100;
 
                 // Get current heights of the two adjacent panes
-                const topHeight = parseFloat(targets[i].style.getPropertyValue('--current-portion')) || (100/n);
-                const bottomHeight = parseFloat(targets[i + 1].style.getPropertyValue('--current-portion')) || (100/n);
+                const topHeight = parseFloat(portions[i].style.getPropertyValue('--current-portion')) || (100/n);
+                const bottomHeight = parseFloat(portions[i + 1].style.getPropertyValue('--current-portion')) || (100/n);
                 const totalAdjacent = topHeight + bottomHeight;
 
                 // Calculate how much of the adjacent space we're at
                 let adjacentStart = 0;
                 for (let j = 0; j < i; j++) {
-                    adjacentStart += parseFloat(targets[j].style.getPropertyValue('--current-portion')) || (100/n);
+                    adjacentStart += parseFloat(portions[j].style.getPropertyValue('--current-portion')) || (100/n);
                 }
 
                 const adjacentPercent = Math.max(0, Math.min(100, percent - adjacentStart));
                 const topRatio = Math.max(minPercent, Math.min(totalAdjacent - minPercent, adjacentPercent));
                 const bottomRatio = totalAdjacent - topRatio;
 
-                targets[i].style.setProperty('--current-portion', topRatio + '%');
-                targets[i + 1].style.setProperty('--current-portion', bottomRatio + '%');
+                portions[i].style.setProperty('--current-portion', topRatio + '%');
+                portions[i + 1].style.setProperty('--current-portion', bottomRatio + '%');
             }
 
             function cleanup() {
@@ -101,14 +135,20 @@ export async function main(target, n = 2) {
         };
     }
 
-    for (let i = 0; i < n; i++) {
-        const target = document.createElement('div');
-        target.style.setProperty('--current-portion', `${100/n}%`);
+    const targets = [];
 
-        await $mod("nothing", target);
+    for (let i = 0; i < n; i++) {
+        const portion = document.createElement('div');
+        portion.className = "portion";
+        portion.style.setProperty('--current-portion', `${100/n}%`);
+
+        const target = document.createElement('div');
+        target.className = "target";
 
         targets.push(target);
-        container.appendChild(target);
+        portions.push(portion);
+        portion.appendChild(target);
+        container.appendChild(portion);
 
         if (i === n - 1) continue;
 
@@ -122,9 +162,12 @@ export async function main(target, n = 2) {
 
     target.appendChild(container);
 
+    for (const target of targets.toReversed()) {
+        await $mod("nothing", target);
+    }
+
     return {
         replace: true,
-        targets: targets
     };
 }
 
