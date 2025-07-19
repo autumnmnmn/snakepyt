@@ -4,6 +4,10 @@ import os
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from lib import log
+
+# TODO make it upgrade to https instead of just fucking throwing exceptions
+
 HOST = 'localhost'
 PORT = 1313
 BASE_DIR = Path("./webui").resolve()
@@ -15,10 +19,9 @@ ROUTES = {
 MIME_TYPES = {
     ".html": "text/html",
     ".css": "text/css",
-    ".js": "application/javascript",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".ico": "image/x-icon"
+    ".js": "text/javascript",
+    ".wgsl": "text/wgsl",
+    ".png": "image/png"
 }
 
 SSL_CERT = "/home/ponder/ponder/certs/cert.pem"
@@ -48,6 +51,8 @@ def route(req_path):
         return "content/main.html"
     if any(req_path.endswith(x) for x in [".html", ".png"]):
         return f"content/{req_path}"
+    if any(req_path.endswith(x) for x in [".wgsl"]):
+        return f"content/wgsl/{req_path}"
     if req_path.endswith(".js"):
         return f"js/{req_path}"
     return req_path[1:]
@@ -101,7 +106,7 @@ def main():
                 except KeyboardInterrupt:
                     raise
                 except:
-                    print("exc")
+                    log.trace()
                     continue
                 with conn:
                     request = conn.recv(4096)

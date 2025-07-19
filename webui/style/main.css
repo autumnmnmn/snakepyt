@@ -22,7 +22,6 @@
 body {
     height: 100vh;
     width: 100vw;
-    padding: 0rem;
     background-color: var(--main-background);
 }
 

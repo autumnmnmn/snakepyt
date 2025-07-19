@@ -79,14 +79,18 @@ sheet.replaceSync(`
 `);
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
-function focusableDescendent(element) {
+function focusableDescendent(element, reverse = false) {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT,
         (node) => {
-            if (node.tabIndex >= 0) {
+            if (node.$ && node.$.focusable) {
                 return NodeFilter.FILTER_ACCEPT;
             }
             return NodeFilter.FILTER_SKIP;
         });
+    if (reverse) {
+        while (walker.nextNode()) { }
+        walker.previousNode();
+    }
     return walker.nextNode();
 }
 
@@ -104,13 +108,19 @@ export async function main(target, n = 2) {
 
         if (e.key === "h") {
             const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
-            const prevIndex = (currentIndex - 1 + targets.length) % targets.length;
-            const prev = focusableDescendent(targets[prevIndex]);
+            if (currentIndex === 0) {
+                return;
+            }
+            const prevIndex = currentIndex - 1;
+            const prev = focusableDescendent(targets[prevIndex], true);
             if (prev) prev.focus();
         }
         else if (e.key === "l") {
             const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
-            const nextIndex = (currentIndex + 1) % targets.length;
+            if (currentIndex === targets.length - 1) {
+                return;
+            }
+            const nextIndex = currentIndex + 1;
             const next = focusableDescendent(targets[nextIndex]);
             if (next) next.focus();
         }

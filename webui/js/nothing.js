@@ -20,6 +20,9 @@ export async function main(target) {
 
     backdrop.className = "nothing";
     backdrop.tabIndex = 0;
+    backdrop.$ = {
+        focusable: true
+    };
 
     const load = (modName, args=[]) => {
         return async () => {
@@ -31,6 +34,7 @@ export async function main(target) {
     };
 
     const menuItems = {
+        gpu: load("webgpu"),
         prompt: load("prompt"),
         row2: load("row"),
         row3: load("row", [3]),
