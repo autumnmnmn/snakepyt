@@ -1,6 +1,5 @@
 
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`
+$css(`
     .context-backdrop {
         position: absolute;
         margin: 0;
@@ -66,7 +65,6 @@ sheet.replaceSync(`
         margin: 0.25rem 0;
     }
 `);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
 export function main(target, ...args) {
     let items;

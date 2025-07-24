@@ -1,6 +1,5 @@
 
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`
+$css(`
     .nothing {
         background-color: var(--main-background);
         width: 100%;
@@ -13,7 +12,6 @@ sheet.replaceSync(`
         outline-offset: -2px;
     }
 `);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
 export async function main(target) {
     const backdrop = document.createElement("div");
@@ -34,19 +32,19 @@ export async function main(target) {
     };
 
     const menuItems = {
-        gpu: load("webgpu"),
+        fractal: load("gpu/proj_shift"),
         prompt: load("prompt"),
-        row2: load("row"),
-        row3: load("row", [3]),
-        col2: load("col"),
-        col3: load("col", [3]),
+        row2: load("layout/row"),
+        row3: load("layout/row", [3]),
+        col2: load("layout/col"),
+        col3: load("layout/col", [3]),
         blackboard: load("theme", ["blackboard"]),
         whiteboard: load("theme", ["whiteboard"]),
         spinner: load("spinner"),
-        highlight: load("highlight")
+        highlight: load("code/highlight")
     }
 
-    const menu = await $mod("menu", backdrop, [menuItems]);
+    const menu = await $mod("control/menu", backdrop, [menuItems]);
 
     backdrop.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === "o") {

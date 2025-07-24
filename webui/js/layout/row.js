@@ -1,6 +1,5 @@
 
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`
+$css(`
     .row {
         display: flex;
         flex-direction: row;
@@ -77,7 +76,6 @@ sheet.replaceSync(`
         width: calc(100% - 0.5rem);
     }
 `);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
 function focusableDescendent(element, reverse = false) {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT,
@@ -206,7 +204,7 @@ export async function main(target, n = 2) {
     target.appendChild(container);
 
     for (const target of targets.toReversed()) {
-        await $mod("nothing", target);
+        await $mod("layout/nothing", target);
     }
 
     return {

@@ -42,6 +42,15 @@ window.$mod = async function(moduleName, targetElement, args = []) {
     return null;
 };
 
+window.$css = async function(cssText) {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(cssText);
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+};
+
+window.$tau = 6.283185307179586;
+
 $mod("theme", document.body);
-$mod("nothing", document.body);
+
+$mod("layout/nothing", document.body);
 

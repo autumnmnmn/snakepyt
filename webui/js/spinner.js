@@ -1,6 +1,5 @@
 
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`
+$css(`
     .spinner {
         opacity: 1;
         width: 0px;
@@ -83,7 +82,6 @@ sheet.replaceSync(`
         }
     }
 `);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
 export async function main(target, modNext = "nothing") {
     let spinner = document.createElement('div');

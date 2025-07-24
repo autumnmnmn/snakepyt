@@ -21,7 +21,8 @@ MIME_TYPES = {
     ".css": "text/css",
     ".js": "text/javascript",
     ".wgsl": "text/wgsl",
-    ".png": "image/png"
+    ".png": "image/png",
+    ".orb": "text/x-orb"
 }
 
 SSL_CERT = "/home/ponder/ponder/certs/cert.pem"
@@ -53,6 +54,8 @@ def route(req_path):
         return f"content/{req_path}"
     if any(req_path.endswith(x) for x in [".wgsl"]):
         return f"content/wgsl/{req_path}"
+    if any(req_path.endswith(x) for x in [".orb"]):
+        return f"content/orb/{req_path}"
     if req_path.endswith(".js"):
         return f"js/{req_path}"
     return req_path[1:]

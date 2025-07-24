@@ -1,6 +1,5 @@
 
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`/* css */
+$css(`/* css */
     .highlight-container {
         display: flex;
         flex-direction: column;
@@ -90,7 +89,6 @@ sheet.replaceSync(`/* css */
     .token-whitespace { color: var(--code-whitespace); }
     .token-unknown { color: var(--code-unknown); }
 `);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
 const tokenizer_js = await import("/js_tokenizer.js");
 

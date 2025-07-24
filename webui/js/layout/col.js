@@ -1,6 +1,5 @@
 
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`
+$css(`
     .column {
         display: flex;
         flex-direction: column;
@@ -78,7 +77,6 @@ sheet.replaceSync(`
     }
 
 `);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 
 export async function main(target, n = 2) {
     n = parseInt(n, 10);
@@ -163,7 +161,7 @@ export async function main(target, n = 2) {
     target.appendChild(container);
 
     for (const target of targets.toReversed()) {
-        await $mod("nothing", target);
+        await $mod("layout/nothing", target);
     }
 
     return {
