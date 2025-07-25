@@ -59,10 +59,11 @@ fn iterate_cartesian(z: vec2<f32>, phi: f32, c: f32) -> vec2<f32> {
 }
 
 fn pixel_to_complex(px: u32, py: u32) -> vec2<f32> {
+    let aspect = f32(uniforms.width) / f32(uniforms.height);
     let scale = 4.0 / uniforms.zoom;
     let half_width = f32(uniforms.width) * 0.5;
     let half_height = f32(uniforms.height) * 0.5;
-    let x = (f32(px) - half_width) * scale / f32(uniforms.width) + uniforms.center_x;
+    let x = (f32(px) - half_width) * scale * aspect / f32(uniforms.width) + uniforms.center_x;
     let y = (f32(py) - half_height) * scale / f32(uniforms.height) + uniforms.center_y;
     return vec2<f32>(x, y);
 }

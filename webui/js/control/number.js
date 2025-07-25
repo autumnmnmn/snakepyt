@@ -78,6 +78,7 @@ $css(`
     border-radius: 2px;
     outline: none;
     cursor: pointer;
+    overflow: visible;
 }
 
 .number input[type=range]::-webkit-slider-thumb {

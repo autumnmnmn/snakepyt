@@ -90,7 +90,7 @@ $css(`/* css */
     .token-unknown { color: var(--code-unknown); }
 `);
 
-const tokenizer_js = await import("/js_tokenizer.js");
+const tokenizer_js = await import("/code/js_tokenizer.js");
 
 function highlight(code) {
     const tokens = tokenizer_js.tokenize(code);
@@ -206,7 +206,7 @@ function renderToken(token) {
     return span;
 }
 
-export async function main(target) {
+export async function main(target, text="") {
     const container = document.createElement('div');
     container.className = 'highlight-container';
 
@@ -217,7 +217,7 @@ export async function main(target) {
     editor.className = 'highlight-editor';
     editor.spellcheck = false;
     editor.placeholder = '...';
-    editor.value = ``;
+    editor.value = text;
 
     const preformatted = document.createElement('pre');
 

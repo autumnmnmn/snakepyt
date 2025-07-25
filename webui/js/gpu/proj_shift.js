@@ -275,27 +275,92 @@ export async function main(target) {
         $gpu.device.queue.submit([commandEncoder.finish()]);
     }
 
-    canvas.addEventListener('click', (e) => {
+    // Lots of unreviewed code from claude here:
+
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    // Mouse down - start dragging
+    canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
         const rect = canvas.getBoundingClientRect();
-        const px = e.clientX - rect.left;
-        const py = e.clientY - rect.top;
+        lastMouseX = e.clientX - rect.left;
+        lastMouseY = e.clientY - rect.top;
+        canvas.style.cursor = 'all-scroll';
+    });
 
-        // Convert pixel coordinates to complex plane coordinates
+    // Mouse move - pan when dragging
+    canvas.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const deltaX = mouseX - lastMouseX;
+        const deltaY = mouseY - lastMouseY;
+
+        // Convert pixel delta to complex plane delta
         const scale = 4.0 / zoom;
-        const x = (px - width * 0.5) * scale / width + centerX;
-        const y = (py - height * 0.5) * scale / height + centerY;
+        const aspect = width / height;
+        const complexDeltaX = -deltaX * scale * aspect / width;
+        const complexDeltaY = -deltaY * scale / height;
 
-        centerX = x;
-        centerY = y;
-        zoom *= e.shiftKey ? 0.5 : 2.0; // Shift+click to zoom out
+        centerX += complexDeltaX;
+        centerY += complexDeltaY;
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
 
         render();
     });
 
+    // Mouse up - stop dragging
+    canvas.addEventListener('mouseup', () => {
+        isDragging = false;
+        canvas.style.cursor = 'crosshair';
+    });
+
+    // Mouse leave - stop dragging if mouse leaves canvas
+    canvas.addEventListener('mouseleave', () => {
+        isDragging = false;
+        canvas.style.cursor = 'crosshair';
+    });
+
+    // Wheel - zoom in/out
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Convert mouse position to complex coordinates before zoom
+        const scale = 4.0 / zoom;
+        const aspect = width / height;
+        const complexX = (mouseX - width * 0.5) * scale * aspect / width + centerX;
+        const complexY = (mouseY - height * 0.5) * scale / height + centerY;
+
+        // Zoom factor - negative deltaY means zoom in
+        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        zoom *= zoomFactor;
+
+        // Adjust center to keep mouse position fixed in complex plane
+        const newScale = 4.0 / zoom;
+        const newCenterX = complexX - (mouseX - width * 0.5) * newScale * aspect / width;
+        const newCenterY = complexY - (mouseY - height * 0.5) * newScale / height;
+
+        centerX = newCenterX;
+        centerY = newCenterY;
+
+        render();
+    });
+
+    canvas.style.cursor = 'crosshair';
 
     render();
 
     return { replace: true };
 }
-
 

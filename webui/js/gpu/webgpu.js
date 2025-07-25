@@ -3,6 +3,7 @@ $css(`
     canvas.webgpu {
         width: 100%;
         height: 100%;
+        user-select: none;
     }
 `);
 
@@ -53,6 +54,20 @@ export async function main(target) {
 
     const canvas = document.createElement('canvas');
     canvas.className = "webgpu";
+
+    canvas.tabIndex = 0;
+
+    canvas.addEventListener("keydown", (e) => {
+        if (e.key === "f") {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            else {
+                canvas.requestFullscreen();
+            }
+        }
+    });
+
 
     const context = canvas.getContext('webgpu');
 

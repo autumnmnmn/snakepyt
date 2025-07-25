@@ -1,7 +1,7 @@
 
 // Courtesy of Claude :)
 
-import * as cssTokenizer from '/css_tokenizer.js';
+import * as cssTokenizer from '/code/css_tokenizer.js';
 
 const keywords = new Set([
     'abstract', 'arguments', 'await', 'boolean', 'break', 'byte', 'case', 'catch',
