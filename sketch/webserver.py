@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from lib import log
+#from lib import log
 
 # TODO make it upgrade to https instead of just fucking throwing exceptions
 
@@ -109,7 +109,7 @@ def main():
                 except KeyboardInterrupt:
                     raise
                 except:
-                    log.trace()
+                    #log.trace()
                     continue
                 with conn:
                     request = conn.recv(4096)
@@ -117,6 +117,5 @@ def main():
                     conn.sendall(response)
                     print("served!")
 
-def init():
-    schedule(run, None)
-
+if __name__ == "__main__":
+    main()

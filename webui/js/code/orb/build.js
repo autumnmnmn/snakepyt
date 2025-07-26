@@ -2,15 +2,7 @@
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
 
-const inlineElements = {
-    bold: "b",
-    italic: "i"
-}
-
-const simpleBlocks = {
-    demo: { element: "div", class: "demo" },
-    height300: { element: "div", class: "height300" }
-}
+const inlineElements = ["b", "i"];
 
 export async function build(target, nodes, source, inline=false) {
     let segment = document.createElement(inline ? "span" : "p");
@@ -41,38 +33,64 @@ export async function build(target, nodes, source, inline=false) {
             continue;
         }
 
-        if (tag in inlineElements) {
-            const bold = document.createElement(inlineElements[tag]);
-            await build(bold, node.content.nodes, source, true);
+        let bracketArgs = [];
+        if (node.args.start !== null) {
+            bracketArgs = source.substring(node.args.start, node.args.end + 1).split("|");
+        }
+
+        if (inlineElements.includes(tag)) {
+            const tagElement = document.createElement(tag);
+            await build(tagElement, node.content.nodes, source, true);
+            for (const arg of bracketArgs) {
+                const split = arg.split("=");
+                console.log(split);
+                tagElement[split[0].trim()] = split[1];
+            }
             segment.appendChild(document.createTextNode(" "));
-            segment.appendChild(bold);
+            segment.appendChild(tagElement);
             inlineEnded = true;
             continue;
         }
 
-        if (tag in simpleBlocks) {
-            target.appendChild(segment);
-            segment = document.createElement(inline ? "span" : "p");
-            const block = simpleBlocks[tag];
-            const container = document.createElement(block.element);
-            container.classList = block.class;
-            await build(container, node.content.nodes, source);
-            target.appendChild(container);
+        if (tag[0] !== "$") {
+            if (segment.childNodes.length > 0) {
+                target.appendChild(segment);
+                segment = document.createElement(inline ? "span" : "p");
+            }
+            try {
+                const tagElement = document.createElement(tag);
+                for (const arg of bracketArgs) {
+                    const split = arg.split("=");
+                    console.log(split);
+                    tagElement[split[0].trim()] = split[1];
+                }
+                await build(tagElement, node.content.nodes, source);
+                target.appendChild(tagElement);
+            }
+            catch {
+                const _sp = document.createElement("span");
+                _sp.innerText = ` [no tag "${tag}"] `;
+                segment.appendChild(_sp);
+            }
             continue;
         }
 
         try {
-            target.appendChild(segment);
-            segment = document.createElement(inline ? "span" : "p");
-            await $mod(tag, target, [source.substring(node.content.start, node.content.end)]);
+            if (segment.childNodes.length > 0) {
+                target.appendChild(segment);
+                segment = document.createElement(inline ? "span" : "p");
+            }
+            await $mod(tag.substring(1), target, [...bracketArgs, source.substring(node.content.start, node.content.end)]);
         }
         catch {
             const _sp = document.createElement("span");
-            _sp.innerText = ` [unrecognized tag "${tag}"] `;
+            _sp.innerText = ` [no module "${tag}"] `;
             segment.appendChild(_sp);
         }
     }
 
-    target.appendChild(segment);
+    if (segment.childNodes.length > 0) {
+        target.appendChild(segment);
+    }
 }
 

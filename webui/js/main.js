@@ -52,5 +52,3 @@ window.$tau = 6.283185307179586;
 
 $mod("theme", document.body);
 
-$mod("layout/nothing", document.body);
-

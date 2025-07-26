@@ -6,27 +6,18 @@ $css(`
         height: 100%;
         overflow-y: scroll;
     }
-
-    .orb-container .demo {
-        height: 500px;
-    }
-
-    .orb-container .height300 {
-        height: 300px;
-    }
-
 `);
 
-export async function main(target) {
+export async function main(target, orb) {
     const container = document.createElement("div");
     container.classList = "orb-container";
 
     const parserModule = await import(`/code/orb/parse.js`);
     const buildModule = await import(`/code/orb/build.js`);
 
-    const parsed = await parserModule.parse("test.orb");
+    const parsed = await parserModule.parse(orb);
 
-    await parserModule.debugParse("test.orb");
+    //await parserModule.debugParse("test.orb");
 
     await buildModule.build(container, parsed.nodes, parsed.source);
 

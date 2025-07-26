@@ -95,14 +95,20 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var color: vec4<f32>;
     if (escaped) {
-        let escape_speed = pow(f32(iter) / f32(uniforms.max_iter), 0.5);
-        color = vec4<f32>(0.0, escape_speed, 0.0, 1.0);
+        let escape_speed = 1.0 - pow(f32(iter) / f32(uniforms.max_iter), 2.0);
+        color = vec4<f32>(escape_speed, escape_speed, escape_speed, 1.0);
     } else {
         let final_mag = complex_mag(z);
-        let scaled_mag = log(final_mag);
-        let final_x = scaled_mag * (z.x / final_mag);
-        let final_y = scaled_mag * (z.y / final_mag);
-        color = vec4<f32>(0.5 + 0.5 * final_x, 0.0, 0.5 + 0.5 * final_y, 1.0);
+        let final_angle = complex_angle(z);
+        //let scaled_mag = log(final_mag);
+        //let final_x = scaled_mag * (z.x / final_mag);
+        //let final_y = scaled_mag * (z.y / final_mag);
+        //color = vec4<f32>(0.5 + 0.5 * final_x, 0.0, 0.5 + 0.5 * final_y, 1.0);
+        let scaled_mag = pow(final_mag / escape_threshold, 0.5);
+        let scaled_angle = (final_angle + 3.1415926535) / 6.283185307179586;
+        let r = max(0, 2.0 * scaled_angle - 1.0);
+        let b = max(0, 2.0 * (1.0 - scaled_angle) - 1.0);
+        color = vec4<f32>(r, scaled_mag, b, 1.0);
     }
 
     textureStore(output_texture, vec2<i32>(i32(px), i32(py)), color);

@@ -1,0 +1,16 @@
+
+h2 { Projective Shift Map }
+
+f(z) = (r + cos(θ-φ))e^(iθψ) - c
+where z_n = r * cos(θ)
+
+b{click and drag} to move around, b{scroll} to zoom in and out; b{press F} to go fullscreen
+
+div[style=height: 75%]{ $gpu/proj_shift {} }
+
+this visualization is treating each pixel coordinate as a starting value z_0 in the complex plane, and running it through the iterative equation above many times, keeping track of where it ends up. points that exceed the "escape distance" from the origin are grayscale, darker the longer they took to reach that escape threshold. the rest of the points are colored according to their final location (as you increase the iterations count, you can watch them jump around). green is based on distance from the origin, while blue and red are based on the angle around the origin. you can set iterations to zero to see what the color mapping looks like prior to any of the points moving.
+
+i{p.s. you can use the input boxes to exceed the bounds of the sliders}
+
+i{p.p.s. you can save the canvas as an image in the right click menu}
+

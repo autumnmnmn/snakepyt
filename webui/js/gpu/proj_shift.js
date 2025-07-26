@@ -19,19 +19,9 @@ export async function main(target) {
     let centerY = 0.0;
     let zoom = 4.0;
 
+
+    // z_{n+1} = (r + cos(θ-φ))e^(iθψ) - c
     $mod("control/panel", container, [[
-        {
-            type: "number",
-            label: "phi",
-            value: phi,
-            min: 0,
-            max: $tau,
-            step: 0.001,
-            onUpdate: (value, set) => {
-                phi = value;
-                render();
-            }
-        },
         {
             type: "number",
             label: "c",
@@ -41,6 +31,30 @@ export async function main(target) {
             step: 0.001,
             onUpdate: (value, set) => {
                 c = value;
+                render();
+            }
+        },
+        {
+            type: "number",
+            label: "ψ",
+            value: psi,
+            min: 0,
+            max: 12,
+            step: 0.001,
+            onUpdate: (value, set) => {
+                psi = value;
+                render();
+            }
+        },
+        {
+            type: "number",
+            label: "φ",
+            value: phi,
+            min: 0,
+            max: $tau,
+            step: 0.001,
+            onUpdate: (value, set) => {
+                phi = value;
                 render();
             }
         },
@@ -57,18 +71,6 @@ export async function main(target) {
                     iterations = 0;
                     set(0);
                 }
-                render();
-            }
-        },
-        {
-            type: "number",
-            label: "psi",
-            value: psi,
-            min: 0,
-            max: 12,
-            step: 0.001,
-            onUpdate: (value, set) => {
-                psi = value;
                 render();
             }
         },

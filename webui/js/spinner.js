@@ -83,7 +83,7 @@ $css(`
     }
 `);
 
-export async function main(target, modNext = "nothing") {
+export async function main(target, modNext = "layout/nothing") {
     let spinner = document.createElement('div');
     let orb0 = document.createElement('div');
     let orb1 = document.createElement('div');
