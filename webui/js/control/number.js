@@ -1,69 +1,49 @@
 
 $css(`
 .number {
+    display: block;
+    line-height: 1.5rem;
+    border-left: 1px solid var(--main-faded);
+    padding-left: 0.5rem;
+}
 
+.number:has(input:focus) {
+    border-left: 3px solid var(--main-solid);
+    padding-left: calc(0.5rem - 2px);
 }
 
 .number label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
     color: var(--main-solid);
-    min-height: 1.2rem;
-    line-height: 1.2rem;
+    min-height: 1em;
+    line-height: 1em;
+    cursor: text;
+}
+
+.number .copyable-value {
+    width: 0;
+    display: inline-block;
 }
 
 .number input[type=number] {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--main-faded);
-    border-radius: 3px;
     background: var(--main-background);
     color: var(--main-solid);
     font-family: var(--main-font);
-    font-size: 0.9rem;
-    width: 90px;
-    outline: none;
     transition: border-color 0.2s ease;
-}
-
-.number input[type=number]::-webkit-outer-spin-button,
-.number input[type=number]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    opacity: 1;
-    position: relative;
-    width: 20px;
-    height: 50%;
-    background: var(--main-background);
-    border-left: 1px solid var(--main-faded);
-    cursor: pointer;
-    display: block;
-}
-
-.number input[type=number]::-webkit-inner-spin-button {
-    background-image:
-        linear-gradient(45deg, transparent 40%, var(--main-solid) 40%, var(--main-solid) 60%, transparent 60%),
-        linear-gradient(-45deg, transparent 40%, var(--main-solid) 40%, var(--main-solid) 60%, transparent 60%);
-    background-size: 6px 6px;
-    background-position: 7px 6px, 7px 6px;
-    background-repeat: no-repeat;
-}
-
-.number input[type=number]::-webkit-outer-spin-button {
-    background-image:
-        linear-gradient(135deg, transparent 40%, var(--main-solid) 40%, var(--main-solid) 60%, transparent 60%),
-        linear-gradient(-135deg, transparent 40%, var(--main-solid) 40%, var(--main-solid) 60%, transparent 60%);
-    background-size: 6px 6px;
-    background-position: 7px 6px, 7px 6px;
-    background-repeat: no-repeat;
-}
-
-.number input[type=number]::-webkit-outer-spin-button:hover,
-.number input[type=number]::-webkit-inner-spin-button:hover {
-    background-color: var(--main-faded);
+    border-bottom: 1px solid var(--main-faded);
+    min-height: 1rem;
+    line-height: 1rem;
+    width: 5rem;
 }
 
 .number input[type=number] {
-    -moz-appearance: spinner-textfield;
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.number input[type=number]::-webkit-inner-spin-button,
+.number input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearnce: none;
 }
 
 .number input[type=number]:focus {
@@ -73,51 +53,56 @@ $css(`
 .number input[type=range] {
     -webkit-appearance: none;
     appearance: none;
-    height: 4px;
-    background: var(--main-faded);
-    border-radius: 2px;
+    width: 100%;
     outline: none;
     cursor: pointer;
     overflow: visible;
+    margin-top: 0.25rem;
+    border: none;
+    border-radius: 2px;
+}
+
+.number input[type=range]:focus {
+    background: none;
+}
+
+/* -webkit: Chromium, Safari, Opera */
+.number input[type=range]::-webkit-slider-runnable-track {
+    background: var(--main-faded);
+    height: 2px;
+}
+
+.number input[type=range]:focus::-webkit-slider-runnable-track {
+    background: var(--main-solid);
+}
+
+/* -moz: Firefox */
+.number input[type=range]::-moz-range-track {
+    background: var(--main-faded);
+    height: 2px;
+}
+
+.number input[type=range]:focus::-moz-range-track {
+    background: var(--main-solid);
 }
 
 .number input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+    width: 0.5rem;
+    height: 1rem;
+    border-radius: 2px;
     background: var(--main-solid);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
+    margin-top: calc(1px - 1rem); /* center the thumb on the track */
 
-.number input[type=range]::-webkit-slider-thumb:hover {
-    background: var(--main-transparent);
 }
 
 .number input[type=range]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+    width: 0.5rem;
+    height: 1rem;
+    border-radius: 2px;
+    border: none; /* cancel default style */
     background: var(--main-solid);
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.2s ease;
-}
-
-.number input[type=range]::-moz-range-thumb:hover {
-    background: var(--main-transparent);
-}
-
-.number .input-row {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.number input[type=range] {
-    flex: 1;
 }
 
 `);
@@ -138,11 +123,26 @@ export async function main(target, spec) {
     const control = document.createElement("div");
     control.className = "control number";
 
+    // TODO ensure uniqueness more rigorously
+    const name = spec.label.toLowerCase().replace(/\s+/g, "-");
+
     const label = document.createElement("label");
-    label.textContent = spec.label;
+    label.innerText = spec.label;
+    label.id = `${name}-label`;
+
+    const label_eq = document.createElement("span");
+    label_eq.innerText = " = ";
+
+    const copyable_value = document.createElement("span");
+    copyable_value.innerText = `${spec.value};\n`;
+    copyable_value.classList = "copyable-value";
+    label_eq.appendChild(copyable_value);
+
+    label_eq.setAttribute("aria-hidden", true);
 
     const slider = document.createElement("input");
     slider.type = "range";
+    slider.setAttribute("aria-labelledby", label.id);
     slider.min = spec.min;
     slider.max = spec.max;
     slider.step = spec.step;
@@ -150,6 +150,7 @@ export async function main(target, spec) {
 
     const field = document.createElement("input");
     field.type = "number";
+    field.setAttribute("aria-labelledby", label.id);
     if (spec.limitField) {
         field.min = spec.min;
         field.max = spec.max;
@@ -162,19 +163,22 @@ export async function main(target, spec) {
         field.value = value;
     }
 
-    slider.addEventListener('input', () => {
+    slider.addEventListener("input", () => {
         field.value = slider.value;
+        copyable_value.innerText = slider.value;
         spec.onUpdate?.(slider.value, set);
     });
 
-    field.addEventListener('input', () => {
+    field.addEventListener("input", () => {
         slider.value = field.value;
+        copyable_value.innerText = field.value;
         spec.onUpdate?.(field.value, set);
     });
 
     control.appendChild(label);
-    control.appendChild(slider);
+    control.appendChild(label_eq);
     control.appendChild(field);
+    control.appendChild(slider);
     target.appendChild(control);
 }
 

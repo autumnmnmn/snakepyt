@@ -42,6 +42,16 @@ window.$mod = async function(moduleName, targetElement, args = []) {
     return null;
 };
 
+window.$prepMod = async function(moduleName, args = []) {
+    const module = await import(`/${moduleName}.js`);
+    if ("main" in module) {
+        const initializer = async (targetElement) => await module.main(targetElement, ...args);
+        initializer.$isInitializer = true;
+        return initializer;
+    }
+    return null;
+}
+
 window.$css = async function(cssText) {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(cssText);

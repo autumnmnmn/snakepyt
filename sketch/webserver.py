@@ -8,9 +8,10 @@ from urllib.parse import unquote, urlparse
 
 # TODO make it upgrade to https instead of just fucking throwing exceptions
 
-HOST = 'localhost'
+HOST = "0.0.0.0"
 PORT = 1313
 BASE_DIR = Path("./webui").resolve()
+USE_SSL = False
 
 ROUTES = {
     "/": "content/main.html",
@@ -102,20 +103,23 @@ def main():
         server.bind((HOST, PORT))
         server.listen()
         print(f"Serving HTTPS on {HOST}:{PORT}")
-        with ssl_ctx.wrap_socket(server, server_side=True) as ssock:
-            while True:
-                try:
-                    conn, addr = ssock.accept()
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    #log.trace()
-                    continue
-                with conn:
+        while True:
+            try:
+                conn, addr = server.accept()
+                if USE_SSL:
+                    with ssl_ctx.wrap_socket(conn, server_side=True) as ssl_conn:
+                        request = ssl_conn.recv(4096)
+                        response = handle_request(request)
+                        ssl_conn.sendall(response)
+                else:
                     request = conn.recv(4096)
                     response = handle_request(request)
                     conn.sendall(response)
-                    print("served!")
+            except KeyboardInterrupt:
+                raise
+            except:
+                #log.trace()
+                continue
 
 if __name__ == "__main__":
     main()

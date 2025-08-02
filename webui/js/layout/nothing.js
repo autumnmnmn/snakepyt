@@ -4,12 +4,13 @@ $css(`
         background-color: var(--main-background);
         width: 100%;
         height: 100%;
-        border-radius: 0.5em;
+        border-radius: 0;
     }
 
     .nothing:focus {
         outline: 2px solid var(--main-faded);
         outline-offset: -2px;
+        outline-radius: 0;
     }
 `);
 
@@ -17,10 +18,13 @@ export async function main(target) {
     const backdrop = document.createElement("div");
 
     backdrop.className = "nothing";
-    backdrop.tabIndex = 0;
     backdrop.$ = {
         focusable: true
     };
+
+    backdrop.tabIndex = 0;
+    backdrop.setAttribute("role", "button");
+    backdrop.setAttribute("aria-label", "Empty space. Press enter for a menu of modules to load.");
 
     const load = (modName, args=[]) => {
         return async () => {
@@ -31,13 +35,17 @@ export async function main(target) {
         }
     };
 
+    const noth = await $prepMod("layout/nothing");
+    const noth2 = {content: [noth, noth]};
+    const noth3 = {content: [noth, noth, noth]};
+
     const menuItems = {
         fractal: load("gpu/proj_shift"),
         prompt: load("prompt"),
-        row2: load("layout/row"),
-        row3: load("layout/row", [3]),
-        col2: load("layout/col"),
-        col3: load("layout/col", [3]),
+        row2: load("layout/split", [noth2]),
+        row3: load("layout/split", [noth3]),
+        col2: load("layout/split", [{...noth2, orientation: "col"}]),
+        col3: load("layout/split", [{...noth3, orientation: "col"}]),
         blackboard: load("theme", ["blackboard"]),
         whiteboard: load("theme", ["whiteboard"]),
         spinner: load("spinner"),

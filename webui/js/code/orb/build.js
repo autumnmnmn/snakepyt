@@ -40,7 +40,7 @@ export async function build(target, nodes, source, inline=false) {
 
         if (inlineElements.includes(tag)) {
             const tagElement = document.createElement(tag);
-            await build(tagElement, node.content.nodes, source, true);
+            build(tagElement, node.content.nodes, source, true);
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
                 console.log(split);
@@ -64,7 +64,7 @@ export async function build(target, nodes, source, inline=false) {
                     console.log(split);
                     tagElement[split[0].trim()] = split[1];
                 }
-                await build(tagElement, node.content.nodes, source);
+                build(tagElement, node.content.nodes, source);
                 target.appendChild(tagElement);
             }
             catch {
@@ -80,7 +80,7 @@ export async function build(target, nodes, source, inline=false) {
                 target.appendChild(segment);
                 segment = document.createElement(inline ? "span" : "p");
             }
-            await $mod(tag.substring(1), target, [...bracketArgs, source.substring(node.content.start, node.content.end)]);
+            $mod(tag.substring(1), target, [...bracketArgs, source.substring(node.content.start, node.content.end)]);
         }
         catch {
             const _sp = document.createElement("span");

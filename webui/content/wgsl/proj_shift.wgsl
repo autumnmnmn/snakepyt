@@ -68,6 +68,22 @@ fn pixel_to_complex(px: u32, py: u32) -> vec2<f32> {
     return vec2<f32>(x, y);
 }
 
+fn c_avg(prev: f32, val: f32, n: f32) -> f32 {
+    return prev + (val - prev) / n;
+}
+
+fn hash(seed: u32) -> u32 {
+    var x = seed;
+    x = ((x >> 16u) ^ x) * 0x45d9f3bu;
+    x = ((x >> 16u) ^ x) * 0x45d9f3bu;
+    x = (x >> 16u) ^ x;
+    return x;
+}
+
+fn random_float(seed: u32) -> f32 {
+    return f32(hash(seed)) / 4294967296.0; // 2^32
+}
+
 @compute @workgroup_size(16, 16)
 fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     let px = id.x;
@@ -78,19 +94,48 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     }
 
     var z = pixel_to_complex(px, py);
+    let n_perturbations = 10u;
     let escape_threshold = uniforms.escape_distance * uniforms.escape_distance;
 
     var escaped = false;
     var iter = 0u;
+    var cavg = f32(0.0);
+    let epsilon = 1.19e-4;
+
+    let transient_skip = u32(f32(uniforms.max_iter) * f32(0.9));
 
     for (iter = 0u; iter < uniforms.max_iter; iter = iter + 1u) {
         let mag_sq = complex_mag_sq(z);
         if (mag_sq > escape_threshold) {
             escaped = true;
-            break;
+            //break;
         }
-        //z = iterate_cartesian(z, uniforms.phi, uniforms.c);
-        z = iterate_polar(z, uniforms.phi, uniforms.psi, uniforms.c);
+        var z_p: array<vec2<f32>, 4>;
+        var df_z_p: array<vec2<f32>, 4>;
+        var abs_df_z_p: array<f32, 4>;
+        var avg_abs_df_z_p = f32(0.0);
+
+        var f_z = iterate_polar(z, uniforms.phi, uniforms.psi, uniforms.c);
+
+        if (iter >= transient_skip) {
+            if (cavg < -10.0) { continue; }
+            if (cavg > 10.0) { continue; }
+            for (var p = 0u; p < n_perturbations; p = p + 1u) {
+                let rng_seed = hash(px * 1000u + py * 2000u + p * 5000u);
+                let random_angle = random_float(rng_seed) * 6.283185307;
+                let perturb_direction = vec2<f32>(cos(random_angle), sin(random_angle));
+                z_p[p] = z + perturb_direction * epsilon;
+                df_z_p[p] = iterate_polar(z, uniforms.phi, uniforms.psi, uniforms.c) - f_z;
+                abs_df_z_p[p] = abs(complex_mag(df_z_p[p]) / epsilon);
+                avg_abs_df_z_p += abs_df_z_p[p];
+            }
+
+            avg_abs_df_z_p /= f32(n_perturbations);
+
+            cavg = c_avg(cavg, log(avg_abs_df_z_p), f32(iter + 1 - transient_skip));
+        }
+
+        z = f_z;
     }
 
     var color: vec4<f32>;
@@ -110,6 +155,8 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         let b = max(0, 2.0 * (1.0 - scaled_angle) - 1.0);
         color = vec4<f32>(r, scaled_mag, b, 1.0);
     }
+
+    color = vec4<f32>(cavg / 1.0, -cavg / 20.0, -cavg / 20.0, 1.0);
 
     textureStore(output_texture, vec2<i32>(i32(px), i32(py)), color);
 }
