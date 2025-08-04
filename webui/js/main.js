@@ -13,26 +13,27 @@
  * Don't sweep errors under the rug. If a function receives invalid input, it should yell into the console about it.
  * Overall, veer toward minimalism and flexible, composable modularity.
  * No frameworks are being used here; just direct DOM manipulation. Modules that need their own CSS can provide it through the CSSStyleSheet API.
+ * Prefer double quotes around string literals, except in the case of single characters. Correct this when you find deviations.
  */
 
 window.userPreferences = {
     setLoadButton: (show) => {
         if (show === null)
-            show = 'show';
+            show = "show";
         userPreferences.loadButton = show;
-        localStorage.setItem('loadButton', show);
+        localStorage.setItem("loadButton", show);
     },
     toggleLoadButton: () => {
-        if (userPreferences.loadButton === 'show') {
-            userPreferences.setLoadButton('hide');
+        if (userPreferences.loadButton === "show") {
+            userPreferences.setLoadButton("hide");
         }
         else {
-            userPreferences.setLoadButton('show');
+            userPreferences.setLoadButton("show");
         }
     }
 };
 
-window.userPreferences.setLoadButton(localStorage.getItem('loadButton'));
+window.userPreferences.setLoadButton(localStorage.getItem("loadButton"));
 
 window.$mod = async function(moduleName, targetElement, args = []) {
     const module = await import(`/${moduleName}.js`);

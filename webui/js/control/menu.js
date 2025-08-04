@@ -72,16 +72,16 @@ export function main(target, ...args) {
         items = args[0];
     }
 
-    const backdrop = document.createElement('div');
-    backdrop.className = 'context-backdrop';
+    const backdrop = document.createElement("div");
+    backdrop.className = "context-backdrop";
 
-    const menu = document.createElement('div');
+    const menu = document.createElement("div");
     menu.$ = {};
-    menu.className = 'context-menu';
-    menu.setAttribute('role', 'menu');
-    menu.setAttribute('aria-orientation', 'vertical');
+    menu.className = "context-menu";
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-orientation", "vertical");
 
-    menu.addEventListener('mouseenter', () => {
+    menu.addEventListener("mouseenter", () => {
         //menu.firstChild?.blur();
         menu.focus();
     });
@@ -108,21 +108,21 @@ export function main(target, ...args) {
         }
     };
 
-    backdrop.addEventListener('click', onBackdropClick);
-    backdrop.addEventListener('contextmenu', onBackdropClick);
+    backdrop.addEventListener("click", onBackdropClick);
+    backdrop.addEventListener("contextmenu", onBackdropClick);
 
     menuItems.forEach(item => {
         if (item === null) {
-            const separator = document.createElement('div');
-            separator.className = 'context-menu-separator';
+            const separator = document.createElement("div");
+            separator.className = "context-menu-separator";
             menu.appendChild(separator);
             return;
         }
 
-        const menuItem = document.createElement('button');
-        menuItem.className = 'context-menu-item';
-        menu.setAttribute('role', 'menuItem');
-        menu.setAttribute('tabIndex', '-1');
+        const menuItem = document.createElement("button");
+        menuItem.className = "context-menu-item";
+        menu.setAttribute("role", "menuItem");
+        menu.setAttribute("tabIndex", "-1");
 
         menuItem.textContent = item[0];
 
@@ -133,8 +133,8 @@ export function main(target, ...args) {
         };
 
         menuItem.onclick = select;
-        menuItem.addEventListener('keydown', (e) => {
-            if (e.key === 'o' || e.key === 'Enter') {
+        menuItem.addEventListener("keydown", (e) => {
+            if (e.key === "o" || e.key === "Enter") {
                 select();
                 e.stopPropagation();
             }
@@ -143,8 +143,8 @@ export function main(target, ...args) {
         menu.appendChild(menuItem);
     });
 
-    menu.addEventListener('keydown', (e) => {
-        if (!['ArrowDown', 'ArrowUp', 'j', 'k', "Escape"].includes(e.key)) return;
+    menu.addEventListener("keydown", (e) => {
+        if (!["ArrowDown", "ArrowUp", "j", "k", "Escape"].includes(e.key)) return;
 
         e.preventDefault();
 
@@ -161,7 +161,7 @@ export function main(target, ...args) {
         }
 
         let nextItem;
-        if (e.key === 'ArrowDown' || e.key === 'j') {
+        if (e.key === "ArrowDown" || e.key === "j") {
             nextItem = currentItem.nextElementSibling || menu.firstElementChild;
         } else {
             nextItem = currentItem.previousElementSibling || menu.lastElementChild;
@@ -174,42 +174,42 @@ export function main(target, ...args) {
     target.appendChild(backdrop);
 
     const showMenu = (position = null) => {
-        backdrop.style.display = 'block';
+        backdrop.style.display = "block";
         menu.$.previousFocus = document.activeElement;
         menu.firstChild?.focus();
 
         const bounds = target.getBoundingClientRect();
 
         if (!position) {
-            menu.setAttribute('centered', '');
-            menu.style.left = '';
-            menu.style.top = '';
+            menu.setAttribute("centered", "");
+            menu.style.left = "";
+            menu.style.top = "";
             return;
         }
 
         const {x,y} = position;
 
-        menu.removeAttribute('centered');
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
+        menu.removeAttribute("centered");
+        menu.style.left = x + "px";
+        menu.style.top = y + "px";
 
         const rect = menu.getBoundingClientRect();
 
         if (rect.right > bounds.right) {
-            menu.style.left = (x - rect.width) + 'px';
+            menu.style.left = (x - rect.width) + "px";
         }
         if (rect.left < bounds.left) {
-            menu.style.left = bounds.left + 'px';
+            menu.style.left = bounds.left + "px";
         }
         if (rect.bottom > bounds.bottom) {
-            menu.style.top = (y - rect.height) + 'px';
+            menu.style.top = (y - rect.height) + "px";
         }
         if (rect.top < bounds.top) {
-            menu.style.top = bounds.top + 'px';
+            menu.style.top = bounds.top + "px";
         }
     };
 
-    target.addEventListener('contextmenu', (e) => {
+    target.addEventListener("contextmenu", (e) => {
         if (e.target !== e.currentTarget) return;
         e.preventDefault();
 

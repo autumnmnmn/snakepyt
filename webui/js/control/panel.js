@@ -36,7 +36,7 @@ async function createControl(target, spec) {
 }
 
 export async function main(target, name, controls) {
-    const id = name.toLowerCase().replace(/\s+/g, '-');
+    const id = name.toLowerCase().replace(/\s+/g, "-");
 
     const container = document.createElement("fieldset");
     container.className = "control-panel";

@@ -1,10 +1,10 @@
 
 export async function main(target) {
-    const container = document.createElement('div');
+    const container = document.createElement("div");
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = '...';
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "...";
 
     async function handleLoad() {
         const inputValue = input.value.trim();
@@ -18,8 +18,8 @@ export async function main(target) {
         }
     }
 
-    input.addEventListener('keypress', async (e) => {
-        if (e.key === 'Enter') {
+    input.addEventListener("keypress", async (e) => {
+        if (e.key === "Enter") {
             handleLoad();
         }
     });

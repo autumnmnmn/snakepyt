@@ -2,42 +2,42 @@
 // Courtesy of Claude :)
 
 const atRules = new Set([
-    'charset', 'import', 'namespace', 'media', 'supports', 'page', 'font-face',
-    'keyframes', 'counter-style', 'font-feature-values', 'property', 'layer',
-    'container', 'scope'
+    "charset", "import", "namespace", "media", "supports", "page", "font-face",
+    "keyframes", "counter-style", "font-feature-values", "property", "layer",
+    "container", "scope"
 ]);
 
 const pseudoClasses = new Set([
-    'hover', 'focus', 'active', 'visited', 'link', 'disabled', 'enabled',
-    'checked', 'first-child', 'last-child', 'nth-child', 'nth-last-child',
-    'first-of-type', 'last-of-type', 'nth-of-type', 'nth-last-of-type',
-    'only-child', 'only-of-type', 'empty', 'root', 'target', 'not', 'is',
-    'where', 'has', 'focus-within', 'focus-visible'
+    "hover", "focus", "active", "visited", "link", "disabled", "enabled",
+    "checked", "first-child", "last-child", "nth-child", "nth-last-child",
+    "first-of-type", "last-of-type", "nth-of-type", "nth-last-of-type",
+    "only-child", "only-of-type", "empty", "root", "target", "not", "is",
+    "where", "has", "focus-within", "focus-visible"
 ]);
 
 const pseudoElements = new Set([
-    'before', 'after', 'first-line', 'first-letter', 'selection', 'backdrop',
-    'placeholder', 'marker', 'file-selector-button'
+    "before", "after", "first-line", "first-letter", "selection", "backdrop",
+    "placeholder", "marker", "file-selector-button"
 ]);
 
 const properties = new Set([
-    'display', 'position', 'top', 'right', 'bottom', 'left', 'width', 'height',
-    'margin', 'padding', 'border', 'background', 'color', 'font', 'text',
-    'flex', 'grid', 'transform', 'transition', 'animation', 'opacity',
-    'visibility', 'overflow', 'z-index', 'content', 'cursor', 'pointer-events'
+    "display", "position", "top", "right", "bottom", "left", "width", "height",
+    "margin", "padding", "border", "background", "color", "font", "text",
+    "flex", "grid", "transform", "transition", "animation", "opacity",
+    "visibility", "overflow", "z-index", "content", "cursor", "pointer-events"
 ]);
 
 const units = new Set([
-    'px', 'em', 'rem', 'ex', 'ch', 'vw', 'vh', 'vmin', 'vmax', '%',
-    'cm', 'mm', 'in', 'pt', 'pc', 'deg', 'rad', 'grad', 'turn',
-    's', 'ms', 'hz', 'khz', 'dpi', 'dpcm', 'dppx', 'fr'
+    "px", "em", "rem", "ex", "ch", "vw", "vh", "vmin", "vmax", "%",
+    "cm", "mm", "in", "pt", "pc", "deg", "rad", "grad", "turn",
+    "s", "ms", "hz", "khz", "dpi", "dpcm", "dppx", "fr"
 ]);
 
 const functions = new Set([
-    'url', 'calc', 'min', 'max', 'clamp', 'var', 'rgb', 'rgba', 'hsl', 'hsla',
-    'linear-gradient', 'radial-gradient', 'conic-gradient', 'repeating-linear-gradient',
-    'repeating-radial-gradient', 'translate', 'rotate', 'scale', 'skew', 'matrix',
-    'cubic-bezier', 'steps', 'attr', 'counter', 'counters'
+    "url", "calc", "min", "max", "clamp", "var", "rgb", "rgba", "hsl", "hsla",
+    "linear-gradient", "radial-gradient", "conic-gradient", "repeating-linear-gradient",
+    "repeating-radial-gradient", "translate", "rotate", "scale", "skew", "matrix",
+    "cubic-bezier", "steps", "attr", "counter", "counters"
 ]);
 
 export function tokenize(code) {
@@ -51,7 +51,7 @@ export function tokenize(code) {
         if (/\s/.test(char)) {
             const start = i;
             while (i < code.length && /\s/.test(code[i])) i++;
-            tokens.push({ type: 'whitespace', value: code.slice(start, i) });
+            tokens.push({ type: "whitespace", value: code.slice(start, i) });
             continue;
         }
 
@@ -61,12 +61,12 @@ export function tokenize(code) {
             i += 2;
             while (i < code.length - 1 && !(code[i] === '*' && code[i + 1] === '/')) i++;
             if (i < code.length - 1) i += 2;
-            tokens.push({ type: 'comment', value: code.slice(start, i) });
+            tokens.push({ type: "comment", value: code.slice(start, i) });
             continue;
         }
 
         // Strings
-        if (char === '"' || char === "'") {
+        if (char === '"' || char === '\'') {
             const stringToken = tokenizeString(code, i, char);
             tokens.push(stringToken.token);
             i = stringToken.newIndex;
@@ -74,7 +74,7 @@ export function tokenize(code) {
         }
 
         // URL function special case
-        if (char === 'u' && code.slice(i, i + 4) === 'url(') {
+        if (char === 'u' && code.slice(i, i + 4) === "url(") {
             const urlToken = tokenizeUrl(code, i);
             if (urlToken) {
                 tokens.push(urlToken.token);
@@ -132,17 +132,17 @@ export function tokenize(code) {
         }
 
         // Operators and punctuation
-        if ('{}[](),.;:>+~*|^$='.includes(char)) {
+        if ("{}[](),.;:>+~*|^$=".includes(char)) {
             // Handle multi-character operators
             const twoChar = code.slice(i, i + 2);
-            if (['~=', '|=', '^=', '$=', '*='].includes(twoChar)) {
-                tokens.push({ type: 'operator', value: twoChar });
+            if (["~=", "|=", "^=", "$=", "*="].includes(twoChar)) {
+                tokens.push({ type: "operator", value: twoChar });
                 i += 2;
                 continue;
             }
 
-            const type = '{}[]()'.includes(char) ? 'punctuation' :
-                        ',;'.includes(char) ? 'delimiter' : 'operator';
+            const type = "{}[]()".includes(char) ? "punctuation" :
+                        ",;".includes(char) ? "delimiter" : "operator";
             tokens.push({ type, value: char });
             i++;
             continue;
@@ -159,7 +159,7 @@ export function tokenize(code) {
         }
 
         // Unknown character
-        tokens.push({ type: 'unknown', value: char });
+        tokens.push({ type: "unknown", value: char });
         i++;
     }
 
@@ -168,7 +168,7 @@ export function tokenize(code) {
 
 function tokenizeString(code, start, quote) {
     let i = start;
-    let value = '';
+    let value = "";
 
     value += code[i++]; // Opening quote
 
@@ -195,12 +195,12 @@ function tokenizeString(code, start, quote) {
         i++;
     }
 
-    return { token: { type: 'string', value }, newIndex: i };
+    return { token: { type: "string", value }, newIndex: i };
 }
 
 function tokenizeUrl(code, start) {
-    let i = start + 4; // Skip 'url('
-    let value = 'url(';
+    let i = start + 4; // Skip "url("
+    let value = "url(";
 
     // Skip whitespace
     while (i < code.length && /\s/.test(code[i])) {
@@ -208,11 +208,11 @@ function tokenizeUrl(code, start) {
     }
 
     // Handle quoted URLs
-    if (code[i] === '"' || code[i] === "'") {
+    if (code[i] === '"' || code[i] === '\'') {
         const quote = code[i];
         value += code[i++];
         while (i < code.length && code[i] !== quote) {
-            if (code[i] === '\\') {
+            if (code[i] === "\\") {
                 value += code[i++];
                 if (i < code.length) value += code[i++];
             } else {
@@ -236,29 +236,29 @@ function tokenizeUrl(code, start) {
         value += code[i++];
     }
 
-    return { token: { type: 'url', value }, newIndex: i };
+    return { token: { type: "url", value }, newIndex: i };
 }
 
 function tokenizeAtRule(code, start) {
     let i = start + 1; // Skip @
-    let value = '@';
+    let value = "@";
 
     while (i < code.length && /[a-zA-Z-]/.test(code[i])) {
         value += code[i++];
     }
 
     const ruleName = value.slice(1);
-    const type = atRules.has(ruleName) ? 'at-rule' : 'unknown';
+    const type = atRules.has(ruleName) ? "at-rule" : "unknown";
 
     return { token: { type, value }, newIndex: i };
 }
 
 function tokenizeNumber(code, start) {
     let i = start;
-    let value = '';
+    let value = "";
 
     // Handle negative numbers
-    if (code[i] === '-') {
+    if (code[i] === "-") {
         value += code[i++];
     }
 
@@ -278,16 +278,16 @@ function tokenizeNumber(code, start) {
     if (i > unitStart) {
         const unit = code.slice(unitStart, i);
         value += unit;
-        const type = units.has(unit) ? 'number-unit' : 'unknown';
+        const type = units.has(unit) ? "number-unit" : "unknown";
         return { token: { type, value }, newIndex: i };
     }
 
-    return { token: { type: 'number', value }, newIndex: i };
+    return { token: { type: "number", value }, newIndex: i };
 }
 
 function tokenizeHash(code, start) {
     let i = start + 1; // Skip #
-    let value = '#';
+    let value = "#";
 
     while (i < code.length && /[a-fA-F0-9]/.test(code[i])) {
         value += code[i++];
@@ -295,14 +295,14 @@ function tokenizeHash(code, start) {
 
     const hashValue = value.slice(1);
     const isColor = /^([a-fA-F0-9]{3}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})$/.test(hashValue);
-    const type = isColor ? 'color' : 'hash';
+    const type = isColor ? "color" : "hash";
 
     return { token: { type, value }, newIndex: i };
 }
 
 function tokenizeIdentifier(code, start) {
     let i = start;
-    let value = '';
+    let value = "";
 
     while (i < code.length && /[a-zA-Z0-9_-]/.test(code[i])) {
         value += code[i++];
@@ -310,35 +310,35 @@ function tokenizeIdentifier(code, start) {
 
     // Check for function
     if (i < code.length && code[i] === '(') {
-        const type = functions.has(value) ? 'function' : 'unknown';
+        const type = functions.has(value) ? "function" : "unknown";
         return { token: { type, value }, newIndex: i };
     }
 
     // Determine type
-    let type = 'identifier';
-    if (properties.has(value)) type = 'property';
-    else if (value === 'important') type = 'important';
+    let type = "identifier";
+    if (properties.has(value)) type = "property";
+    else if (value === "important") type = "important";
 
     return { token: { type, value }, newIndex: i };
 }
 
 function tokenizeVariable(code, start) {
     let i = start + 2; // Skip --
-    let value = '--';
+    let value = "--";
 
     while (i < code.length && /[a-zA-Z0-9_-]/.test(code[i])) {
         value += code[i++];
     }
 
-    return { token: { type: 'variable', value }, newIndex: i };
+    return { token: { type: "variable", value }, newIndex: i };
 }
 
 function tokenizePseudo(code, start) {
     let i = start + 1; // Skip first :
-    let value = ':';
+    let value = ":";
 
     // Check for double colon (pseudo-element)
-    if (i < code.length && code[i] === ':') {
+    if (i < code.length && code[i] === ":") {
         value += code[i++];
     }
 
@@ -346,16 +346,16 @@ function tokenizePseudo(code, start) {
         value += code[i++];
     }
 
-    const pseudoName = value.replace(/^::?/, '');
-    const isDoubleColon = value.startsWith('::');
+    const pseudoName = value.replace(/^::?/, "");
+    const isDoubleColon = value.startsWith("::");
 
-    let type = 'pseudo-class';
+    let type = "pseudo-class";
     if (isDoubleColon && pseudoElements.has(pseudoName)) {
-        type = 'pseudo-element';
+        type = "pseudo-element";
     } else if (!isDoubleColon && pseudoClasses.has(pseudoName)) {
-        type = 'pseudo-class';
+        type = "pseudo-class";
     } else {
-        type = isDoubleColon ? 'unknown' : 'unknown';
+        type = isDoubleColon ? "unknown" : "unknown";
     }
 
     return { token: { type, value }, newIndex: i };
@@ -367,9 +367,9 @@ function tokenizeImportant(code, start) {
     // Skip whitespace
     while (i < code.length && /\s/.test(code[i])) i++;
 
-    if (code.slice(i, i + 9) === 'important') {
+    if (code.slice(i, i + 9) === "important") {
         return {
-            token: { type: 'important', value: code.slice(start, i + 9) },
+            token: { type: "important", value: code.slice(start, i + 9) },
             newIndex: i + 9
         };
     }

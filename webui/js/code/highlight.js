@@ -7,7 +7,7 @@ $css(`/* css */
         width: 100%;
         background-color: var(--main-background);
         color: var(--main-solid);
-        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
     }
 
     .highlight-toolbar {
@@ -105,35 +105,35 @@ function highlight(code) {
 }
 
 function renderCssToken(token) {
-    if (!token || typeof token.value !== 'string') {
+    if (!token || typeof token.value !== "string") {
         console.error(token);
     }
 
     const tokenTypeMap = {
-        'at-rule': 'token-operator',
-        'property': 'token-property',
-        'color': 'token-color',
-        'number': 'token-number',
-        'number-unit': 'token-number',
-        'string': 'token-string',
-        'url': 'token-regex',
-        'function': 'token-function',
-        'pseudo-class': 'token-css-pseudo',
-        'pseudo-element': 'token-css-pseudo',
-        'variable': 'token-identifier',
-        'comment': 'token-comment',
-        'important': 'token-keyword',
-        'operator': 'token-operator',
-        'delimiter': 'token-punctuation',
-        'identifier': 'token-identifier',
-        'unknown': 'token-unknown'
+        "at-rule": "token-operator",
+        "property": "token-property",
+        "color": "token-color",
+        "number": "token-number",
+        "number-unit": "token-number",
+        "string": "token-string",
+        "url": "token-regex",
+        "function": "token-function",
+        "pseudo-class": "token-css-pseudo",
+        "pseudo-element": "token-css-pseudo",
+        "variable": "token-identifier",
+        "comment": "token-comment",
+        "important": "token-keyword",
+        "operator": "token-operator",
+        "delimiter": "token-punctuation",
+        "identifier": "token-identifier",
+        "unknown": "token-unknown"
     };
 
-    const span = document.createElement('span');
+    const span = document.createElement("span");
     span.textContent = token.value;
 
-    if (token.type === 'punctuation') {
-        span.className = '{}[]()'.includes(token.value) ? 'token-bracket' : 'token-punctuation';
+    if (token.type === "punctuation") {
+        span.className = "{}[]()".includes(token.value) ? "token-bracket" : "token-punctuation";
     } else {
         span.className = tokenTypeMap[token.type] || `token-${token.type}`;
     }
@@ -143,12 +143,12 @@ function renderCssToken(token) {
 
 function renderToken(token) {
     // Language-specific token rendering can be overridden
-    if (token.type === 'template-expression') {
-        const span = document.createElement('span');
-        span.className = 'token-template-expression';
+    if (token.type === "template-expression") {
+        const span = document.createElement("span");
+        span.className = "token-template-expression";
 
         // Add the opening ${
-        span.appendChild(document.createTextNode('${'));
+        span.appendChild(document.createTextNode("${"));
 
         // Extract and highlight the inner expression
         const inner = token.value.slice(2, -1); // Remove ${ and }
@@ -156,18 +156,18 @@ function renderToken(token) {
         span.appendChild(innerHighlighted);
 
         // Add the closing }
-        span.appendChild(document.createTextNode('}'));
+        span.appendChild(document.createTextNode("}"));
 
         return span;
     }
 
-    if (token.type === 'css-string') {
-        const span = document.createElement('span');
-        span.className = 'token-string';
+    if (token.type === "css-string") {
+        const span = document.createElement("span");
+        span.className = "token-string";
 
         // Extract the CSS content and render it with CSS highlighting
         const openQuote = token.value[0];
-        const cssMarker = '/* css */';
+        const cssMarker = "/* css */";
         const markerStart = token.value.indexOf(cssMarker);
         const cssStart = markerStart + cssMarker.length;
         const cssEnd = token.value.lastIndexOf(openQuote);
@@ -194,11 +194,11 @@ function renderToken(token) {
         return span;
     }
 
-    const span = document.createElement('span');
+    const span = document.createElement("span");
     span.textContent = token.value;
 
-    if (token.type === 'punctuation' && '{}[]()'.includes(token.value)) {
-        span.className = 'token-bracket';
+    if (token.type === "punctuation" && "{}[]()".includes(token.value)) {
+        span.className = "token-bracket";
     } else {
         span.className = `token-${token.type}`;
     }
@@ -207,22 +207,22 @@ function renderToken(token) {
 }
 
 export async function main(target, text="") {
-    const container = document.createElement('div');
-    container.className = 'highlight-container';
+    const container = document.createElement("div");
+    container.className = "highlight-container";
 
-    const content = document.createElement('div');
-    content.className = 'highlight-content';
+    const content = document.createElement("div");
+    content.className = "highlight-content";
 
-    const editor = document.createElement('textarea');
-    editor.className = 'highlight-editor';
+    const editor = document.createElement("textarea");
+    editor.className = "highlight-editor";
     editor.spellcheck = false;
-    editor.placeholder = '...';
+    editor.placeholder = "...";
     editor.value = text;
 
-    const preformatted = document.createElement('pre');
+    const preformatted = document.createElement("pre");
 
-    const output = document.createElement('code');
-    output.className = 'highlight-output';
+    const output = document.createElement("code");
+    output.className = "highlight-output";
 
     preformatted.appendChild(output);
 
@@ -236,19 +236,19 @@ export async function main(target, text="") {
         const highlighted = highlight(code);
 
         // Clear existing content
-        output.innerHTML = '';
+        output.innerHTML = "";
 
         // Append the highlighted DOM fragment
         output.appendChild(highlighted);
 
-        if (code.endsWith('\n')) {
+        if (code.endsWith("\n")) {
             // zero-width space to preserve trailing newline
-            output.appendChild(document.createTextNode('\u200B'));
+            output.appendChild(document.createTextNode("\u200B"));
         }
     }
 
-    editor.addEventListener('input', updateHighlight);
-    editor.addEventListener('scroll', () => {
+    editor.addEventListener("input", updateHighlight);
+    editor.addEventListener("scroll", () => {
         output.scrollTop = editor.scrollTop;
         output.scrollLeft = editor.scrollLeft;
     });

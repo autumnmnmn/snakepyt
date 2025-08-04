@@ -1,5 +1,4 @@
 
-
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
 
@@ -55,7 +54,7 @@ function parseSource(input, startIndex = 0) {
     while (scanPosition < scanLimit) {
         const char = input[scanPosition];
 
-        if (!escapeNext && char === '\\') {
+        if (!escapeNext && char === "\\") {
             escapeNext = true;
             scanPosition++;
             continue;
@@ -67,7 +66,7 @@ function parseSource(input, startIndex = 0) {
             continue;
         }
 
-        if (!escapeNext && char === '{') {
+        if (!escapeNext && char === "{") {
             if (contentStart !== null) {
                 nodes.push({
                     tag: {symbol: TEXT, start: null, end: null},
@@ -127,7 +126,7 @@ function parseSource(input, startIndex = 0) {
             continue;
         }
 
-        if (!escapeNext && char === '}') {
+        if (!escapeNext && char === "}") {
             break;
         }
         escapeNext = false;
@@ -213,11 +212,11 @@ function findClosingBracket(input, startIndex) {
 
         if (escapeNext) {
             escapeNext = false;
-        } else if (char === '\\') {
+        } else if (char === "\\") {
             escapeNext = true;
-        } else if (char === '{') {
+        } else if (char === "{") {
             depth++;
-        } else if (char === '}') {
+        } else if (char === "}") {
             depth--;
         }
 

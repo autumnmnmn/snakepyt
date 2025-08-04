@@ -43,7 +43,7 @@ $css(`
     }
 
     .split > .splitter::before {
-        content: '';
+        content: "";
         position: relative;
         display: inline-block;
         pointer-events: auto;
@@ -101,7 +101,7 @@ $css(`
     }
 
     .split > .portion > .target {
-        content: '';
+        content: "";
         position: absolute;
         top: 0rem;
         left: 0rem;
@@ -142,13 +142,13 @@ export async function main(target, settings) {
 
     var n = content.length;
 
-    const container = document.createElement('div');
+    const container = document.createElement("div");
     container.className = "split";
     container.setAttribute("orientation", settings.orientation);
     var row = settings.orientation === "row";
 
-    container.addEventListener('keydown', (e) => {
-        if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
+    container.addEventListener("keydown", (e) => {
+        if (e.target.matches("input, textarea, [contenteditable=\"true\"]")) return;
 
         if (e.key === (row ? "h" : "k")) {
             const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
@@ -194,32 +194,32 @@ export async function main(target, settings) {
                 const relativePos = (row ? e.clientX : e.clientY) - least;
                 const percent = (relativePos / extent) * 100;
 
-                const priorExtent = parseFloat(portions[i].style.getPropertyValue('--current-portion'));
-                const posteriorExtent = parseFloat(portions[i + 1].style.getPropertyValue('--current-portion'));
+                const priorExtent = parseFloat(portions[i].style.getPropertyValue("--current-portion"));
+                const posteriorExtent = parseFloat(portions[i + 1].style.getPropertyValue("--current-portion"));
                 const totalAdjacent = priorExtent + posteriorExtent;
 
                 let adjacentStart = 0;
                 for (let j = 0; j < i; j++) {
-                    adjacentStart += parseFloat(portions[j].style.getPropertyValue('--current-portion'));
+                    adjacentStart += parseFloat(portions[j].style.getPropertyValue("--current-portion"));
                 }
 
                 const adjacentPercent = Math.max(0, Math.min(100, percent - adjacentStart));
                 const priorRatio = Math.max(minPercent, Math.min(totalAdjacent - minPercent, adjacentPercent));
                 const posteriorRatio = totalAdjacent - priorRatio;
 
-                portions[i].style.setProperty('--current-portion', priorRatio + '%');
-                portions[i + 1].style.setProperty('--current-portion', posteriorRatio + '%');
+                portions[i].style.setProperty("--current-portion", priorRatio + "%");
+                portions[i + 1].style.setProperty("--current-portion", posteriorRatio + "%");
             }
 
             function cleanup() {
-                document.removeEventListener('pointermove', resizeCallback);
-                document.removeEventListener('pointerup', cleanup);
-                document.removeEventListener('pointerleave', cleanup);
+                document.removeEventListener("pointermove", resizeCallback);
+                document.removeEventListener("pointerup", cleanup);
+                document.removeEventListener("pointerleave", cleanup);
             }
 
-            document.addEventListener('pointermove', resizeCallback, { passive: false });
-            document.addEventListener('pointerup', cleanup, { passive: false });
-            document.addEventListener('pointerleave', cleanup, { passive: false });
+            document.addEventListener("pointermove", resizeCallback, { passive: false });
+            document.addEventListener("pointerup", cleanup, { passive: false });
+            document.addEventListener("pointerleave", cleanup, { passive: false });
         }
 
         splitter.addEventListener("pointerdown", startDrag, { passive: false, capture: true });
@@ -228,15 +228,15 @@ export async function main(target, settings) {
     const targets = [];
 
     for (let i = 0; i < n; i++) {
-        const portion = document.createElement('div');
+        const portion = document.createElement("div");
         portion.className = "portion";
         if (settings.percents === "equal") {
-            portion.style.setProperty('--current-portion', `${100/n}%`);
+            portion.style.setProperty("--current-portion", `${100/n}%`);
         } else {
-            portion.style.setProperty('--current-portion', `${settings.percents[i]}%`);
+            portion.style.setProperty("--current-portion", `${settings.percents[i]}%`);
         }
 
-        const target = document.createElement('div');
+        const target = document.createElement("div");
         target.className = "target";
 
         targets.push(target);
@@ -246,7 +246,7 @@ export async function main(target, settings) {
 
         if (i === n - 1) continue;
 
-        const splitter = document.createElement('div');
+        const splitter = document.createElement("div");
         splitter.className = "splitter";
         splitters.push(splitter);
         container.appendChild(splitter);

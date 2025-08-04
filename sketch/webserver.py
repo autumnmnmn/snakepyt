@@ -118,8 +118,7 @@ def main():
             except KeyboardInterrupt:
                 raise
             except:
-                #log.trace()
-                continue
+                break
 
 if __name__ == "__main__":
     main()

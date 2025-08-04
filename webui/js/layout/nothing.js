@@ -7,10 +7,23 @@ $css(`
         border-radius: 0;
     }
 
-    .nothing:focus {
+    .nothing:focus::before {
+    /*
         outline: 2px solid var(--main-faded);
         outline-offset: -2px;
         outline-radius: 0;
+    */
+        content: ">";
+        color: var(--main-solid);
+        background-color: var(--main-faded);
+        line-height: 1.5em;
+        width: 1.1em;
+        height: 1.5em;
+        border-radius: 0.2em;
+        padding-left: 0.4em;
+        top: 1em;
+        left: 1em;
+        position: absolute;
     }
 `);
 
@@ -54,8 +67,8 @@ export async function main(target) {
 
     const menu = await $mod("control/menu", backdrop, [menuItems]);
 
-    backdrop.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === "o") {
+    backdrop.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === "o") {
             e.preventDefault();
             e.stopPropagation();
             const rect = backdrop.getBoundingClientRect();

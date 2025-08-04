@@ -84,25 +84,25 @@ $css(`
 `);
 
 export async function main(target, modNext = "layout/nothing") {
-    let spinner = document.createElement('div');
-    let orb0 = document.createElement('div');
-    let orb1 = document.createElement('div');
-    let orb2 = document.createElement('div');
-    let button = document.createElement('button');
+    let spinner = document.createElement("div");
+    let orb0 = document.createElement("div");
+    let orb1 = document.createElement("div");
+    let orb2 = document.createElement("div");
+    let button = document.createElement("button");
 
-    button.innerText = 'enter';
-    button.classList.add('spinner-button');
+    button.innerText = "enter";
+    button.classList.add("spinner-button");
 
-    spinner.classList.add('spinner');
+    spinner.classList.add("spinner");
 
-    orb0.classList.add('spinner-orb');
-    orb0.classList.add('0');
+    orb0.classList.add("spinner-orb");
+    orb0.classList.add("0");
 
-    orb1.classList.add('spinner-orb');
-    orb1.classList.add('1');
+    orb1.classList.add("spinner-orb");
+    orb1.classList.add("1");
 
-    orb2.classList.add('spinner-orb');
-    orb2.classList.add('2');
+    orb2.classList.add("spinner-orb");
+    orb2.classList.add("2");
 
     target.appendChild(spinner);
     target.appendChild(button);
@@ -111,11 +111,11 @@ export async function main(target, modNext = "layout/nothing") {
     orb1.appendChild(orb2);
 
     let removeLoader = async (e) => {
-        spinner.style.opacity = '0';
-        button.style.opacity = '0';
-        orb0.style.left = '50%';
-        orb1.style.left = '50%';
-        orb2.style.left = '50%';
+        spinner.style.opacity = "0";
+        button.style.opacity = "0";
+        orb0.style.left = "50%";
+        orb1.style.left = "50%";
+        orb2.style.left = "50%";
         await $mod(modNext, target);
         setTimeout(async () => {
             spinner.remove();
@@ -126,8 +126,8 @@ export async function main(target, modNext = "layout/nothing") {
     setTimeout(() => {
         button.style.opacity = 1;
     }, 100);
-    button.addEventListener('click', removeLoader);
-    button.style.display = 'initial';
+    button.addEventListener("click", removeLoader);
+    button.style.display = "initial";
 
     return {
         replace: true

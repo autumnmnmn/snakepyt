@@ -1,52 +1,123 @@
 
 function mathElement(tag) { return document.createElementNS("http://www.w3.org/1998/Math/MathML", tag); }
 
-function leafMaker(tag) {
-    return (content) => {
+function makeLeaf(tag, content) {
+    return () => {
         const element = mathElement(tag);
         element.textContent = content;
         return element;
+    };
+}
+
+function make(node) {
+    if (node.type === "group") {
+        return node.make(node.children);
+    }
+    else if (node.type === "leaf") {
+        return node.make();
+    }
+    else {
+        throw new Error(`Node of type ${node.type} should not exist by the final make stage.`);
     }
 }
 
-const ident = leafMaker("mi");
-const num = leafMaker("mn");
-const op = leafMaker("mo");
-const text = leafMaker("mtext");
+function makeGroup(tag) {
+    return (children) => {
+        const element = mathElement(tag);
+        for (const child of children) {
+            element.appendChild(make(child));
+        }
+        return element;
+    };
+}
 
-const commonIdents = {
-    'alpha': 'α',
-    'beta': 'β',
-    'gamma': 'γ',
-    'delta': 'δ',
-    'epsilon': 'ε',
-    'zeta': 'ζ',
-    'eta': 'η',
-    'theta': 'θ',
-    'iota': 'ι',
-    'kappa': 'κ',
-    'lambda': 'λ',
-    'mu': 'μ',
-    'nu': 'ν',
-    'xi': 'ξ',
-    'omicron': 'ο',
-    'pi': 'π',
-    'rho': 'ρ',
-    'sigma': 'σ',
-    'tau': 'τ',
-    'upsilon': 'υ',
-    'phi': 'φ',
-    'chi': 'χ',
-    'psi': 'ψ',
-    'omega': 'ω'
+export const greek = {
+    "alpha": "α",
+    "beta": "β",
+    "gamma": "γ",
+    "delta": "δ",
+    "epsilon": "ε",
+    "zeta": "ζ",
+    "eta": "η",
+    "theta": "θ",
+    "iota": "ι",
+    "kappa": "κ",
+    "lambda": "λ",
+    "mu": "μ",
+    "nu": "ν",
+    "xi": "ξ",
+    "omicron": "ο",
+    "pi": "π",
+    "rho": "ρ",
+    "sigma": "σ",
+    "tau": "τ",
+    "upsilon": "υ",
+    "phi": "ϕ",
+    "curlyphi": "φ",
+    "chi": "χ",
+    "psi": "ψ",
+    "omega": "ω"
 }; // TODO: capital letters
 
 const commonOps = {
     "interpunct": "·"
 };
 
+const whitespace = /\s/;
+const numeric = /[\d.,]/;
+const alphabet = /[a-zA-Z]/;
+
+function tokenize(expression, declarations) {
+    const tokens = [];
+    let current = "";
+    let i = 0;
+
+    function token(source) {
+        let result;
+        if (numeric.test(source[0])) {
+            result = declarations["numeric"](source)
+        } else {
+            result = declarations[source];
+        }
+        if (!result) throw new Error(`Undeclared token "${source}"`);
+        tokens.push(result);
+    }
+
+    while (i < expression.length) {
+        const char = expression[i];
+        const begun = current !== "";
+
+        if (/\s/.test(char)) {
+            if (begun) token(current);
+            current = "";
+        } else if (alphabet.test(char)) {
+            if (begun && !alphabet.test(current[current.length - 1])) {
+                token(current);
+                current = char;
+            } else {
+                current += char;
+            }
+        } else if (numeric.test(char)) { // numerics
+            if (begun && !numeric.test(current[current.length - 1])) {
+                token(current);
+                current = char;
+            } else {
+                current += char;
+            }
+        } else {
+            if (begun) token(current);
+            token(char);
+            current = "";
+        }
+        i++;
+    }
+
+    if (current !== "") token(current);
+
+    return tokens;
+}
+
 export async function main(target, expression) {
-    const math = mathElement("math");
 
     const lines = expression.trim().split("\n");
 
@@ -68,7 +139,7 @@ export async function main(target, expression) {
         }
 
         if (trimmed.startsWith("ident ")) {
-            const declarations = trimmed.split(" ").filter(_=>_).slice(1);
+            const declarations = trimmed.split(' ').filter(_=>_).slice(1);
 
             for (const declaration of declarations) {
                 const splitAt = declaration.indexOf(':');
@@ -79,13 +150,13 @@ export async function main(target, expression) {
                     const key = declaration.slice(0, splitAt);
                     const value = declaration.slice(splitAt + 1);
 
-                    idents[key] = value === "~" ? commonIdents[key] : value;
+                    idents[key] = value === '~' ? greek[key] : value;
                 }
             }
         }
 
         if (trimmed.startsWith("op ")) {
-            const declarations = trimmed.split(" ").filter(_=>_).slice(1);
+            const declarations = trimmed.split(' ').filter(_=>_).slice(1);
 
             for (const declaration of declarations) {
                 const splitAt = declaration.indexOf(':');
@@ -135,7 +206,7 @@ export async function main(target, expression) {
 
                 texts[key] = value;
 
-                while (i < declarations.length && declarations[i] === ' ') {
+                while (i < declarations.length && declarations[i] === " ") {
                     i += 1;
                 }
             }
@@ -143,106 +214,73 @@ export async function main(target, expression) {
 
     }
 
-    console.log(idents);
-    console.log(ops);
-    console.log(texts);
+    const declaredTokens = {
+        "^": { type: "infix", make: makeGroup("msup") },
+        "_": { type: "infix", make: makeGroup("msub") },
+        "{": { type: "row_begin" },
+        "}": { type: "row_end" },
+        "numeric": n => ({ type: "leaf", make: makeLeaf("mn", n) })
+    };
 
-for (const line of contentLines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    
-    const tokens = tokenize(trimmed);
-    const elements = parseTokens(tokens, idents, ops, texts);
-    
-    elements.forEach(el => math.appendChild(el));
-}
-
-function tokenize(input) {
-    const tokens = [];
-    let current = '';
-    let i = 0;
-    
-    while (i < input.length) {
-        const char = input[i];
-        
-        if (char === ' ') {
-            if (current) tokens.push(current);
-            current = '';
-        } else if (char === '_' || char === '^') {
-            if (current) tokens.push(current);
-            tokens.push(char);
-            current = '';
-        } else if (/[a-zA-Z]/.test(char)) {
-            if (current && /\d/.test(current[current.length - 1])) {
-                tokens.push(current);
-                current = char;
-            } else {
-                current += char;
-            }
-        } else if (/\d/.test(char)) {
-            if (current && /[a-zA-Z]/.test(current[current.length - 1])) {
-                tokens.push(current);
-                current = char;
-            } else {
-                current += char;
-            }
-        } else {
-            if (current) tokens.push(current);
-            tokens.push(char);
-            current = '';
-        }
-        i++;
+    for (const ident in idents) {
+        declaredTokens[ident] = { type: "leaf", make: makeLeaf("mi", idents[ident]) };
     }
-    
-    if (current) tokens.push(current);
-    return tokens.filter(t => t.length > 0);
-}
-
-function parseTokens(tokens, idents, ops, texts) {
-    const elements = [];
-    let i = 0;
-    
-    while (i < tokens.length) {
-        const token = tokens[i];
-        
-        if (token === '_' || token === '^') {
-            if (elements.length === 0) {
-                console.error(`Unexpected ${token} at start of expression`);
-                return elements;
-            }
-            
-            if (i + 1 >= tokens.length) {
-                console.error(`Missing argument after ${token}`);
-                return elements;
-            }
-            
-            const base = elements.pop();
-            const script = createTokenElement(tokens[i + 1], idents, ops, texts);
-            const container = mathElement(token === '_' ? 'msub' : 'msup');
-            
-            container.appendChild(base);
-            container.appendChild(script);
-            elements.push(container);
-            i += 2;
-        } else {
-            elements.push(createTokenElement(token, idents, ops, texts));
-            i++;
-        }
+    for (const op in ops) {
+        declaredTokens[op] = { type: "leaf", make: makeLeaf("mo", ops[op]) };
     }
-    
-    return elements;
-}
+    for (const text in texts) {
+        declaredTokens[text] = { type: "leaf", make: makeLeaf("mtext", texts[text]) };
+    }
 
-function createTokenElement(token, idents, ops, texts) {
-    if (/^\d+(\.\d+)?$/.test(token)) return num(token);
-    if (idents[token]) return ident(idents[token]);
-    if (ops[token]) return op(ops[token]);
-    if (texts[token]) return text(texts[token]);
-    
-    console.error(`Unknown token: ${token}`);
-    return text(`[${token}?]`); // visible error in output
-}
+    for (const line of contentLines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
 
-    target.appendChild(math);
+        const tokens = tokenize(trimmed, declaredTokens);
+
+        const root = { type: "group", make: makeGroup("math"), children: [] };
+        const groupStack = [root];
+        for (const token of tokens) {
+            if (token.type === "row_begin") {
+                groupStack.push({ type: "group", make: makeGroup("mrow"), children: [] });
+            }
+            else if (token.type === "row_end") {
+                const row = groupStack.pop();
+                groupStack[groupStack.length - 1].children.push(row);
+            }
+            else {
+                groupStack[groupStack.length - 1].children.push(token);
+            }
+        }
+
+        while (groupStack.length > 0) {
+            const node = groupStack.pop();
+            const modified = [];
+
+            let i = 0;
+            for (; i <= node.children.length - 3; i++) {
+                const [left, middle, right] = [node.children[i], node.children[i + 1], node.children[i + 2]];
+                if (middle.type === "infix") {
+                    const newGroup = { type: "group", make: middle.make, children: [left, right] };
+                    modified.push(newGroup);
+                    groupStack.push(newGroup);
+                    i += 2;
+                }
+                else {
+                    modified.push(left);
+                    if (left.type === "group") groupStack.push(left);
+                }
+            }
+            for (; i < node.children.length; i++) {
+                modified.push(node.children[i]);
+                if (node.children[i].type === "group") groupStack.push(node.children[i]);
+            }
+
+            node.children = modified;
+
+        }
+
+        target.appendChild(make(root));
+    }
 }
 

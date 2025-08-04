@@ -13,14 +13,14 @@ $css(`
 let webgpu_working = true;
 
 if (!navigator.gpu) {
-    console.error('WebGPU not supported.');
+    console.error("WebGPU not supported.");
     webgpu_working = false;
 }
 
 const adapter = await navigator.gpu.requestAdapter();
 
 if (!adapter) {
-    console.error('No WebGPU adapter.');
+    console.error("No WebGPU adapter.");
     webgpu_working = false;
 }
 
@@ -36,7 +36,7 @@ async function loadShader(shaderName) {
     const shaderSource = await response.text();
     const module = device.createShaderModule({ code: shaderSource });
     const info = await module.getCompilationInfo();
-    if (info.messages.some(m => m.type === 'error')) {
+    if (info.messages.some(m => m.type === "error")) {
         return null;
     }
     return module;
@@ -55,12 +55,13 @@ export async function main(target) {
         return;
     }
 
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.className = "webgpu";
 
     canvas.tabIndex = 0;
 
     canvas.addEventListener("keydown", (e) => {
+        console.log(e);
         if (e.key === "f") {
             if (document.fullscreenElement) {
                 document.exitFullscreen();
@@ -72,7 +73,7 @@ export async function main(target) {
     });
 
 
-    const context = canvas.getContext('webgpu');
+    const context = canvas.getContext("webgpu");
 
     context.configure({ device, format: canvasFormat });
 

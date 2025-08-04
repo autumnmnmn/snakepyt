@@ -1,17 +1,15 @@
 
 h2 { Projective Shift Map }
 
-f(z) = (r + cos(θ-φ))e^(iθψ) - c
-where z_n = r * cos(θ)
-
-$math/math {
-    ident f z r cos theta:~ phi:~ psi:~ c n i e
+div { $math/math {
+    ident z r cos theta:~ phi:~ psi:~ c n i e
     text where:~
-    op ( ) + - *:$interpunct =
+    op ( ) + - =
     in
-    f(z) = (r + cos(theta-phi))e^(i theta psi) - c
-    where z_n = r * cos(theta)
-}
+
+    z_{n+1} = (r + cos(theta-phi))e^{i theta psi} - c
+    where z_n = r cos theta
+} }
 
 b{click and drag} to move around, b{scroll} to zoom in and out; b{press F} to go fullscreen
 

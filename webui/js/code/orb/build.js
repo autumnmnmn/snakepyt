@@ -27,8 +27,10 @@ export async function build(target, nodes, source, inline=false) {
                 const br = document.createElement("br");
                 segment.appendChild(br);
             } else {
-                target.appendChild(segment);
-                segment = document.createElement("p");
+                if (segment.childNodes.length > 0) {
+                    target.appendChild(segment);
+                    segment = document.createElement("p");
+                }
             }
             continue;
         }
@@ -43,7 +45,6 @@ export async function build(target, nodes, source, inline=false) {
             build(tagElement, node.content.nodes, source, true);
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
-                console.log(split);
                 tagElement[split[0].trim()] = split[1];
             }
             segment.appendChild(document.createTextNode(" "));
@@ -61,7 +62,6 @@ export async function build(target, nodes, source, inline=false) {
                 const tagElement = document.createElement(tag);
                 for (const arg of bracketArgs) {
                     const split = arg.split("=");
-                    console.log(split);
                     tagElement[split[0].trim()] = split[1];
                 }
                 build(tagElement, node.content.nodes, source);

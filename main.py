@@ -12,7 +12,6 @@ from argparse import ArgumentParser as ArgParser
 from importlib import import_module, reload
 from time import perf_counter
 
-from lib import util
 from lib.log import Logger, inner_log
 from lib.internal.parse import lsnap
 from lib.internal.witchery import try_dump_locals

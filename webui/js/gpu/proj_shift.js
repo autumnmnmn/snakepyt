@@ -14,6 +14,7 @@ $css(`
     }
 `);
 
+import { greek } from "/math/math.js";
 
 export async function main(target) {
     //const container = document.createElement("div");
@@ -55,7 +56,7 @@ function iteratePolar(x, phi, psi, c) {
 function computeTrajectory(startZ, maxIters, escapeThreshold) {
     const trajectory = [startZ];
     let z = { x: startZ.x, y: startZ.y };
-    
+
     for (let i = 0; i < maxIters; i++) {
         const magSq = z.x * z.x + z.y * z.y;
         if (magSq > escapeThreshold * escapeThreshold) {
@@ -64,7 +65,7 @@ function computeTrajectory(startZ, maxIters, escapeThreshold) {
         z = iteratePolar(z, phi, psi, c);
         trajectory.push({ x: z.x, y: z.y });
     }
-    
+
     return trajectory;
 }
 
@@ -94,7 +95,7 @@ function complexToPixel(z) {
         },
         {
             type: "number",
-            label: "ψ",
+            label: greek["psi"],
             value: psi,
             min: 0,
             max: 12,
@@ -106,7 +107,7 @@ function complexToPixel(z) {
         },
         {
             type: "number",
-            label: "φ",
+            label: greek["phi"],
             value: phi,
             min: 0,
             max: $tau,
@@ -168,7 +169,7 @@ function complexToPixel(z) {
         layout: "auto",
         compute: {
             module: compShader,
-            entryPoint: 'main'
+            entryPoint: "main"
         }
     });
 
@@ -176,24 +177,24 @@ function complexToPixel(z) {
         layout: "auto",
         vertex: {
             module: blitShader,
-            entryPoint: 'vert'
+            entryPoint: "vert"
         },
         fragment: {
             module: blitShader,
-            entryPoint: 'frag',
+            entryPoint: "frag",
             targets: [ { format: $gpu.canvasFormat } ]
         },
         primitive: {
-            topology: 'triangle-list'
+            topology: "triangle-list"
         }
     });
 
-    const overlay = document.createElementNS('http://www.w3.org/2000/svg', "svg");
+    const overlay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     overlay.classList = "full overlay";
 
     overlay.setAttribute("aria-label", "Overlay visualizing the trajectory starting from the point under the cursor.")
 
-    const dot = document.createElementNS('http://www.w3.org/2000/svg', "circle");
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     dot.setAttribute("r", "3")
     dot.setAttribute("fill", "red");
     dot.style.display = "block";
@@ -210,7 +211,7 @@ function complexToPixel(z) {
 
     let outputTexture = $gpu.device.createTexture({
         size: [width, height],
-        format: 'rgba8unorm',
+        format: "rgba8unorm",
         usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
     });
 
@@ -219,7 +220,7 @@ function complexToPixel(z) {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    const sampler = $gpu.device.createSampler({ magFilter: 'nearest', minfilter: 'nearest' });
+    const sampler = $gpu.device.createSampler({ magFilter: "nearest", minfilter: "nearest" });
 
     let computeBindGroup = $gpu.device.createBindGroup({
         layout: computePipeline.getBindGroupLayout(0),
@@ -261,7 +262,7 @@ function complexToPixel(z) {
 
         outputTexture = $gpu.device.createTexture({
             size: [width, height],
-            format: 'rgba8unorm',
+            format: "rgba8unorm",
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 
@@ -344,8 +345,8 @@ function complexToPixel(z) {
             colorAttachments: [
                 {
                     view: context.getCurrentTexture().createView(),
-                    loadOp: 'clear',
-                    storeOp: 'store'
+                    loadOp: "clear",
+                    storeOp: "store"
                 }
             ]
         });
@@ -364,18 +365,15 @@ function complexToPixel(z) {
     let lastMouseX = 0;
     let lastMouseY = 0;
 
-    canvas.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+    canvas.addEventListener("pointerdown", (e) => {
         isDragging = true;
         const rect = canvas.getBoundingClientRect();
         lastMouseX = e.clientX - rect.left;
         lastMouseY = e.clientY - rect.top;
-        canvas.style.cursor = 'all-scroll';
+        canvas.style.cursor = "all-scroll";
     });
 
-    canvas.addEventListener('pointermove', (e) => {
+    canvas.addEventListener("pointermove", (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
@@ -391,43 +389,43 @@ function complexToPixel(z) {
 // Compute and display trajectory
     const complexX = (mouseX - width * 0.5) * scale * aspect / width + centerX;
     const complexY = (mouseY - height * 0.5) * scale / height + centerY;
-    
+
     const startZ = { x: complexX, y: complexY };
     const trajectory = computeTrajectory(startZ, Math.min(iterations, 500), escape_distance);
-    
+
     // Clear existing trajectory
-    const existingPath = overlay.querySelector('.trajectory-path');
+    const existingPath = overlay.querySelector(".trajectory-path");
     if (existingPath) {
         existingPath.remove();
     }
-    
+
     if (false && trajectory.length > 1) {
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('class', 'trajectory-path');
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', 'lime');
-        path.setAttribute('stroke-width', '2');
-        path.setAttribute('opacity', '1.0');
-        
-        let pathData = '';
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "trajectory-path");
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "lime");
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("opacity", "1.0");
+
+        let pathData = "";
         for (let i = 0; i < trajectory.length; i++) {
             const pixel = complexToPixel(trajectory[i]);
-            
+
             // Skip points outside visible area
-            if (pixel.x < -10 || pixel.x > width + 10 || 
+            if (pixel.x < -10 || pixel.x > width + 10 ||
                 pixel.y < -10 || pixel.y > height + 10) {
                 //continue;
             }
-            
-            if (pathData === '') {
+
+            if (pathData === "") {
                 pathData = `M ${pixel.x} ${pixel.y}`;
             } else {
                 pathData += ` L ${pixel.x} ${pixel.y}`;
             }
         }
-        
-        if (pathData !== '') {
-            path.setAttribute('d', pathData);
+
+        if (pathData !== "") {
+            path.setAttribute("d", pathData);
             overlay.appendChild(path);
         }
     }
@@ -456,20 +454,20 @@ function complexToPixel(z) {
     });
 
     // Mouse up - stop dragging
-    canvas.addEventListener('pointerup', () => {
+    canvas.addEventListener("pointerup", () => {
         isDragging = false;
-        canvas.style.cursor = 'crosshair';
+        canvas.style.cursor = "crosshair";
     });
 
     // Mouse leave - stop dragging if mouse leaves canvas
-    canvas.addEventListener('pointerleave', () => {
+    canvas.addEventListener("pointerleave", () => {
         isDragging = false;
-        canvas.style.cursor = 'crosshair';
+        canvas.style.cursor = "crosshair";
         dot.style.display = "block";
     });
 
     // Wheel - zoom in/out
-    canvas.addEventListener('wheel', (e) => {
+    canvas.addEventListener("wheel", (e) => {
         e.preventDefault();
 
         const rect = canvas.getBoundingClientRect();
@@ -497,7 +495,7 @@ function complexToPixel(z) {
         render();
     });
 
-    canvas.style.cursor = 'crosshair';
+    canvas.style.cursor = "crosshair";
 
     render();
 
