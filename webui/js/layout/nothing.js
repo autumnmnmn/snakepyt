@@ -28,11 +28,10 @@ $css(`
 `);
 
 export async function main(target) {
-    const backdrop = document.createElement("div");
+    const backdrop = $div("nothing");
 
-    backdrop.className = "nothing";
     backdrop.$ = {
-        focusable: true
+        focusable: true,
     };
 
     backdrop.tabIndex = 0;
@@ -41,7 +40,7 @@ export async function main(target) {
 
     const load = (modName, args=[]) => {
         return async () => {
-            const result = await $mod(modName, target, args);
+            const result = await $mod(modName, backdrop.parentNode, args);
             if (result?.replace) {
                 backdrop.remove();
             }
@@ -63,7 +62,11 @@ export async function main(target) {
         whiteboard: load("theme", ["whiteboard"]),
         spinner: load("spinner"),
         highlight: load("code/highlight")
-    }
+    };
+
+    backdrop.$contextMenu = {
+        items: Object.entries(menuItems)
+    };
 
     const menu = await $mod("control/menu", backdrop, [menuItems]);
 

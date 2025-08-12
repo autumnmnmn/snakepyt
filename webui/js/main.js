@@ -59,7 +59,34 @@ window.$css = async function(cssText) {
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 };
 
+Object.defineProperty(Element.prototype, "$with", {
+    value: function(...children) {
+        for (const child of children) {
+            this.appendChild(child);
+        }
+        return this;
+    },
+    enumerable: false
+});
+
+window.$element = (name) => document.createElement(name);
+window.$div = function (classList = "") {
+    const div = $element("div");
+    div.classList = classList;
+    return div;
+}
+
+window.$svgElement = (name) => document.createElementNS("http://www.w3.org/2000/svg", name);
+window.$mathElement = (name) => document.createElementNS("http://www.w3.org/1998/Math/MathML", name);
+
 window.$tau = 6.283185307179586;
+
+window.$actualize = (maybeFunction) => {
+    if (typeof maybeFunction === "function") return maybeFunction();
+    return maybeFunction;
+};
+
+import('/control/menu.js');
 
 $mod("theme", document.body);
 

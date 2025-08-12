@@ -1,8 +1,8 @@
 
 export async function main(target) {
-    const container = document.createElement("div");
+    const container = $div();
 
-    const input = document.createElement("input");
+    const input = $element("input");
     input.type = "text";
     input.placeholder = "...";
 
@@ -12,7 +12,7 @@ export async function main(target) {
         const moduleName = inputSplit[0];
         const args = inputSplit.slice(1);
 
-        const result = await $mod(moduleName, target, args);
+        const result = await $mod(moduleName, container.parentNode, args);
         if (result?.replace) {
             container.remove();
         }
@@ -24,8 +24,8 @@ export async function main(target) {
         }
     });
 
-    container.appendChild(input);
-    target.appendChild(container);
+    target.$with(container.$with(input));
+
     input.focus();
 
     return {

@@ -1,9 +1,7 @@
 
-function mathElement(tag) { return document.createElementNS("http://www.w3.org/1998/Math/MathML", tag); }
-
 function makeLeaf(tag, content) {
     return () => {
-        const element = mathElement(tag);
+        const element = $mathElement(tag);
         element.textContent = content;
         return element;
     };
@@ -23,7 +21,7 @@ function make(node) {
 
 function makeGroup(tag) {
     return (children) => {
-        const element = mathElement(tag);
+        const element = $mathElement(tag);
         for (const child of children) {
             element.appendChild(make(child));
         }

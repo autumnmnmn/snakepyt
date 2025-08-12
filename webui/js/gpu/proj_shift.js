@@ -5,9 +5,10 @@ $css(`
         flex-direction: row;
     }
 
-    .proj-shift-container .overlay {
+    .overlay {
         user-select: none;
         position: absolute;
+        z-index: 1;
         top: 0;
         left: 0;
         pointer-events: none;
@@ -29,53 +30,55 @@ export async function main(target) {
     let centerY = 0.0;
     let zoom = 4.0;
 
-function complexMag(z) {
-    return Math.sqrt(z.x * z.x + z.y * z.y);
-}
+    let showTrajectory = false;
 
-function complexAngle(z) {
-    return Math.atan2(z.y, z.x);
-}
-
-function projectiveShift(x, phi, psi) {
-    const xMag = complexMag(x);
-    const xAngle = complexAngle(x);
-    const angleDiff = xAngle - phi;
-    const newMag = xMag + Math.cos(angleDiff);
-    return {
-        x: newMag * Math.cos(xAngle * psi),
-        y: newMag * Math.sin(xAngle * psi)
-    };
-}
-
-function iteratePolar(x, phi, psi, c) {
-    const shifted = projectiveShift(x, phi, psi);
-    return { x: shifted.x - c, y: shifted.y };
-}
-
-function computeTrajectory(startZ, maxIters, escapeThreshold) {
-    const trajectory = [startZ];
-    let z = { x: startZ.x, y: startZ.y };
-
-    for (let i = 0; i < maxIters; i++) {
-        const magSq = z.x * z.x + z.y * z.y;
-        if (magSq > escapeThreshold * escapeThreshold) {
-            break;
-        }
-        z = iteratePolar(z, phi, psi, c);
-        trajectory.push({ x: z.x, y: z.y });
+    function complexMag(z) {
+        return Math.sqrt(z.x * z.x + z.y * z.y);
     }
 
-    return trajectory;
-}
+    function complexAngle(z) {
+        return Math.atan2(z.y, z.x);
+    }
 
-function complexToPixel(z) {
-    const aspect = width / height;
-    const scale = 4.0 / zoom;
-    const px = (z.x - centerX) * width / (scale * aspect) + width * 0.5;
-    const py = (z.y - centerY) * height / scale + height * 0.5;
-    return { x: px, y: py };
-}
+    function projectiveShift(x, phi, psi) {
+        const xMag = complexMag(x);
+        const xAngle = complexAngle(x);
+        const angleDiff = xAngle - phi;
+        const newMag = xMag + Math.cos(angleDiff);
+        return {
+            x: newMag * Math.cos(xAngle * psi),
+            y: newMag * Math.sin(xAngle * psi)
+        };
+    }
+
+    function iteratePolar(x, phi, psi, c) {
+        const shifted = projectiveShift(x, phi, psi);
+        return { x: shifted.x - c, y: shifted.y };
+    }
+
+    function computeTrajectory(startZ, maxIters, escapeThreshold) {
+        const trajectory = [startZ];
+        let z = { x: startZ.x, y: startZ.y };
+
+        for (let i = 0; i < maxIters; i++) {
+            const magSq = z.x * z.x + z.y * z.y;
+            if (magSq > escapeThreshold * escapeThreshold) {
+                break;
+            }
+            z = iteratePolar(z, phi, psi, c);
+            trajectory.push({ x: z.x, y: z.y });
+        }
+
+        return trajectory;
+    }
+
+    function complexToPixel(z) {
+        const aspect = width / height;
+        const scale = 4.0 / zoom;
+        const px = (z.x - centerX) * width / (scale * aspect) + width * 0.5;
+        const py = (z.y - centerY) * height / scale + height * 0.5;
+        return { x: px, y: py };
+    }
 
 
 
@@ -147,8 +150,7 @@ function complexToPixel(z) {
         },
     ]]);
 
-    const renderStack = document.createElement("div");
-    renderStack.classList = "full";
+    const renderStack = $div("full");
     renderStack.style.position = "relative";
 
     const gpuModule = await $mod("gpu/webgpu", renderStack);
@@ -189,18 +191,36 @@ function complexToPixel(z) {
         }
     });
 
-    const overlay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const overlay = $svgElement("svg");
     overlay.classList = "full overlay";
 
     overlay.setAttribute("aria-label", "Overlay visualizing the trajectory starting from the point under the cursor.")
 
-    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    const dot = $svgElement("circle");
     dot.setAttribute("r", "3")
     dot.setAttribute("fill", "red");
     dot.style.display = "block";
 
     overlay.appendChild(dot);
     renderStack.appendChild(overlay);
+
+    function showControls() {
+        if (controls.parentNode) return;
+
+        return ["show controls", async () => {
+            await $mod("layout/split", renderStack.parentNode, [{content: [controls, renderStack], percents: [20, 80]}]);
+        }];
+    }
+
+    function toggleTrajectory() {
+        if (showTrajectory) return ["hide trajectory", () => {showTrajectory = false}];
+        return ["show trajectory", () => {showTrajectory = true}];
+    }
+
+    renderStack.$preventCollapse = true;
+    renderStack.$contextMenu = {
+        items: [showControls, toggleTrajectory]
+    };
 
     await $mod("layout/split", target, [{ content: [controls, renderStack], percents: [20, 80]}]);
 
@@ -366,6 +386,7 @@ function complexToPixel(z) {
     let lastMouseY = 0;
 
     canvas.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
         isDragging = true;
         const rect = canvas.getBoundingClientRect();
         lastMouseX = e.clientX - rect.left;
@@ -399,8 +420,8 @@ function complexToPixel(z) {
         existingPath.remove();
     }
 
-    if (false && trajectory.length > 1) {
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    if (showTrajectory && trajectory.length > 1) {
+        const path = $svgElement("path");
         path.setAttribute("class", "trajectory-path");
         path.setAttribute("fill", "none");
         path.setAttribute("stroke", "lime");
@@ -455,12 +476,14 @@ function complexToPixel(z) {
 
     // Mouse up - stop dragging
     canvas.addEventListener("pointerup", () => {
+        if (!isDragging) return;
         isDragging = false;
         canvas.style.cursor = "crosshair";
     });
 
     // Mouse leave - stop dragging if mouse leaves canvas
     canvas.addEventListener("pointerleave", () => {
+        if (!isDragging) return;
         isDragging = false;
         canvas.style.cursor = "crosshair";
         dot.style.display = "block";

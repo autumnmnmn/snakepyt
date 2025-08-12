@@ -84,31 +84,23 @@ $css(`
 `);
 
 export async function main(target, modNext = "layout/nothing") {
-    let spinner = document.createElement("div");
-    let orb0 = document.createElement("div");
-    let orb1 = document.createElement("div");
-    let orb2 = document.createElement("div");
-    let button = document.createElement("button");
+    let spinner = $div("spinner");
+    let orb0 = $div("spinner-orb 0");
+    let orb1 = $div("spinner-orb 1");
+    let orb2 = $div("spinner-orb 2");
+    let button = $element("button");
 
     button.innerText = "enter";
     button.classList.add("spinner-button");
 
-    spinner.classList.add("spinner");
-
-    orb0.classList.add("spinner-orb");
-    orb0.classList.add("0");
-
-    orb1.classList.add("spinner-orb");
-    orb1.classList.add("1");
-
-    orb2.classList.add("spinner-orb");
-    orb2.classList.add("2");
-
-    target.appendChild(spinner);
-    target.appendChild(button);
-    spinner.appendChild(orb0);
-    orb0.appendChild(orb1);
-    orb1.appendChild(orb2);
+    target.$with(
+        spinner.$with(
+            orb0.$with(
+                orb1.$with(orb2)
+            )
+        ),
+        button
+    );
 
     let removeLoader = async (e) => {
         spinner.style.opacity = "0";
@@ -116,7 +108,7 @@ export async function main(target, modNext = "layout/nothing") {
         orb0.style.left = "50%";
         orb1.style.left = "50%";
         orb2.style.left = "50%";
-        await $mod(modNext, target);
+        await $mod(modNext, spinner.parentNode);
         setTimeout(async () => {
             spinner.remove();
             button.remove();

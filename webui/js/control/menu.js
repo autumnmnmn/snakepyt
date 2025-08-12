@@ -66,53 +66,145 @@ $css(`
     }
 `);
 
-export function main(target, ...args) {
-    let items;
-    if (args.length > 0 && args[0]) {
-        items = args[0];
+function collectItems(element) {
+    const items = [];
+
+    for (let node = element; node; node = node.parentNode) {
+        if (node.$contextMenu !== null && node.$contextMenu !== undefined) {
+            const nodeItems = $actualize(node.$contextMenu.items);
+            for (const item of nodeItems.map($actualize)) {
+                if (Array.isArray(item) && item[0] && Array.isArray(item[0])) {
+                    items.push(...item);
+                }
+                else {
+                    items.push(item);
+                }
+            }
+
+            if (node.$contextMenu.override) {
+                break;
+            }
+        }
     }
 
-    const backdrop = document.createElement("div");
-    backdrop.className = "context-backdrop";
+    return items;
+}
 
-    const menu = document.createElement("div");
-    menu.$ = {};
-    menu.className = "context-menu";
-    menu.setAttribute("role", "menu");
-    menu.setAttribute("aria-orientation", "vertical");
 
-    menu.addEventListener("mouseenter", () => {
-        //menu.firstChild?.blur();
-        menu.focus();
-    });
+const backdrop = document.createElement("div");
+backdrop.className = "context-backdrop";
 
-    const menuItems = Array.isArray(items) ? items : Object.entries(items);
+const menu = document.createElement("div");
+menu.$ = {};
+menu.className = "context-menu";
+menu.setAttribute("role", "menu");
+menu.setAttribute("aria-orientation", "vertical");
 
-    const onBackdropClick = (e) => {
-        if (e.target !== backdrop) return;
-        e.preventDefault();
+menu.addEventListener("mouseenter", () => {
+    //menu.firstChild?.blur();
+    menu.focus();
+});
 
+const onBackdropClick = (e) => {
+    if (e.target !== backdrop) return;
+    e.preventDefault();
+
+    backdrop.style.display = "none";
+    menu.$.previousFocus?.focus();
+
+    // don't make user click twice when clicking away from the context menu
+    const clickTarget = document.elementFromPoint(e.clientX, e.clientY);
+    if (clickTarget) {
+        clickTarget.focus();
+        clickTarget.dispatchEvent(new MouseEvent(e.type, {
+            bubbles: true,
+            cancelable: true,
+            clientX: e.clientX,
+            clientY: e.clientY
+        }));
+    }
+};
+
+backdrop.addEventListener("click", onBackdropClick);
+backdrop.addEventListener("contextmenu", onBackdropClick);
+
+menu.addEventListener("keydown", (e) => {
+    if (!["ArrowDown", "ArrowUp", "j", "k", "Escape"].includes(e.key)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.key === "Escape") {
         backdrop.style.display = "none";
         menu.$.previousFocus?.focus();
+        return;
+    }
 
-        // don't make user click twice when clicking away from the context menu
-        const clickTarget = document.elementFromPoint(e.clientX, e.clientY);
-        if (clickTarget) {
-            clickTarget.focus();
-            clickTarget.dispatchEvent(new MouseEvent(e.type, {
-                bubbles: true,
-                cancelable: true,
-                clientX: e.clientX,
-                clientY: e.clientY
-            }));
-        }
-    };
+    const currentItem = document.activeElement;
+    if (!menu.contains(currentItem)) {
+        menu.firstElementChild?.focus();
+        return;
+    }
 
-    backdrop.addEventListener("click", onBackdropClick);
-    backdrop.addEventListener("contextmenu", onBackdropClick);
+    let nextItem;
+    if (e.key === "ArrowDown" || e.key === "j") {
+        nextItem = currentItem.nextElementSibling || menu.firstElementChild;
+    } else {
+        nextItem = currentItem.previousElementSibling || menu.lastElementChild;
+    }
 
-    menuItems.forEach(item => {
-        if (item === null) {
+    nextItem.focus();
+});
+
+backdrop.appendChild(menu);
+
+const showMenu = (target, position = null) => {
+    document.body.appendChild(backdrop);
+    backdrop.style.display = "block";
+    menu.$.previousFocus = document.activeElement;
+    menu.firstChild?.focus();
+
+    const bounds = target.getBoundingClientRect();
+
+    if (!position) {
+        menu.setAttribute("centered", "");
+        menu.style.left = "";
+        menu.style.top = "";
+        return;
+    }
+
+    const {x,y} = position;
+
+    menu.removeAttribute("centered");
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+
+    const rect = menu.getBoundingClientRect();
+
+    if (rect.right > bounds.right) {
+        menu.style.left = (x - rect.width) + "px";
+    }
+    if (rect.left < bounds.left) {
+        menu.style.left = bounds.left + "px";
+    }
+    if (rect.bottom > bounds.bottom) {
+        menu.style.top = (y - rect.height) + "px";
+    }
+    if (rect.top < bounds.top) {
+        menu.style.top = bounds.top + "px";
+    }
+};
+
+document.addEventListener("contextmenu", (e) => {
+    menu.replaceChildren();
+
+    const items = collectItems(e.target);
+
+    if (items.length === 0) return;
+
+    items.forEach(item => {
+        if (!item) return;
+        if (item === "separator") { // TODO improve this
             const separator = document.createElement("div");
             separator.className = "context-menu-separator";
             menu.appendChild(separator);
@@ -143,82 +235,8 @@ export function main(target, ...args) {
         menu.appendChild(menuItem);
     });
 
-    menu.addEventListener("keydown", (e) => {
-        if (!["ArrowDown", "ArrowUp", "j", "k", "Escape"].includes(e.key)) return;
+    e.preventDefault();
 
-        e.preventDefault();
-
-        if (e.key === "Escape") {
-            backdrop.style.display = "none";
-            menu.$.previousFocus?.focus();
-            return;
-        }
-
-        const currentItem = document.activeElement;
-        if (!menu.contains(currentItem)) {
-            menu.firstElementChild?.focus();
-            return;
-        }
-
-        let nextItem;
-        if (e.key === "ArrowDown" || e.key === "j") {
-            nextItem = currentItem.nextElementSibling || menu.firstElementChild;
-        } else {
-            nextItem = currentItem.previousElementSibling || menu.lastElementChild;
-        }
-
-        nextItem.focus();
-    });
-
-    backdrop.appendChild(menu);
-    target.appendChild(backdrop);
-
-    const showMenu = (position = null) => {
-        backdrop.style.display = "block";
-        menu.$.previousFocus = document.activeElement;
-        menu.firstChild?.focus();
-
-        const bounds = target.getBoundingClientRect();
-
-        if (!position) {
-            menu.setAttribute("centered", "");
-            menu.style.left = "";
-            menu.style.top = "";
-            return;
-        }
-
-        const {x,y} = position;
-
-        menu.removeAttribute("centered");
-        menu.style.left = x + "px";
-        menu.style.top = y + "px";
-
-        const rect = menu.getBoundingClientRect();
-
-        if (rect.right > bounds.right) {
-            menu.style.left = (x - rect.width) + "px";
-        }
-        if (rect.left < bounds.left) {
-            menu.style.left = bounds.left + "px";
-        }
-        if (rect.bottom > bounds.bottom) {
-            menu.style.top = (y - rect.height) + "px";
-        }
-        if (rect.top < bounds.top) {
-            menu.style.top = bounds.top + "px";
-        }
-    };
-
-    target.addEventListener("contextmenu", (e) => {
-        if (e.target !== e.currentTarget) return;
-        e.preventDefault();
-
-        showMenu({x: e.clientX, y: e.clientY});
-    });
-
-    return {
-        replace: false,
-        showMenu
-    };
-}
+    showMenu(e.target, {x: e.clientX, y: e.clientY});
+});
 

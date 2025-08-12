@@ -253,6 +253,8 @@ export async function main(target, text="") {
         output.scrollLeft = editor.scrollLeft;
     });
 
+    editor.$ = { focusable: true, collapsible: false };
+
     // Initial highlight
     updateHighlight();
 

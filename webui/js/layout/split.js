@@ -123,8 +123,11 @@ function focusableDescendent(element, reverse = false) {
             return NodeFilter.FILTER_SKIP;
         });
     if (reverse) {
-        while (walker.nextNode()) { }
-        walker.previousNode();
+        let lastNode = null;
+        while (walker.nextNode()) {
+            lastNode = walker.currentNode;
+        }
+        return lastNode;
     }
     return walker.nextNode();
 }
@@ -142,10 +145,17 @@ export async function main(target, settings) {
 
     var n = content.length;
 
-    const container = document.createElement("div");
-    container.className = "split";
+    const container = $div("split");
     container.setAttribute("orientation", settings.orientation);
     var row = settings.orientation === "row";
+
+    const orientationToggle = [row ? "row->col" : "col->row", () => {
+        row = !row;
+        settings.orientation = row ? "row" : "col";
+        container.setAttribute("orientation", settings.orientation);
+        orientationToggle[0] = row ? "row->col" : "col->row";
+    }];
+
 
     container.addEventListener("keydown", (e) => {
         if (e.target.matches("input, textarea, [contenteditable=\"true\"]")) return;
@@ -158,6 +168,7 @@ export async function main(target, settings) {
             const prevIndex = currentIndex - 1;
             const prev = focusableDescendent(targets[prevIndex], true);
             if (prev) prev.focus();
+            e.stopPropagation();
         }
         else if (e.key === (row ? "l" : "j")) {
             const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
@@ -167,9 +178,10 @@ export async function main(target, settings) {
             const nextIndex = currentIndex + 1;
             const next = focusableDescendent(targets[nextIndex]);
             if (next) next.focus();
+
+            e.stopPropagation();
         }
 
-        e.stopPropagation();
     });
 
     const portions = [];
@@ -227,27 +239,92 @@ export async function main(target, settings) {
 
     const targets = [];
 
+    function collapse(removedIndex, keptIndex) {
+        n = n - 1;
+
+        if (n === 1) {
+            container.parentNode.replaceChildren(...targets[keptIndex].childNodes);
+            return;
+        }
+
+        portions[removedIndex].remove();
+        const removedExtent = parseFloat(portions[removedIndex].style.getPropertyValue("--current-portion"));
+        const keptExtent = parseFloat(portions[keptIndex].style.getPropertyValue("--current-portion"));
+        portions[keptIndex].style.setProperty("--current-portion", `${removedExtent + keptExtent}%`);
+
+        for (let i = removedIndex + 1; i < n; i++) {
+            container.insertBefore(portions[i], splitters[i-1]);
+        }
+
+        portions.splice(removedIndex, 1);
+        targets.splice(removedIndex, 1);
+        splitters[n - 1].remove();
+        splitters.splice(n - 1, 1);
+    }
+
+    function tryCollapse(separatorIndex) {
+        const prior = targets[separatorIndex];
+        const posterior = targets[separatorIndex + 1];
+
+        const priorCollapse = ![...prior.childNodes].some(child => $actualize(child.$preventCollapse));
+        const posteriorCollapse = ![...posterior.childNodes].some(child => $actualize(child.$preventCollapse));
+
+        if (!(priorCollapse || posteriorCollapse)) return;
+
+        collapse(priorCollapse ? separatorIndex : separatorIndex + 1, priorCollapse ? separatorIndex + 1 : separatorIndex);
+    }
+
+    function collapseOptions(separatorIndex) {
+        return () => {
+            const prior = targets[separatorIndex];
+            const posterior = targets[separatorIndex + 1];
+
+            const priorCollapse = ![...prior.childNodes].some(child => $actualize(child.$preventCollapse));
+            const posteriorCollapse = ![...posterior.childNodes].some(child => $actualize(child.$preventCollapse));
+
+            if (!(priorCollapse || posteriorCollapse)) return;
+
+            if (priorCollapse && posteriorCollapse) {
+                return [
+                    [`collapse ${row ? "left" : "top"}`, () => collapse(separatorIndex, separatorIndex + 1)],
+                    [`collapse ${row ? "right" : "bottom"}`, () => collapse(separatorIndex + 1, separatorIndex)]
+                ];
+            }
+
+            return ["collapse", () => collapse(priorCollapse ? separatorIndex : separatorIndex + 1, priorCollapse ? separatorIndex + 1 : separatorIndex)];
+        }
+    }
+
     for (let i = 0; i < n; i++) {
-        const portion = document.createElement("div");
-        portion.className = "portion";
+        const portion = $div("portion");
         if (settings.percents === "equal") {
             portion.style.setProperty("--current-portion", `${100/n}%`);
         } else {
             portion.style.setProperty("--current-portion", `${settings.percents[i]}%`);
         }
 
-        const target = document.createElement("div");
-        target.className = "target";
+        const target = $div("target");
 
         targets.push(target);
         portions.push(portion);
-        portion.appendChild(target);
-        container.appendChild(portion);
+
+        container.$with(portion.$with(target));
 
         if (i === n - 1) continue;
 
         const splitter = document.createElement("div");
         splitter.className = "splitter";
+
+        splitter.$contextMenu = {
+            items: [orientationToggle, collapseOptions(i)]
+        };
+
+        splitter.addEventListener("pointerdown", (e) => {
+            if (e.button !== 1) return;
+
+            tryCollapse(i);
+        });
+
         splitters.push(splitter);
         container.appendChild(splitter);
 
@@ -264,6 +341,10 @@ export async function main(target, settings) {
             targets[i].appendChild(content[i]);
         }
     }
+
+    container.$preventCollapse = () => {
+        return targets.some(target => [...target.childNodes].some(child => $actualize(child.$preventCollapse)));
+    };
 
     return {
         replace: true
