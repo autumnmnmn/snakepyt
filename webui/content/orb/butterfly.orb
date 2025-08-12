@@ -1,0 +1,5 @@
+
+div[style=width:60%;margin:auto;margin-top:10rem;height:100%;] {
+    $bsky/profile { }
+}
+

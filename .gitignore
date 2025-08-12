@@ -1,4 +1,14 @@
-.git
-__pycache__
+
+_design
+in
 out
-scratch.py
+
+sketch/.old
+sketch/scratch.py
+
+.git
+.venv
+__pycache__
+*.egg-info
+build
+

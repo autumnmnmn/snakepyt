@@ -1,0 +1,3 @@
+
+/data/0/code/cpp/llama.cpp/build/bin/llama-server -m /ssd/0/ml_models/gemma-3-27b-it-q4_0.gguf --gpu_layers 1000 -dev CUDA0 --host 0.0.0.0 --port 1312
+

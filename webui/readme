@@ -1,0 +1,5 @@
+old_fic_svelte contains the old .svelte files from the original ficscript UI
+
+the styling and scripts are probably still a useful baseline / reference for a lot of what i want to do with this repo
+
+but i don't want to use svelte, so a little bit of work needs to be done to strip it down to html/css/js
