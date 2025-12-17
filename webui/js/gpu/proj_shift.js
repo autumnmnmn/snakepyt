@@ -24,11 +24,15 @@ export async function main(target) {
     let phi = 0.0;
     let psi = 1.0;
     let c = 0.85;
+    let d = 0.0;
     let iterations = 100;
     let escape_distance = 2;
     let centerX = -0.5;
     let centerY = 0.0;
     let zoom = 4.0;
+    let twist = 0.0;
+    let squoosh_x = 1.0;
+    let squoosh_y = 1.0;
 
     let showTrajectory = false;
 
@@ -51,9 +55,9 @@ export async function main(target) {
         };
     }
 
-    function iteratePolar(x, phi, psi, c) {
+    function iteratePolar(x, phi, psi, c, d) {
         const shifted = projectiveShift(x, phi, psi);
-        return { x: shifted.x - c, y: shifted.y };
+        return { x: shifted.x - c, y: shifted.y - d };
     }
 
     function computeTrajectory(startZ, maxIters, escapeThreshold) {
@@ -65,7 +69,7 @@ export async function main(target) {
             if (magSq > escapeThreshold * escapeThreshold) {
                 break;
             }
-            z = iteratePolar(z, phi, psi, c);
+            z = iteratePolar(z, phi, psi, c, d);
             trajectory.push({ x: z.x, y: z.y });
         }
 
@@ -98,6 +102,18 @@ export async function main(target) {
         },
         {
             type: "number",
+            label: "d",
+            value: d,
+            min: 0,
+            max: 1,
+            step: 0.001,
+            onUpdate: (value, set) => {
+                d = value;
+                render();
+            }
+        },
+        {
+            type: "number",
             label: greek["psi"],
             value: psi,
             min: 0,
@@ -105,6 +121,42 @@ export async function main(target) {
             step: 0.001,
             onUpdate: (value, set) => {
                 psi = value;
+                render();
+            }
+        },
+        {
+            type: "number",
+            label: "twist",
+            value: twist,
+            min: -$tau/2,
+            max: $tau/2,
+            step: 0.001,
+            onUpdate: (value, set) => {
+                twist = value;
+                render();
+            }
+        },
+        {
+            type: "number",
+            label: "squoosh x",
+            value: squoosh_x,
+            min: 0,
+            max: 10,
+            step: 0.001,
+            onUpdate: (value, set) => {
+                squoosh_x = value;
+                render();
+            }
+        },
+        {
+            type: "number",
+            label: "squoosh y",
+            value: squoosh_y,
+            min: 0,
+            max: 10,
+            step: 0.001,
+            onUpdate: (value, set) => {
+                squoosh_y = value;
                 render();
             }
         },
@@ -236,7 +288,7 @@ export async function main(target) {
     });
 
     const uniformBuffer = $gpu.device.createBuffer({
-        size: 10 * 4,
+        size: 14 * 4,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
@@ -307,7 +359,7 @@ export async function main(target) {
 
     function updateUniforms() {
         // TODO: save the same buffer
-        const uniformData = new ArrayBuffer(10 * 4);
+        const uniformData = new ArrayBuffer(14 * 4);
         const view = new DataView(uniformData);
 
         /*
@@ -321,6 +373,8 @@ export async function main(target) {
         max_iter: u32,
         escape_distance: f32,
         psi: f32,
+        d: f32,
+        twist: f32,
         */
 
         // TODO less brittle hard coded numbers jfc
@@ -334,6 +388,10 @@ export async function main(target) {
         view.setUint32(28, iterations, true);
         view.setFloat32(32, escape_distance, true);
         view.setFloat32(36, psi, true);
+        view.setFloat32(40, d, true);
+        view.setFloat32(44, twist, true);
+        view.setFloat32(48, squoosh_x, true);
+        view.setFloat32(52, squoosh_y, true);
 
         $gpu.device.queue.writeBuffer(uniformBuffer, 0, uniformData);
     }

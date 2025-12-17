@@ -5,6 +5,7 @@ out
 
 sketch/.old
 sketch/scratch.py
+sketch/local
 
 .git
 .venv
