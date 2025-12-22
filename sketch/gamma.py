@@ -18,12 +18,10 @@ tau = 2 * math.pi
 # renderer config
 scale_power = 12
 scale = 2 ** scale_power
-origin = -0.5, 0.5
-span = 1, 1
+origin = 0, 0
+span = 15, 15
 stretch = 1, 1
 zooms = [
-        ((0.45, 0.55), (0.3,0.4)),
-        ((0.25, 0.5), (0.25,0.5))
         ]
 
 # particle distribution: sample domain points
@@ -66,6 +64,18 @@ def gamma_approx(z):
         core = math.sqrt(2 * math.pi) * torch.exp(t * torch.log(zpos) - zpos)
         z[~reflect] = core
     return z
+
+
+a = 2.0j
+b = 2.0
+kernel_xs = torch.tensor([a + b, a - b, -a + b, -a - b], device=device)
+kernel_xs -= kernel_xs.mean()
+
+def velu_like(z):
+    acc = z
+    for xQ in kernel_xs:
+        acc += 1 / (z - xQ)
+    return acc
 
 
 def gamma_to_rgb(gz):
@@ -118,8 +128,8 @@ def main_render():
     # compute Gamma(p)
     gz = grid.clone()#gamma_approx(p_positions)
 
-    for i in range(20):
-        gz = gamma_approx(gz)
+    for i in range(2):
+        gz = gamma_approx(gz)#velu_like(gz)
 
         naniter += gz.isnan() * 1.0
 
@@ -131,9 +141,16 @@ def main_render():
         #insert_at_coords(coords, rgb, scratch, mapping)
 
 
-        scratch[:,:,0] = gz.real
-        scratch[:,:,2] = gz.imag
-        scratch[:,:,1] = naniter / naniter.max()
+        #scratch[:,:,0] = gz.real
+        #scratch[:,:,2] = gz.imag
+        #scratch[:,:,1] = naniter / naniter.max()
+
+        scratch[:,:,0] = (torch.angle(gz) + math.pi)
+        scratch[:,:,1] = torch.log(torch.abs(gz) + 1e-12) / 30
+        scratch[:,:,1] /= scratch[:,:,2].max()
+        scratch[:,:,2] = torch.cos(scratch[:,:,0] / 2)
+        scratch[:,:,0] = torch.abs(torch.sin(scratch[:,:,0] / 2))
+
 
         # normalization/centering like plume_c does
         #scratch[:,:,2] -= scratch[:,:,2].mean()

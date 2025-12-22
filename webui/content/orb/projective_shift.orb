@@ -8,7 +8,7 @@ div { $math/math {
     in
 
     z_{n+1} = (r + cos(theta-phi))e^{i theta psi} - c
-    where z_n = r cos theta
+    where z_n = r e^{i theta}
 } }
 
 b{click and drag} to move around, b{scroll} to zoom in and out; b{press F} to go fullscreen
