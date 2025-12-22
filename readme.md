@@ -1,6 +1,6 @@
-# 🐍 🐍 🐍
+the up-to-date version of this project is at: https://tangled.org/ponder.ooo/snakepyt
 
-A python interactive environment, mainly for making various visualizations and simulations using pytorch. also there's a static web ui framework thing
+A python interactive environment, mainly for making various visualizations and simulations using pytorch.
 
 ![examples](examples/collage.png)
 
