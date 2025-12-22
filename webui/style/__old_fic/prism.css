@@ -1,0 +1,85 @@
+/* PrismJS 1.29.0
+    https://prismjs.com/download.html#themes=prism-tomorrow&languages=markup+css+clike+javascript+bash+batch+brainfuck+c+csharp+cpp+coq+fsharp+fortran+gml+gdscript+git+glsl+go+graphql+haskell+hlsl+http+java+json+latex+lisp+markdown+matlab+opencl+powershell+python+r+cshtml+ruby+rust+sql+toml+typescript+typoscript+vim+wasm+wolfram+xml-doc+yaml+zig&plugins=line-numbers */
+code[class*=language-],pre[class*=language-]
+{
+    color: var(--plaintext);
+    background:0 0;
+    font-family:Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
+    font-size:1em;
+    text-align:left;
+    white-space:pre;
+    word-spacing:normal;
+    word-break:normal;
+    word-wrap:normal;
+    line-height:1.5;
+    -moz-tab-size:4;
+    -o-tab-size:4;
+    tab-size:4;
+    -webkit-hyphens:none;
+    -moz-hyphens:none;
+    -ms-hyphens:none;
+    hyphens:none
+}
+
+pre[class*=language-]
+{
+    margin:.5em 0;
+    overflow:auto
+}
+
+:not(pre)>code[class*=language-],pre[class*=language-]
+{
+    background:#2d2d2d
+}
+
+:not(pre)>code[class*=language-]
+{
+    padding:.1em;
+    border-radius:.3em;
+    white-space:normal
+}
+
+pre[class*=language-].line-numbers
+{
+    position:relative;
+    padding-left:3.8em;
+    counter-reset:linenumber
+}
+
+pre[class*=language-].line-numbers>code
+{
+    position:relative;
+    white-space:inherit
+}
+
+.line-numbers .line-numbers-rows
+{
+    position:absolute;
+    pointer-events:none;
+    top:0;
+    font-size:100%;
+    left:-3.8em;
+    width:3em;
+    letter-spacing:-1px;
+    border-right:1px solid #999;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none
+}
+
+.line-numbers-rows>span
+{
+    display:block;
+    counter-increment:linenumber
+}
+
+.line-numbers-rows>span:before
+{
+    content:counter(linenumber);
+    color:#999;
+    display:block;
+    padding-right:.8em;
+    text-align:right
+}
+

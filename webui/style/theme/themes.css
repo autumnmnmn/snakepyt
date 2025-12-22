@@ -1,0 +1,88 @@
+
+*[theme=whiteboard] {
+    --main-background: #EEDDEE;
+    --main-solid: #112233;
+    --main-transparent: #112233DD;
+    --main-faded: #11223344;
+    --main-solid-content: #DDDDDD;
+
+    --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    --main-font: var(--code-font);
+
+    --code-keyword: #8B4F99;
+    --code-string: #B5651D;
+    --code-template-literal: #B5651D;
+    --code-comment: #6A8759;
+    --code-number: #1B5E20;
+    --code-operator: var(--main-solid);
+    --code-punctuation: var(--main-solid);
+    --code-function: #C1670A;
+    --code-property: #0F4C75;
+    --code-bracket: #D68910;
+    --code-builtin: #2E7D32;
+    --code-regex: #B71C1C;
+    --code-identifier: #0F4C75;
+    --code-whitespace: var(--main-solid);
+    --code-unknown: #D32F2F;
+
+    --token-css-at-rule: #8B4F99;
+    --token-css-property: #0F4C75;
+    --token-css-color: #B71C1C;
+    --token-css-number: #1B5E20;
+    --token-css-string: #B5651D;
+    --token-css-url: #B5651D;
+    --token-css-function: #C1670A;
+    --token-css-pseudo: #8B4F99;
+    --token-css-variable: #2E7D32;
+    --token-css-comment: #6A8759;
+    --token-css-important: #D32F2F;
+    --token-css-bracket: #D68910;
+    --token-css-punctuation: var(--main-solid);
+    --token-css-operator: var(--main-solid);
+    --token-css-delimiter: var(--main-solid);
+}
+
+*[theme=blackboard] {
+    --main-background: #112233;
+    --main-solid: #EEDDEE;
+    --main-transparent: #EEDDEEDD;
+    --main-faded: #EEDDEE44;
+    --main-solid-content: #333333;
+
+    --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    --main-font: var(--code-font);
+
+    --code-keyword: #569cd6;
+    --code-string: #ce9178;
+    --code-template-literal: #ce9178;
+    --code-comment: #6a9955;
+    --code-number: #b5cea8;
+    --code-operator: var(--main-solid);
+    --code-punctuation: var(--main-solid);
+    --code-function: #dcdcaa;
+    --code-property: #9cdcfe;
+    --code-bracket: #ffd700;
+    --code-builtin: #4ec9b0;
+    --code-regex: #d16969;
+    --code-identifier: #9cdcfe;
+    --code-whitespace: var(--main-solid);
+    --code-unknown: #f44747;
+
+    --token-css-at-rule: #569cd6;
+    --token-css-property: #9cdcfe;
+    --token-css-color: #ff6b6b;
+    --token-css-number: #b5cea8;
+    --token-css-string: #ce9178;
+    --token-css-url: #ce9178;
+    --token-css-function: #dcdcaa;
+    --token-css-pseudo: #569cd6;
+    --token-css-variable: #4ec9b0;
+    --token-css-identifier: #4ec9b0;
+    --token-css-comment: #6a9955;
+    --token-css-important: #f44747;
+    --token-css-bracket: #ffd700;
+    --token-css-punctuation: var(--main-solid);
+    --token-css-operator: var(--main-solid);
+    --token-css-delimiter: var(--main-solid);
+}
+

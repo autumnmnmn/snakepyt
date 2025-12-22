@@ -2,6 +2,7 @@
 import sys
 import inspect
 import traceback
+import time
 
 from dataclasses import dataclass
 from typing import Optional
@@ -14,6 +15,8 @@ def _log(tag, content, mode, indent):
         tag_color = "\033[31m"
     elif mode == "success":
         tag_color = "\033[92m"
+    elif mode == "warning":
+        tag_color = "\033[33m"
     else:
         tag_color = "\033[96m"
     print(f"{tag_color}{' '*indent}[{tag}]{reset_color} {content}{final_color}")
@@ -113,4 +116,14 @@ def trace(indent=0, source=None):
             line_number = first_line + line_number - 1
         file_end = file.split("/")[-1]
         _log(f"in {file_end} {line_number}", line, mode="error", indent=indent+4)
+
+class Timer(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __enter__(self):
+        self.t = time.perf_counter()
+
+    def __exit__(self, *args):
+        print(f"{self.name}: {time.perf_counter() - self.t}")
 

@@ -1,0 +1,11 @@
+copied from old diffusion experiments notebook
+
+extra deps:
+
+transformers
+diffusers
+jupyterlab
+ipywidgets
+accelerate
+matplotlib
+

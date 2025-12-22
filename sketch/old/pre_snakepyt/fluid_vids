@@ -1,0 +1,2 @@
+ffmpeg -i out/velocities/%06d.png -framerate 24 -c:v libx264 -pix_fmt yuv420p out/velocity.mp4
+ffmpeg -i out/densities/%06d.png -framerate 24 -c:v libx264 -pix_fmt yuv420p out/density.mp4

@@ -14,6 +14,6 @@ A python interactive environment, mainly for making various visualizations and s
 - Strange attractors and other ODEs
 - & Many other dynamical systems
 
-An assortment of renders can be found in the examples folder.
+An assortment of old renders can be found in the examples folder.
 
 

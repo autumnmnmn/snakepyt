@@ -1,0 +1,133 @@
+
+.screenreader {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+math {
+    display: block;
+    line-height: 2em;
+}
+
+mtext {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+msub > :last-child {
+    font-size: 0.8rem;
+    transform: translateY(0.15em);
+}
+
+msup > :last-child {
+    font-size: 0.8rem;
+}
+
+:root {
+    font-size: 1em;
+    line-height: 0;
+}
+
+.full {
+    width: 100%;
+    height: 100%;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+
+    box-sizing: border-box;
+
+    font-family: var(--main-font);
+
+    --panel-margin: 0.5rem;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--main-background);
+}
+
+.target {
+    height: 100%;
+    width: 100%;
+}
+
+pre {
+    font-family: var(--code-font);
+}
+
+button {
+    border: none;
+    border-radius: 0.5em;
+    height: 1.5em;
+    background-color: var(--main-solid);
+    color: var(--main-solid-content);
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+p {
+    color: var(--main-solid);
+    line-height: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+input {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid var(--main-solid);
+    background-color: transparent;
+    color: var(--main-solid);
+}
+
+input:focus {
+    outline: none;
+    background-color: var(--main-faded);
+}
+
+.nothing_old {
+    position: absolute;
+    font-family: var(--code-font);
+    color: var(--main-solid);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 4s infinite linear;
+    animation-delay: 2.5s;
+}
+
+.theme-toggle {
+    position: absolute;
+    bottom: 2em;
+    right: 2em;
+    border: none;
+    border-radius: 50%;
+    width: 4em;
+    height: 4em;
+    background-color: var(--main-solid);
+    cursor: pointer;
+}
+
+@keyframes spin {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
