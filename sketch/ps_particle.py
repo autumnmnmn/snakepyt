@@ -22,34 +22,34 @@ def main():
     tau = 3.14159265358979323 * 2
 
     flow = 8
-    ebb = 0.7952 #- 0.0001
-    phi = 0.122
+    ebb = 1 - (1 / 5) + 0.0001
+    phi = 0
     randomize = False
     random_range = tau #/ 50
     rescaling = False
     show_gridlines = True
 
-    particle_count = 10**5
+    particle_count = 10**6
 
-    iterations = 500001
+    iterations = 200#0001
 
     # 2 ** 9 = 512; 10 => 1024; 11 => 2048
     scale_power = 12
     scale = 2 ** scale_power
 
     origin = 0, -(flow*ebb)/2
-    span = 5, 7
+    span = 10, 10
 
     stretch = 1, 1
 
     zooms = [
-            ((0.5, 1.2), (0.0, 1.0))
+            #((0.5,0.8),(0.1,0.5))
             ]
 
     save_every = 5000
-    agg_every = 1000
+    agg_every = 1#000
     yell_every = 1000
-    grid_on_agg = True
+    grid_on_agg = False#True
 
     quantile_range = torch.tensor([0.05, 0.95], dtype=t_real, device=device)
 
@@ -103,10 +103,10 @@ def run():
     p_colors[:,0] = torch.frac((p_positions.real) * 1 / (span[0]))
     p_colors[:,2] = torch.frac((p_positions.imag) * 1 / (span[1]))
 
-    p_positions.real *= y_max - y_min
-    p_positions.real += y_min
-    p_positions.imag *= x_max - x_min
-    p_positions.imag += x_min
+    p_positions.real *= 0.025 * (y_max - y_min)
+    p_positions.real += y_min + (0.4875) * (y_max - y_min)
+    p_positions.imag *= 0.025 * (x_max - x_min) * 4
+    p_positions.imag += x_min + 0.501 * (x_max - x_min)
 
     #p_colors[:,0] = torch.cos(color_rotation)
     p_colors[:,1] = 1.0 - (p_colors[:,0] + p_colors[:,2])#0.1
@@ -186,13 +186,16 @@ def run():
 
             if iteration % agg_every == 0:
                 p_low, p_high = torch.quantile(temp[:,(2*h//5):(3*h//5),:], quantile_range)
-                save(1 - temp, f"{run_dir}/aggregate/_{iteration:06d}")
-                temp = (temp - p_low) / (p_high - p_low)
+                #    temp[0] += gridlines
+                #    temp[1] += gridlines
+                #    temp[2] += gridlines
+
                 if grid_on_agg:
-                    temp[0] += gridlines
-                    temp[1] += gridlines
-                    temp[2] += gridlines
-                save(1 - temp, f"{run_dir}/aggregate/{iteration:06d}")
+                    save((1 - temp).clamp_(0.0, 1.0) - gridlines, f"{run_dir}/aggregate/_{iteration:06d}")
+                else:
+                    save((1 - temp).clamp_(0.0, 1.0), f"{run_dir}/aggregate/_{iteration:06d}")
+                temp = (temp - p_low) / (1e-7 + p_high - p_low)
+                #save(1 - temp, f"{run_dir}/aggregate/{iteration:06d}")
             #scratch /= scratch.max()
             #scratch = scratch.sqrt().sqrt()
             if show_gridlines:

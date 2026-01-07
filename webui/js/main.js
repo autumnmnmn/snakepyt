@@ -69,6 +69,41 @@ Object.defineProperty(Element.prototype, "$with", {
     enumerable: false
 });
 
+
+Object.defineProperty(Element.prototype, "$attrs", {
+    get() {
+        if (this.__attrsProxy) return this.__attrsProxy;
+
+        const el = this;
+        this.__attrsProxy = new Proxy({}, {
+            get(_, prop) {
+                return el.getAttribute(prop.toString());
+            },
+            set(_, prop, val) {
+                el.setAttribute(prop.toString(), val);
+                return true;
+            },
+            deleteProperty(_, prop) {
+                el.removeAttribute(prop.toString());
+                return true;
+            },
+            has(_, prop) {
+                return el.hasAttribute(prop.toString());
+            },
+            ownKeys() {
+                return Array.from(el.attributes).map(a => a.name);
+            },
+            getOwnPropertyDescriptor(_, prop) {
+                if (el.hasAttribute(prop.toString())) {
+                    return { configurable: true, enumerable: true, value: el.getAttribute(prop.toString()) };
+                }
+                return undefined;
+            }
+        });
+    },
+    enumerable: false
+});
+
 window.$element = (name) => document.createElement(name);
 window.$div = function (classList = "") {
     const div = $element("div");

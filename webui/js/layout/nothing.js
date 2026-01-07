@@ -68,7 +68,7 @@ export async function main(target) {
         items: Object.entries(menuItems)
     };
 
-    const menu = await $mod("control/menu", backdrop, [menuItems]);
+    //const menu = await $mod("control/menu", backdrop, [menuItems]);
 
     backdrop.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === "o") {
@@ -78,7 +78,7 @@ export async function main(target) {
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
 
-            menu.showMenu();
+            document.$showMenu(backdrop);
         }
     });
 

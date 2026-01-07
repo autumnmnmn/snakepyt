@@ -1,5 +1,5 @@
 
-*[theme=whiteboard] {
+*[data-theme=whiteboard] {
     --main-background: #EEDDEE;
     --main-solid: #112233;
     --main-transparent: #112233DD;
@@ -42,7 +42,7 @@
     --token-css-delimiter: var(--main-solid);
 }
 
-*[theme=blackboard] {
+*[data-theme=blackboard] {
     --main-background: #112233;
     --main-solid: #EEDDEE;
     --main-transparent: #EEDDEEDD;

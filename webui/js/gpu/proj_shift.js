@@ -203,6 +203,7 @@ export async function main(target) {
     ]]);
 
     const renderStack = $div("full");
+    renderStack.dataset.name = "renderer";
     renderStack.style.position = "relative";
 
     const gpuModule = await $mod("gpu/webgpu", renderStack);
@@ -214,7 +215,7 @@ export async function main(target) {
     canvas.setAttribute("role", "application");
     canvas.setAttribute("aria-keyshortcuts", "f");
 
-    const compShader = await $gpu.loadShader("proj_shift");
+    const compShader = await $gpu.loadShader("proj_shift", { "pixel_mapping" : "pixel_to_complex" });
     const blitShader = await $gpu.loadShader("blit");
 
     if (!compShader || !blitShader) return;
@@ -257,10 +258,14 @@ export async function main(target) {
     renderStack.appendChild(overlay);
 
     function showControls() {
-        if (controls.parentNode) return;
+        if (!topmost.isConnected) {
+            topmost = renderStack;
+        }
+        else if (topmost.querySelector(".control-panel")) return;
 
         return ["show controls", async () => {
-            await $mod("layout/split", renderStack.parentNode, [{content: [controls, renderStack], percents: [20, 80]}]);
+            const split = await $mod("layout/split", renderStack.parentNode, [{content: [controls, renderStack], percents: [20, 80]}]);
+            topmost = split.topmost;
         }];
     }
 
@@ -269,12 +274,22 @@ export async function main(target) {
         return ["show trajectory", () => {showTrajectory = true}];
     }
 
+    function exitRenderer() {
+        // relying on showControls' topmost check to have occurred before this can be called,
+        // which is true bc that happens while the context menu is built.
+        // this may not remain true if a hotkey is added for exiting w/o opening the context menu
+        const target = topmost.parentNode;
+        target.replaceChildren();
+        $mod("layout/nothing", target);
+    }
+
     renderStack.$preventCollapse = true;
     renderStack.$contextMenu = {
-        items: [showControls, toggleTrajectory]
+        items: [showControls, toggleTrajectory, ["exit", exitRenderer]]
     };
 
-    await $mod("layout/split", target, [{ content: [controls, renderStack], percents: [20, 80]}]);
+    const split = await $mod("layout/split", target, [{ content: [controls, renderStack], percents: [20, 80]}]);
+    let topmost = split.topmost;
 
     let width = canvas.clientWidth;
     let height = canvas.clientHeight;

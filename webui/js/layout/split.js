@@ -9,15 +9,15 @@ $css(`
         padding: 0rem;
     }
 
-    [theme-changed] > .split {
+    [data-theme-changed] > .split {
         padding: 0.5rem;
     }
 
-    .split[orientation=row] {
+    .split[data-orientation=row] {
         flex-direction: row;
     }
 
-    .split[orientation=col] {
+    .split[data-orientation=col] {
         flex-direction: column;
     }
 
@@ -32,12 +32,12 @@ $css(`
         -webkit-user-drag: none;
     }
 
-    .split[orientation=row] > .splitter {
+    .split[data-orientation=row] > .splitter {
         width: 1px;
         cursor: col-resize;
     }
 
-    .split[orientation=col] > .splitter {
+    .split[data-orientation=col] > .splitter {
         height: 1px;
         cursor: row-resize;
     }
@@ -49,48 +49,48 @@ $css(`
         pointer-events: auto;
     }
 
-    .split[orientation=row] > .splitter::before {
+    .split[data-orientation=row] > .splitter::before {
         top: 0;
         left: calc(0px - var(--panel-margin));
         width: calc(var(--panel-margin) * 2);
         height: 100%;
     }
 
-    .split[orientation=col] > .splitter::before {
+    .split[data-orientation=col] > .splitter::before {
         left: 0;
         top: calc(0px - var(--panel-margin));
         height: calc(var(--panel-margin) * 2);
         width: 100%;
     }
 
-    .split[orientation=row] > :first-child {
+    .split[data-orientation=row] > :first-child {
         margin-right: var(--panel-margin);
         width: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split[orientation=col] > :first-child {
+    .split[data-orientation=col] > :first-child {
         margin-bottom: var(--panel-margin);
         height: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split[orientation=row] > :not(.splitter):not(:first-child):not(:last-child) {
+    .split[data-orientation=row] > :not(.splitter):not(:first-child):not(:last-child) {
         margin-left: var(--panel-margin);
         margin-right: var(--panel-margin);
         width: calc(var(--current-portion) - 1px - 2 * var(--panel-margin));
     }
 
-    .split[orientation=col] > :not(.splitter):not(:first-child):not(:last-child) {
+    .split[data-orientation=col] > :not(.splitter):not(:first-child):not(:last-child) {
         margin-top: var(--panel-margin);
         margin-bottom: var(--panel-margin);
         height: calc(var(--current-portion) - 1px - 2 * var(--panel-margin));
     }
 
-    .split[orientation=row] > :last-child {
+    .split[data-orientation=row] > :last-child {
         margin-left: var(--panel-margin);
         width: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split[orientation=col] > :last-child {
+    .split[data-orientation=col] > :last-child {
         margin-top: var(--panel-margin);
         height: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
@@ -146,13 +146,13 @@ export async function main(target, settings) {
     var n = content.length;
 
     const container = $div("split");
-    container.setAttribute("orientation", settings.orientation);
+    container.dataset.orientation = settings.orientation;
     var row = settings.orientation === "row";
 
     const orientationToggle = [row ? "row->col" : "col->row", () => {
         row = !row;
         settings.orientation = row ? "row" : "col";
-        container.setAttribute("orientation", settings.orientation);
+        container.dataset.orientation = settings.orientation;
         orientationToggle[0] = row ? "row->col" : "col->row";
     }];
 
@@ -347,7 +347,8 @@ export async function main(target, settings) {
     };
 
     return {
-        replace: true
+        replace: true,
+        topmost: container
     };
 }
 

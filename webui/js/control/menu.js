@@ -4,10 +4,13 @@ $css(`
         position: absolute;
         margin: 0;
         padding: 0;
+        top: 0;
+        left: 0;
         border: none;
         width: 100%;
         height: 100%;
         display: none;
+        pointer-events: none;
     }
 
     .context-menu {
@@ -19,9 +22,10 @@ $css(`
         font-size: 0.875rem;
         user-select: none;
         z-index: 10;
+        pointer-events: auto;
     }
 
-    .context-menu[centered] {
+    .context-menu[data-centered] {
         position: absolute;
         left: 50%;
         top: 50%;
@@ -100,14 +104,14 @@ menu.className = "context-menu";
 menu.setAttribute("role", "menu");
 menu.setAttribute("aria-orientation", "vertical");
 
-menu.addEventListener("mouseenter", () => {
-    //menu.firstChild?.blur();
-    menu.focus();
-});
+//menu.addEventListener("mouseenter", () => {
+//    //menu.firstChild?.blur();
+//    menu.focus();
+//});
 
 const onBackdropClick = (e) => {
     if (e.target !== backdrop) return;
-    e.preventDefault();
+    //e.preventDefault();
 
     backdrop.style.display = "none";
     menu.$.previousFocus?.focus();
@@ -125,8 +129,15 @@ const onBackdropClick = (e) => {
     }
 };
 
-backdrop.addEventListener("click", onBackdropClick);
-backdrop.addEventListener("contextmenu", onBackdropClick);
+//backdrop.addEventListener("click", onBackdropClick);
+//backdrop.addEventListener("contextmenu", onBackdropClick);
+
+menu.addEventListener("focusout", (e) => {
+    if (menu.contains(e.relatedTarget)) return;
+
+    backdrop.style.display = "none";
+    menu.$.previousFocus?.focus();
+});
 
 menu.addEventListener("keydown", (e) => {
     if (!["ArrowDown", "ArrowUp", "j", "k", "Escape"].includes(e.key)) return;
@@ -161,13 +172,14 @@ backdrop.appendChild(menu);
 const showMenu = (target, position = null) => {
     document.body.appendChild(backdrop);
     backdrop.style.display = "block";
+
     menu.$.previousFocus = document.activeElement;
     menu.firstChild?.focus();
 
     const bounds = target.getBoundingClientRect();
 
     if (!position) {
-        menu.setAttribute("centered", "");
+        menu.dataset.centered = "";
         menu.style.left = "";
         menu.style.top = "";
         return;
@@ -175,7 +187,7 @@ const showMenu = (target, position = null) => {
 
     const {x,y} = position;
 
-    menu.removeAttribute("centered");
+    delete menu.dataset.centered;
     menu.style.left = x + "px";
     menu.style.top = y + "px";
 
@@ -221,6 +233,7 @@ document.addEventListener("contextmenu", (e) => {
         const select = async () => {
             backdrop.style.display = "none";
             menu.$.previousFocus?.focus();
+
             await item[1]();
         };
 
@@ -239,4 +252,49 @@ document.addEventListener("contextmenu", (e) => {
 
     showMenu(e.target, {x: e.clientX, y: e.clientY});
 });
+
+document.$showMenu = (target) => {
+    menu.replaceChildren();
+
+    const items = collectItems(target);
+
+    if (items.length === 0) return;
+
+    items.forEach(item => {
+        if (!item) return;
+        if (item === "separator") { // TODO improve this
+            const separator = document.createElement("div");
+            separator.className = "context-menu-separator";
+            menu.appendChild(separator);
+            return;
+        }
+
+        const menuItem = document.createElement("button");
+        menuItem.className = "context-menu-item";
+        menu.setAttribute("role", "menuItem");
+        menu.setAttribute("tabIndex", "-1");
+
+        menuItem.textContent = item[0];
+
+        const select = async () => {
+            backdrop.style.display = "none";
+            menu.$.previousFocus?.focus();
+
+            console.log("sel");
+            await item[1]();
+        };
+
+        menuItem.onclick = select;
+        menuItem.addEventListener("keydown", (e) => {
+            if (e.key === "o" || e.key === "Enter") {
+                select();
+                e.stopPropagation();
+            }
+        });
+
+        menu.appendChild(menuItem);
+    });
+
+    showMenu(target);
+};
 

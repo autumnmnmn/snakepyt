@@ -136,7 +136,6 @@ export async function main(target, spec) {
     const copyable_value = document.createElement("span");
     copyable_value.innerText = `${spec.value};\n`;
     copyable_value.classList = "copyable-value";
-    label_eq.appendChild(copyable_value);
 
     label_eq.setAttribute("aria-hidden", true);
 
@@ -158,10 +157,24 @@ export async function main(target, spec) {
     field.step = spec.step;
     field.value = spec.value;
 
+    const play_button = $element("button");
+    play_button.innerText = "▶/⏸";
+    // todo alt text
+
+
     const set = (value) => {
         slider.value = value;
         field.value = value;
     }
+
+    const reset_button = $element("button");
+    reset_button.innerText = "⟳";
+    reset_button.label = "reset";
+    reset_button.addEventListener("click", () => {
+        set(spec.value);
+        spec.onUpdate?.(spec.value, set);
+    });
+
 
     slider.addEventListener("input", () => {
         field.value = slider.value;
@@ -175,10 +188,12 @@ export async function main(target, spec) {
         spec.onUpdate?.(field.value, set);
     });
 
-    control.appendChild(label);
-    control.appendChild(label_eq);
-    control.appendChild(field);
-    control.appendChild(slider);
-    target.appendChild(control);
+    target.$with(
+        control.$with(
+            label, label_eq.$with(copyable_value), field,
+            play_button, reset_button,
+            slider
+        )
+    );
 }
 

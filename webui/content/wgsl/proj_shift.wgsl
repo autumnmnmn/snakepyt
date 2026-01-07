@@ -189,6 +189,12 @@ fn hash(seed: u32) -> u32 {
     return x;
 }
 
+fn pcg_hash(x: u32) -> u32 {
+    let state = x * 747796405u + 2891336453u;
+    let word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
 fn random_float(seed: u32) -> f32 {
     return f32(hash(seed)) / 4294967296.0; // 2^32
 }
@@ -202,16 +208,17 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         return;
     }
 
-    var z = pixel_to_complex_inverted_d(px, py);
-    let n_perturbations = 10u;
+    var z = ${pixel_mapping}(px, py);
+    let orig_z = z;
+    let n_perturbations = 1u;
     let escape_threshold = uniforms.escape_distance * uniforms.escape_distance;
 
     var escaped = false;
     var iter = 0u;
     var cavg = f32(0.0);
-    let epsilon = 1.19e-4;
+    let epsilon = 1.19e-6;
 
-    let transient_skip = u32(f32(uniforms.max_iter) * f32(0.9));
+    let transient_skip = u32(f32(uniforms.max_iter) * f32(0.95));
 
     let cosTwist = cos(uniforms.twist);
     let sinTwist = sin(uniforms.twist);
@@ -222,25 +229,23 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
             escaped = true;
             //break;
         }
-        var z_p: array<vec2<f32>, 4>;
-        var df_z_p: array<vec2<f32>, 4>;
-        var abs_df_z_p: array<f32, 4>;
+        var z_p: array<vec2<f32>, 10>;
+        var df_z_p: array<vec2<f32>, 10>;
+        var abs_df_z_p: array<f32, 10>;
         var avg_abs_df_z_p = f32(0.0);
-
 
         var f_z = iterate_polar(z, uniforms.phi, uniforms.psi, uniforms.c, uniforms.d, cosTwist, sinTwist, uniforms.squoosh_x, uniforms.squoosh_y);
 
-        /*
         if (iter >= transient_skip) {
             if (cavg < -10.0) { continue; }
             if (cavg > 10.0) { continue; }
             for (var p = 0u; p < n_perturbations; p = p + 1u) {
-                let rng_seed = hash(px * 1000u + py * 2000u + p * 5000u);
+                let rng_seed = pcg_hash(px + pcg_hash(py << 1)) ^ pcg_hash(p);
                 let random_angle = random_float(rng_seed) * 6.283185307;
                 let perturb_direction = vec2<f32>(cos(random_angle), sin(random_angle));
                 z_p[p] = z + perturb_direction * epsilon;
-                df_z_p[p] = iterate_polar(z, uniforms.phi, uniforms.psi, uniforms.c) - f_z;
-                abs_df_z_p[p] = abs(complex_mag(df_z_p[p]) / epsilon);
+                df_z_p[p] = iterate_polar(z_p[p], uniforms.phi, uniforms.psi, uniforms.c, uniforms.d, cosTwist, sinTwist, uniforms.squoosh_x, uniforms.squoosh_y) - orig_z;
+                abs_df_z_p[p] = abs(complex_mag(df_z_p[p]));
                 avg_abs_df_z_p += abs_df_z_p[p];
             }
 
@@ -248,9 +253,9 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
             cavg = c_avg(cavg, log(avg_abs_df_z_p), f32(iter + 1 - transient_skip));
         }
-        */
 
         z = f_z;
+        //z = avg_abs_df_z_p;
     }
 
     var color: vec4<f32>;
@@ -271,7 +276,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         color = vec4<f32>(r, scaled_mag, b, 1.0);
     }
 
-    //color = vec4<f32>(cavg / 1.0, -cavg / 20.0, -cavg / 20.0, 1.0);
+    color = vec4<f32>(cavg / 10.0, -cavg / 5.0, -cavg / 5.0, 1.0);
 
     textureStore(output_texture, vec2<i32>(i32(px), i32(py)), color);
 }

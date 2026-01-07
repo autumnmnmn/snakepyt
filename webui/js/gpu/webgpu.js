@@ -31,12 +31,24 @@ const device = await adapter.requestDevice();
 const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
 // TODO make more robust
-async function loadShader(shaderName) {
+async function loadShader(shaderName, substitutions = {}) {
     const response = await fetch(`./${shaderName}.wgsl`);
     const shaderSource = await response.text();
-    const module = device.createShaderModule({ code: shaderSource });
+
+    var substitutionFailure = false;
+    const adjustedSource = shaderSource.replace(/\${(\w+)}/g, (match, key) => {
+        if (!(key in substitutions)) {
+            substitutionFailure = true;
+            return "";
+        }
+        else {
+            return substitutions[key];
+        }
+    });
+
+    const module = device.createShaderModule({ code: adjustedSource });
     const info = await module.getCompilationInfo();
-    if (info.messages.some(m => m.type === "error")) {
+    if (info.messages.some(m => m.type === "error") || substitutionFailure) {
         return null;
     }
     return module;

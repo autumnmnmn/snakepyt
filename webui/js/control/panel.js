@@ -9,8 +9,13 @@ $css(`
     background: var(--main-background);
     font-family: var(--main-font);
     color: var(--main-solid);
-    max-width: 300px;
     overflow-y: scroll;
+    height: 100%;
+    width: 100%;
+}
+
+.control-panel > * {
+    max-width: 300px;
 }
 
 .control-panel legend {
