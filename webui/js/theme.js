@@ -2,12 +2,10 @@
 function checkForParentTheme(element, theme) {
     let parent = element.parentElement;
     while (parent) {
-        //if (parent.classList.contains("target")) {
-            const parentTheme = parent.dataset.theme; //getAttribute("theme");
-            //if (!parentTheme) return false;
-            if (parentTheme)
-            return parentTheme !== theme;
-        //}
+        const parentTheme = parent.dataset.theme;
+
+        if (parentTheme) return parentTheme !== theme;
+
         parent = parent.parentElement;
     }
 

@@ -104,34 +104,6 @@ menu.className = "context-menu";
 menu.setAttribute("role", "menu");
 menu.setAttribute("aria-orientation", "vertical");
 
-//menu.addEventListener("mouseenter", () => {
-//    //menu.firstChild?.blur();
-//    menu.focus();
-//});
-
-const onBackdropClick = (e) => {
-    if (e.target !== backdrop) return;
-    //e.preventDefault();
-
-    backdrop.style.display = "none";
-    menu.$.previousFocus?.focus();
-
-    // don't make user click twice when clicking away from the context menu
-    const clickTarget = document.elementFromPoint(e.clientX, e.clientY);
-    if (clickTarget) {
-        clickTarget.focus();
-        clickTarget.dispatchEvent(new MouseEvent(e.type, {
-            bubbles: true,
-            cancelable: true,
-            clientX: e.clientX,
-            clientY: e.clientY
-        }));
-    }
-};
-
-//backdrop.addEventListener("click", onBackdropClick);
-//backdrop.addEventListener("contextmenu", onBackdropClick);
-
 menu.addEventListener("focusout", (e) => {
     if (menu.contains(e.relatedTarget)) return;
 
