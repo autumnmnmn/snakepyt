@@ -72,17 +72,7 @@ export async function main(target) {
 
     canvas.tabIndex = 0;
 
-    canvas.addEventListener("keydown", (e) => {
-        console.log(e);
-        if (e.key === "f") {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            else {
-                canvas.requestFullscreen();
-            }
-        }
-    });
+
 
 
     const context = canvas.getContext("webgpu");

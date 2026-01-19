@@ -249,12 +249,6 @@ export async function main(target) {
 
     overlay.setAttribute("aria-label", "Overlay visualizing the trajectory starting from the point under the cursor.")
 
-    const dot = $svgElement("circle");
-    dot.setAttribute("r", "3")
-    dot.setAttribute("fill", "red");
-    dot.style.display = "block";
-
-    overlay.appendChild(dot);
     renderStack.appendChild(overlay);
 
     function showControls() {
@@ -283,10 +277,53 @@ export async function main(target) {
         $mod("layout/nothing", target);
     }
 
+    function saveFrame() {
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = $element("a");
+            a.href = url;
+            a.download = `ps_web_${Date.now()}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    function saveTrajectory() {
+        if (!showTrajectory) return;
+
+        return ["save trajectory", () => {
+            const svgString = new XMLSerializer().serializeToString(overlay);
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = $element("a");
+            a.href = url;
+            a.download = `ps_traj_${Date.now()}.svg`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }];
+    }
+
     renderStack.$preventCollapse = true;
     renderStack.$contextMenu = {
-        items: [showControls, toggleTrajectory, ["exit", exitRenderer]]
+        items: [
+            showControls,
+            saveTrajectory,
+            ["save frame", saveFrame],
+            toggleTrajectory,
+            ["exit", exitRenderer]
+        ]
     };
+
+    renderStack.addEventListener("keydown", (e) => {
+        if (e.key === "f") {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            else {
+                renderStack.requestFullscreen();
+            }
+        }
+    });
 
     const split = await $mod("layout/split", target, [{ content: [controls, renderStack], percents: [20, 80]}]);
     let topmost = split.topmost;
@@ -472,10 +509,6 @@ export async function main(target) {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        dot.style.display = "block";
-        dot.setAttribute("cx", mouseX);
-        dot.setAttribute("cy", mouseY);
-
         const scale = 4.0 / zoom;
         const aspect = width / height;
 
@@ -559,7 +592,6 @@ export async function main(target) {
         if (!isDragging) return;
         isDragging = false;
         canvas.style.cursor = "crosshair";
-        dot.style.display = "block";
     });
 
     // Wheel - zoom in/out

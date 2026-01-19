@@ -10,6 +10,10 @@ $css(`/* css */
         font-family: "Consolas", "Monaco", "Courier New", monospace;
     }
 
+    .highlight-header {
+        height: 2rem;
+    }
+
     .highlight-toolbar {
         display: flex;
         align-items: center;
@@ -210,6 +214,8 @@ export async function main(target, text="") {
     const container = document.createElement("div");
     container.className = "highlight-container";
 
+    const header = $div("highlight-header");
+
     const content = document.createElement("div");
     content.className = "highlight-content";
 
@@ -224,12 +230,13 @@ export async function main(target, text="") {
     const output = document.createElement("code");
     output.className = "highlight-output";
 
-    preformatted.appendChild(output);
-
-    content.appendChild(editor);
-    content.appendChild(preformatted);
-
-    container.appendChild(content);
+    container.$with(
+        header,
+        content.$with(
+            editor,
+            preformatted.$with(output)
+        )
+    );
 
     function updateHighlight() {
         const code = editor.value;
@@ -254,6 +261,18 @@ export async function main(target, text="") {
     });
 
     editor.$ = { focusable: true, collapsible: false };
+
+    function exit() {
+        const target = container.parentNode;
+        container.remove();
+        $mod("layout/nothing", target);
+    }
+
+    container.$contextMenu = {
+        items: [
+            ["exit", exit ]
+        ]
+    };
 
     // Initial highlight
     updateHighlight();

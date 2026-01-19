@@ -94,6 +94,7 @@ function collectItems(element) {
     return items;
 }
 
+var menuTarget = document.body;
 
 const backdrop = document.createElement("div");
 backdrop.className = "context-backdrop";
@@ -142,7 +143,8 @@ menu.addEventListener("keydown", (e) => {
 backdrop.appendChild(menu);
 
 const showMenu = (target, position = null) => {
-    document.body.appendChild(backdrop);
+    const body = document.fullscreenElement || document.body;
+    body.appendChild(backdrop);
     backdrop.style.display = "block";
 
     menu.$.previousFocus = document.activeElement;
@@ -252,7 +254,6 @@ document.$showMenu = (target) => {
             backdrop.style.display = "none";
             menu.$.previousFocus?.focus();
 
-            console.log("sel");
             await item[1]();
         };
 

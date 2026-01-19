@@ -1,13 +1,14 @@
 
 $css(`
-    .nothing {
+    nothing- {
+        display: block;
         background-color: var(--main-background);
         width: 100%;
         height: 100%;
         border-radius: 0;
     }
 
-    .nothing:focus::before {
+    nothing-:focus::before {
     /*
         outline: 2px solid var(--main-faded);
         outline-offset: -2px;
@@ -27,8 +28,11 @@ $css(`
     }
 `);
 
+customElements.define("nothing-", class extends HTMLElement {});
+
 export async function main(target) {
-    const backdrop = $div("nothing");
+    const backdrop = $element("nothing-");
+    //const backdrop = $div("nothing");
 
     backdrop.$ = {
         focusable: true,
@@ -53,7 +57,7 @@ export async function main(target) {
 
     const menuItems = {
         fractal: load("gpu/proj_shift"),
-        prompt: load("prompt"),
+        //prompt: load("prompt"),
         row2: load("layout/split", [noth2]),
         row3: load("layout/split", [noth3]),
         col2: load("layout/split", [{...noth2, orientation: "col"}]),

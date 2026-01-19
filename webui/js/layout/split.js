@@ -1,6 +1,6 @@
 
 $css(`
-    .split {
+    split- {
         display: flex;
         flex-direction: row;
         height: 100%;
@@ -9,19 +9,19 @@ $css(`
         padding: 0rem;
     }
 
-    [data-theme-changed] > .split {
+    [data-theme-changed] > split- {
         padding: 0.5rem;
     }
 
-    .split[data-orientation=row] {
+    split-[data-orientation=row] {
         flex-direction: row;
     }
 
-    .split[data-orientation=col] {
+    split-[data-orientation=col] {
         flex-direction: column;
     }
 
-    .split > .splitter {
+    split- > divider- {
         background-color: var(--main-faded);
         user-select: none;
         -webkit-user-select: none;
@@ -32,86 +32,73 @@ $css(`
         -webkit-user-drag: none;
     }
 
-    .split[data-orientation=row] > .splitter {
+    split-[data-orientation=row] > divider- {
         width: 1px;
         cursor: col-resize;
     }
 
-    .split[data-orientation=col] > .splitter {
+    split-[data-orientation=col] > divider- {
         height: 1px;
         cursor: row-resize;
     }
 
-    .split > .splitter::before {
+    split- > divider-::before {
         content: "";
         position: relative;
         display: inline-block;
         pointer-events: auto;
     }
 
-    .split[data-orientation=row] > .splitter::before {
+    split-[data-orientation=row] > divider-::before {
         top: 0;
         left: calc(0px - var(--panel-margin));
         width: calc(var(--panel-margin) * 2);
         height: 100%;
     }
 
-    .split[data-orientation=col] > .splitter::before {
+    split-[data-orientation=col] > divider-::before {
         left: 0;
         top: calc(0px - var(--panel-margin));
         height: calc(var(--panel-margin) * 2);
         width: 100%;
     }
 
-    .split[data-orientation=row] > :first-child {
+    split-[data-orientation=row] > :first-child {
         margin-right: var(--panel-margin);
         width: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split[data-orientation=col] > :first-child {
+    split-[data-orientation=col] > :first-child {
         margin-bottom: var(--panel-margin);
         height: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split[data-orientation=row] > :not(.splitter):not(:first-child):not(:last-child) {
+    split-[data-orientation=row] > :not(divider-):not(:first-child):not(:last-child) {
         margin-left: var(--panel-margin);
         margin-right: var(--panel-margin);
         width: calc(var(--current-portion) - 1px - 2 * var(--panel-margin));
     }
 
-    .split[data-orientation=col] > :not(.splitter):not(:first-child):not(:last-child) {
+    split-[data-orientation=col] > :not(divider-):not(:first-child):not(:last-child) {
         margin-top: var(--panel-margin);
         margin-bottom: var(--panel-margin);
         height: calc(var(--current-portion) - 1px - 2 * var(--panel-margin));
     }
 
-    .split[data-orientation=row] > :last-child {
+    split-[data-orientation=row] > :last-child {
         margin-left: var(--panel-margin);
         width: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split[data-orientation=col] > :last-child {
+    split-[data-orientation=col] > :last-child {
         margin-top: var(--panel-margin);
         height: calc(var(--current-portion) - 0.5px - var(--panel-margin));
     }
 
-    .split > .portion {
-        overflow: visible;
+    split- > portion- {
+        overflow: hidden;
         position: relative;
     }
-
-    .split > .portion > .target {
-        content: "";
-        position: absolute;
-        top: 0rem;
-        left: 0rem;
-        width: 100%;
-        height: 100%;
-        background-color: var(--main-background);
-        border-radius: 3px;
-        overflow: hidden;
-    }
-
 `);
 
 function focusableDescendent(element, reverse = false) {
@@ -138,6 +125,10 @@ const defaults = {
     orientation: "row"
 };
 
+customElements.define("split-", class extends HTMLElement {});
+customElements.define("divider-", class extends HTMLElement {});
+customElements.define("portion-", class extends HTMLElement {});
+
 export async function main(target, settings) {
     settings = { ... defaults, ... settings };
 
@@ -145,7 +136,7 @@ export async function main(target, settings) {
 
     var n = content.length;
 
-    const container = $div("split");
+    const container = $element("split-");
     container.dataset.orientation = settings.orientation;
     var row = settings.orientation === "row";
 
@@ -161,22 +152,22 @@ export async function main(target, settings) {
         if (e.target.matches("input, textarea, [contenteditable=\"true\"]")) return;
 
         if (e.key === (row ? "h" : "k")) {
-            const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
+            const currentIndex = portions.findIndex(t => t.contains(document.activeElement));
             if (currentIndex === 0) {
                 return;
             }
             const prevIndex = currentIndex - 1;
-            const prev = focusableDescendent(targets[prevIndex], true);
+            const prev = focusableDescendent(portions[prevIndex], true);
             if (prev) prev.focus();
             e.stopPropagation();
         }
         else if (e.key === (row ? "l" : "j")) {
-            const currentIndex = targets.findIndex(t => t.contains(document.activeElement));
-            if (currentIndex === targets.length - 1) {
+            const currentIndex = portions.findIndex(t => t.contains(document.activeElement));
+            if (currentIndex === portions.length - 1) {
                 return;
             }
             const nextIndex = currentIndex + 1;
-            const next = focusableDescendent(targets[nextIndex]);
+            const next = focusableDescendent(portions[nextIndex]);
             if (next) next.focus();
 
             e.stopPropagation();
@@ -237,13 +228,11 @@ export async function main(target, settings) {
         splitter.addEventListener("pointerdown", startDrag, { passive: false, capture: true });
     }
 
-    const targets = [];
-
     function collapse(removedIndex, keptIndex) {
         n = n - 1;
 
         if (n === 1) {
-            container.parentNode.replaceChildren(...targets[keptIndex].childNodes);
+            container.parentNode.replaceChildren(...portions[keptIndex].childNodes);
             return;
         }
 
@@ -257,14 +246,13 @@ export async function main(target, settings) {
         }
 
         portions.splice(removedIndex, 1);
-        targets.splice(removedIndex, 1);
         splitters[n - 1].remove();
         splitters.splice(n - 1, 1);
     }
 
     function tryCollapse(separatorIndex) {
-        const prior = targets[separatorIndex];
-        const posterior = targets[separatorIndex + 1];
+        const prior = portions[separatorIndex];
+        const posterior = portions[separatorIndex + 1];
 
         const priorCollapse = ![...prior.childNodes].some(child => $actualize(child.$preventCollapse));
         const posteriorCollapse = ![...posterior.childNodes].some(child => $actualize(child.$preventCollapse));
@@ -276,8 +264,8 @@ export async function main(target, settings) {
 
     function collapseOptions(separatorIndex) {
         return () => {
-            const prior = targets[separatorIndex];
-            const posterior = targets[separatorIndex + 1];
+            const prior = portions[separatorIndex];
+            const posterior = portions[separatorIndex + 1];
 
             const priorCollapse = ![...prior.childNodes].some(child => $actualize(child.$preventCollapse));
             const posteriorCollapse = ![...posterior.childNodes].some(child => $actualize(child.$preventCollapse));
@@ -296,24 +284,22 @@ export async function main(target, settings) {
     }
 
     for (let i = 0; i < n; i++) {
-        const portion = $div("portion");
+        const portion = $element("portion-");
         if (settings.percents === "equal") {
             portion.style.setProperty("--current-portion", `${100/n}%`);
         } else {
             portion.style.setProperty("--current-portion", `${settings.percents[i]}%`);
         }
 
-        const target = $div("target");
-
-        targets.push(target);
         portions.push(portion);
 
-        container.$with(portion.$with(target));
+        container.$with(portion);
 
         if (i === n - 1) continue;
 
-        const splitter = document.createElement("div");
-        splitter.className = "splitter";
+        const splitter = $element("divider-");
+        //document.createElement("div");
+        //splitter.className = "splitter";
 
         splitter.$contextMenu = {
             items: [orientationToggle, collapseOptions(i)]
@@ -335,15 +321,15 @@ export async function main(target, settings) {
 
     for (let i = 0; i < n; i++) {
         if (content[i].$isInitializer) {
-            await content[i](targets[i]);
+            await content[i](portions[i]);
         }
         else {
-            targets[i].appendChild(content[i]);
+            portions[i].appendChild(content[i]);
         }
     }
 
     container.$preventCollapse = () => {
-        return targets.some(target => [...target.childNodes].some(child => $actualize(child.$preventCollapse)));
+        return portions.some(target => [...target.childNodes].some(child => $actualize(child.$preventCollapse)));
     };
 
     return {

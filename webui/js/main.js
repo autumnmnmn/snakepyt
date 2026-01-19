@@ -105,9 +105,9 @@ Object.defineProperty(Element.prototype, "$attrs", {
 });
 
 window.$element = (name) => document.createElement(name);
-window.$div = function (classList = "") {
+window.$div = function (className = "") {
     const div = $element("div");
-    div.classList = classList;
+    div.className = className;
     return div;
 }
 
@@ -115,6 +115,7 @@ window.$svgElement = (name) => document.createElementNS("http://www.w3.org/2000/
 window.$mathElement = (name) => document.createElementNS("http://www.w3.org/1998/Math/MathML", name);
 
 window.$tau = 6.283185307179586;
+window.$phi = 1.618033988749894;
 
 window.$actualize = (maybeFunction) => {
     if (typeof maybeFunction === "function") return maybeFunction();
