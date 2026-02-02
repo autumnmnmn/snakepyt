@@ -1,0 +1,16 @@
+
+{
+    "name": "webui",
+    "compatibility_date": "2026-02-02",
+    "assets": {
+        "directory": "../../webui",
+        "binding": "SITE"
+    },
+    "routes": [
+    ],
+    "vars": {
+        "WEBUI_MAIN": "/site/main.html"
+    },
+    "main": "_worker.js"
+}
+

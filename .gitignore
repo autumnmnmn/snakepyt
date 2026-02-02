@@ -7,6 +7,12 @@ sketch/.old
 sketch/scratch.py
 sketch/local
 
+webui/site
+sites/_deploy/wrangler.jsonc
+
+.legacy
+node_modules
+.wrangler
 .git
 .venv
 __pycache__

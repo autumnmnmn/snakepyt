@@ -1,0 +1,17 @@
+
+{
+    "name": "autumn",
+    "compatibility_date": "2026-02-02",
+    "assets": {
+        "directory": "../../webui",
+        "binding": "SITE"
+    },
+    "routes": [
+        { "pattern": "autumn.computer", "custom_domain": true }
+    ],
+    "vars": {
+        "WEBUI_MAIN": "/site/main.html"
+    },
+    "main": "_worker.js"
+}
+

@@ -1,0 +1,19 @@
+
+if [ -z "$1" ]; then
+    exit
+else
+    TARGET="sites/$1"
+fi
+
+ln -s "$(pwd)/$TARGET/content" "./webui/site"
+ln -s "$(pwd)/$TARGET/wrangler.jsonc" "./sites/_deploy/wrangler.jsonc"
+
+cd sites/_deploy || exit
+
+npx wrangler deploy
+
+cd - || exit
+
+rm webui/site
+rm sites/_deploy/wrangler.jsonc
+

@@ -127,7 +127,10 @@ def run():
         global direction
         #return blus(p, ones) - ones
         if randomize:
-            direction = flow * torch.polar(ones.real, (random() * random_range - random_range / 2) * ones.real)
+            direction = flow * torch.polar(
+                ones.real,
+                (random() * random_range - random_range / 2) * ones.real
+            )
         result = blus(p, direction, phi) - direction * ebb
         res_abs = result.abs()
         if rescaling:
@@ -191,7 +194,10 @@ def run():
                 #    temp[2] += gridlines
 
                 if grid_on_agg:
-                    save((1 - temp).clamp_(0.0, 1.0) - gridlines, f"{run_dir}/aggregate/_{iteration:06d}")
+                    save(
+                        (1 - temp).clamp_(0.0, 1.0) - gridlines,
+                        f"{run_dir}/aggregate/_{iteration:06d}"
+                    )
                 else:
                     save((1 - temp).clamp_(0.0, 1.0), f"{run_dir}/aggregate/_{iteration:06d}")
                 temp = (temp - p_low) / (1e-7 + p_high - p_low)

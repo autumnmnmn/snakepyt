@@ -105,11 +105,11 @@ decoder_dim_scale = 2 ** 3
 variance_range = (0.00085, 0.012)
 
 
-seed = lambda run, meta: 2835723 + run
+seed = lambda run, meta: 23333 + run
 
 meta_count = 1
 
-width, height = 16, 16
+width, height = 16, 20
 
 steps = 50
 run_count = 10
@@ -117,16 +117,19 @@ run_count = 10
 timestep_power = 1
 timestep_range = (0, 999)
 
-# TODO prompts are now in sketch/local/prompts, should be simple enough to fetch them
+from sketch.local.prompts import *
 
 empty_p = ""
 
 prompts = {
-    "encoder_1": [p3, p3],
+    "encoder_1": [p8, p3],
     "encoder_2": None,
     "encoder_2_pooled": None
 }
 _lerp = lambda t, a, b: t * b + (1-t) * a
+
+clip_skip = lambda r, m: 0
+clip_skip_2 = lambda r, m: 0
 
 combine_predictions = lambda s,r: scaled_CFG(
     difference_scales = [
@@ -145,7 +148,7 @@ _scale = lambda step, scale: _lerp(step / (steps - 1), scale / steps, 0.1 * scal
 a,b,c = -7, 10, 15
 #combine_predictions = lambda step, run: lambda p, n: _scale(step, a + c * run / (run_count-1)) * (n - p[0]) + _scale(step, b - c * run / (run_count-1)) * (n - p[1])
 #combine_predictions = lambda step, run: lambda p, n: _scale(step, 4) * (n - p[1]) + _scale(step, 2.5) * (p[0] - n)
-combine_predictions = lambda step, run: lambda p, n: _scale(step, 3) * (n - p[0])
+combine_predictions = lambda step, run: lambda p, n: _scale(step, 3) * (n - p[0]) * 0.5 + _scale(step, 3) * (n - p[1]) * 0.5
 #combine_predictions = lambda step, run: lambda p, n: _scale(step, _lerp(step/steps, 0.0, 0.0)) * (n - p[0]) + _scale(step, 2) * (n - p[1])
 
 
@@ -154,7 +157,7 @@ diffusion_method = "tnr"
 solver_step = euler_step
 
 save_raw = lambda run, step: False
-save_approximates = lambda run, step: True
+save_approximates = lambda run, step: False #step % 5 == 0
 save_final = True
 
 def pre_step(step, latents):
@@ -235,6 +238,21 @@ def run(run_id):
     diffusion_timesteps = linspace_timesteps(steps+1, timestep_range[1], timestep_range[0], timestep_power)
 
     noise_predictor_batch_size = len(prompts["encoder_1"])
+
+    enc1 = prompt_encoder.text_encoder.text_model.encoder
+    enc2 = prompt_encoder.text_encoder_2.text_model.encoder
+
+    if not hasattr(enc1, "___orig_layers"):
+        enc1.___orig_layers = enc1.layers
+
+    if not hasattr(enc2, "___orig_layers"):
+        enc2.___orig_layers = enc2.layers
+
+    kept_layers = len(enc1.___orig_layers) - clip_skip(run_id, meta_id)
+    kept_layers_2 = len(enc2.___orig_layers) - clip_skip_2(run_id, meta_id)
+
+    enc1.layers = torch.nn.ModuleList(enc1.___orig_layers[:kept_layers])
+    enc2.layers = torch.nn.ModuleList(enc2.___orig_layers[:kept_layers_2])
 
     (all_penult_states, enc2_pooled) = prompt_encoder.encode(prompts["encoder_1"], prompts["encoder_2"], prompts["encoder_2_pooled"])
 

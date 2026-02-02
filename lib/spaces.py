@@ -33,9 +33,22 @@ def draw_points_2d(coords, colors, canvas, mapping):
     coords_filtered[0] *= (h-1) / (y_max - y_min)
     indices = coords_filtered.long()
 
-    canvas[:,indices[0],indices[1]] = colors_filtered
+    #canvas[:,indices[0],indices[1]] = colors_filtered
 
     #canvas.index_put_((indices[0],indices[1]), colors_filtered, accumulate=True)
+
+
+    C, H, W = canvas.shape
+    N = indices.shape[1]
+
+    # expand indices for channel dimension
+    channel_idx = torch.arange(C, device=canvas.device).unsqueeze(1).expand(-1, N)
+    row_idx     = indices[0].unsqueeze(0).expand(C, N)
+    col_idx     = indices[1].unsqueeze(0).expand(C, N)
+
+    # now index_put_ with accumulate
+    canvas.index_put_((channel_idx, row_idx, col_idx), colors_filtered, accumulate=True)
+
 
 def dotted_lines_2d(coord_pairs, colors, n_dots, canvas, mapping):
     ((x_min,x_max), (y_min,y_max)), (h,w) = mapping
