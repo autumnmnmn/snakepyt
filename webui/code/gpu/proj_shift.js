@@ -504,8 +504,12 @@ export async function main(target) {
         const scale = 4.0 / uniforms.vars.zoom.value;
         const cMouse = c.fromPixel(pMouse, dims, center, scale);
 
-        // Zoom factor - negative deltaY means zoom in
-        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        const isTrackpad = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
+        const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;
+
+        // negative deltaY means zoom in
+        const zoomFactor = e.deltaY > 0 ? 1.0 - zoomFactorDiff : 1.0 + zoomFactorDiff;
+
         uniforms.vars.zoom.value *= zoomFactor;
 
         // Adjust center to keep mouse position fixed in complex plane
