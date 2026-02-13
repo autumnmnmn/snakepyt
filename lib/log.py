@@ -3,27 +3,27 @@ import sys
 import inspect
 import traceback
 import time
+import readline
 
 from dataclasses import dataclass
 from typing import Optional
 
-reset_color = "\033[0m"
+from lib.ansi import codes as ac
+
+_tag_colors = {
+    "error": ac.ansi(ac.fg("red")),
+    "success": ac.ansi(ac.bright_fg("green")),
+    "warning": ac.ansi(ac.fg("yellow")),
+    "standard": ac.ansi(ac.fg("cyan")),
+}
 
 def _log(tag, content, mode, indent):
-    final_color = reset_color
-    if mode == "error":
-        tag_color = "\033[31m"
-    elif mode == "success":
-        tag_color = "\033[92m"
-    elif mode == "warning":
-        tag_color = "\033[33m"
-    else:
-        tag_color = "\033[96m"
-    print(f"{tag_color}{' '*indent}[{tag}]{reset_color} {content}{final_color}")
+    tag_color = _tag_colors.get(mode, _tag_colors["standard"])
+    print(f"{tag_color}{' '*indent}[{tag}]{ac.reset} {content}{ac.reset}")
 
 def _input(prompt, mode, indent):
-    tag_color = "\033[35m"
-    return input(f"{tag_color}{' '*indent}{prompt} {reset_color}")
+    tag_color = ac.ansi(ac.fg("magenta"))
+    return input(f"{tag_color}{' '*indent}{prompt} {ac.reset}")
 
 
 @dataclass
@@ -50,8 +50,10 @@ class Logger:
             tag = self._tag
         if tag is None:
             callsite = inspect.stack()[1]
-            filename = callsite[1].split("/")[-1]
-            tag = f"{filename} {callsite[2]}"
+            filepath = callsite[1]
+            line_number = callsite[2]
+            filename = filepath.split("/")[-1]
+            tag = ac.link(f"file://{filepath}#{line_number}", f"{filepath} {line_number}")
         _log(tag, content, mode, indent)
         return self
 
@@ -73,7 +75,8 @@ class Logger:
                     # TODO fix this!!
                     _log(f"SNAKEPYT", "TRACING ERROR", mode="error", indent=self._indent+8)
             file_end = file.split("/")[-1]
-            _log(f"in {file_end} {line_number}", line, mode="error", indent=self._indent+4)
+            frame_tag = ac.link(f"file://{file}#{line_number}", f"{file_end} {line_number}")
+            _log(f"in {frame_tag}", line, mode="error", indent=self._indent+4)
         return self
 
     def log(self, content, mode=None, indent=None, tag=None):
@@ -99,7 +102,8 @@ def inner_log(source, indent):
             lines, first_line = inspect.getsourcelines(source)
             line_number += first_line - 1
         filename = file.split("/")[-1]
-        _log(f"{filename} {line_number}", content, mode, indent)
+        tag = ac.link(f"file://{file}#{line_number}", f"{filename} {line_number}")
+        _log(tag, content, mode, indent)
     return log
 
 
@@ -115,6 +119,7 @@ def trace(indent=0, source=None):
             line = lines[line_number-1].strip()
             line_number = first_line + line_number - 1
         file_end = file.split("/")[-1]
+        frame_tag = ac.link(f"file://{file}#{line_number}", f"in {file_end} {line_number}")
         _log(f"in {file_end} {line_number}", line, mode="error", indent=indent+4)
 
 class Timer(object):

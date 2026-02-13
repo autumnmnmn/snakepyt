@@ -5,15 +5,17 @@ else
     TARGET="sites/$1"
 fi
 
-ln -s "$(pwd)/$TARGET/content" "./webui/site"
+mkdir sites/_deploy/content
+cp -ans "$(pwd)/$TARGET"/content/* sites/_deploy/content/
+cp -ans "$(pwd)"/webui/* sites/_deploy/content/
+
 ln -s "$(pwd)/$TARGET/wrangler.jsonc" "./sites/_deploy/wrangler.jsonc"
 
 cd sites/_deploy || exit
 
-npx wrangler dev
+npx wrangler dev --live-reload --ip 0.0.0.0 --port 1313 --local-protocol https
 
 cd - || exit
 
-rm webui/site
 rm sites/_deploy/wrangler.jsonc
-
+rm -rf sites/_deploy/content

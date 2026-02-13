@@ -4,6 +4,16 @@ from PIL import Image
 from safetensors.torch import save_file as sft_save
 import io
 
+class AttrDict(dict):
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
 def badfunc():
     return 1 / 0
 

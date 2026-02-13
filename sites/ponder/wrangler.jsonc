@@ -3,14 +3,14 @@
     "name": "ponder",
     "compatibility_date": "2026-02-02",
     "assets": {
-        "directory": "../../webui",
+        "directory": "content",
         "binding": "SITE"
     },
     "routes": [
         { "pattern": "ponder.ooo", "custom_domain": true }
     ],
     "vars": {
-        "WEBUI_MAIN": "/site/main.html"
+        "WEBUI_MAIN": "/main.html"
     },
     "main": "_worker.js"
 }

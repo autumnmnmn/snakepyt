@@ -68,8 +68,8 @@ def persistent():
     model_path = "/ssd/0/ml_models/ql/hf-diff/stable-diffusion-xl-base-0.9"
 
     main_device = "cuda:0"
-    decoder_device = "cuda:1"
-    clip_device = "cuda:1"
+    decoder_device = "cuda:0"
+    clip_device = "cuda:0"
 
     main_dtype = torch.float64
     noise_predictor_dtype = torch.float16

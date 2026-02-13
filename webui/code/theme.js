@@ -12,9 +12,23 @@ function checkForParentTheme(element, theme) {
     return false;
 }
 
+function getOppositeTheme(theme) {
+    if (theme === "blackboard") return "whiteboard";
+    if (theme === "whiteboard") return "blackboard";
+    return theme;
+}
+
 export function main(target, initialTheme = null) {
     const storedTheme = localStorage.getItem("theme");
-    let theme = initialTheme || storedTheme || "blackboard";
+
+    let theme = storedTheme || "blackboard";
+
+    if (initialTheme === "toggle") {
+        theme = getOppositeTheme(theme);
+    } else {
+        theme = initialTheme || theme;
+    }
+
     target.dataset.theme = theme;
 
     if (target === document.body) {

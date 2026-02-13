@@ -4,7 +4,6 @@ $css(`
         color: var(--main-solid);
         line-height: 1.5rem;
         height: 100%;
-        overflow-y: scroll;
     }
 `);
 
@@ -16,6 +15,7 @@ export async function main(target, orb) {
     const buildModule = await import(`/code/code/orb/build.js`);
 
     const parsed = await parserModule.parse(orb);
+
 
     //await parserModule.debugParse("test.orb");
 

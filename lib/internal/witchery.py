@@ -22,11 +22,13 @@ class _Errs(metaclass=Errs):
     NON_DICT_RETURN = "fn dumped a non-dict"
 
 def _modify_to_dump_locals(fn, fn_source, deftime_globals, log):
-    instructions = dis.get_instructions(fn)
-    for instruction in instructions:
-        if instruction.opcode == dis.opmap["RETURN_VALUE"]:
-            return (False, _Errs.FOUND_RETURN)
-    fn_source = fn_source
+    #instructions = dis.get_instructions(fn)
+    #for instruction in instructions:
+    #    if instruction.opcode == dis.opmap["RETURN_VALUE"]:
+    #        return (False, _Errs.FOUND_RETURN)
+    #fn_source = fn_source
+    # TODO this doesn't work right if the function returns but my hacky detection for that
+    # (the disassembly stuff above) no longer works
     fn_source_modified = f"{fn_source}\n    return locals()"
     sandbox = {}
     try:

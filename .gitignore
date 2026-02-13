@@ -8,7 +8,8 @@ sketch/scratch.py
 sketch/local
 
 webui/site
-sites/_deploy/wrangler.jsonc
+sites/_deploy
+sites/local
 
 .legacy
 node_modules

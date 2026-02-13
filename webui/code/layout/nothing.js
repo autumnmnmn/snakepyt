@@ -24,7 +24,8 @@ $css(`
         padding-left: 0.4em;
         top: 1em;
         left: 1em;
-        position: absolute;
+        position: relative;
+        display: block;
     }
 `);
 

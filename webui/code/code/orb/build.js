@@ -13,7 +13,7 @@ export async function build(target, nodes, source, inline=false) {
 
         if (tag === TEXT) {
             const span = document.createElement("span");
-            span.innerText = source.substring(node.content.start, node.content.end + 1);
+            span.textContent = source.substring(node.content.start, node.content.end + 1);
             if (inlineEnded && /\w/.test(span.innerText[0])) {
                 segment.appendChild(document.createTextNode(" "));
             }
