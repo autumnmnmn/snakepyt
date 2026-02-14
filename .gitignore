@@ -1,15 +1,10 @@
 
 _design
-in
-out
 
-sketch/.old
-sketch/scratch.py
-sketch/local
+pyt/sketch
 
-webui/site
-sites/_deploy
-sites/local
+webui/sites/_deploy
+webui/sites/local
 
 .legacy
 node_modules

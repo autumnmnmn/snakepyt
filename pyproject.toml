@@ -1,0 +1,11 @@
+
+[project]
+name = "snakepyt"
+version = "0.2"
+
+[tool.setuptools]
+packages = ["pyt", "pyt.lib"]
+
+[project.scripts]
+pyt = "pyt.repl:main"
+

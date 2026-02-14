@@ -1,0 +1,22 @@
+
+if [ -z "$1" ]; then
+    exit
+else
+    TARGET="sites/$1"
+fi
+
+mkdir sites/_deploy/content
+cp -ans "$(pwd)/$TARGET"/content/* sites/_deploy/content/
+cp -ans "$(pwd)"/common/* sites/_deploy/content/
+
+ln -s "$(pwd)/$TARGET/wrangler.jsonc" "./sites/_deploy/wrangler.jsonc"
+
+cd sites/_deploy || exit
+
+npx wrangler deploy
+
+cd - || exit
+
+rm sites/_deploy/wrangler.jsonc
+rm -rf sites/_deploy/content
+
