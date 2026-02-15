@@ -7,7 +7,7 @@ def establish_scheduler():
 
 def handle_persistent(session, sketch_name, persistent_fn, module_globals, log, sources):
     import hashlib
-    from pyt.lib.core import try_dump_locals
+    from pyt.core import try_dump_locals
 
     # TODO better to hash the source code tbh
     bytecode_hash = hashlib.sha256(persistent_fn.__code__.co_code).hexdigest()
@@ -31,13 +31,14 @@ def run(session, fn, arg, partial_id, outer_scope, log, sources, finalizer=None)
     from time import perf_counter
 
     from pyt.lib.log import inner_log
-    from pyt.lib.core import try_dump_locals
+    from pyt.core import try_dump_locals
 
     scope = dict(outer_scope)
     schedule, schedule_fn = establish_scheduler()
     scope["schedule"] = schedule_fn
     scope["print"] = inner_log(source=fn, indent=4)
-    scope["pyt_in"] = session.env.PYT_IN
+    scope["_print"] = print
+    scope["pyt_in"] = session.env.IN
     run_id = partial_id + (arg,)
 
     args = [] if arg is None else [arg]

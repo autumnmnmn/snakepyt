@@ -4,10 +4,10 @@ import sys
 
 from pathlib import Path
 
-from pyt.lib.core.commands import command_registrar, builtin_commands
+from pyt.core.commands import command_registrar, builtin_commands
 from pyt.lib.ansi import codes as ac
 from pyt.lib.log import Logger
-from pyt.lib.core import AttrDict, lsnap
+from pyt.core import AttrDict, lsnap
 
 def _find_pytrc():
     config_home = os.getenv("XDG_CONFIG_HOME")
@@ -71,14 +71,14 @@ class PytSession:
     def _get_paths(self):
         # priority order: cli > pytrc > env > default
 
-        self.env.PYT_OUT = self.cli_args.pyt_out or self.env.get("PYT_OUT") or os.getenv("PYT_OUT") or None
-        self.env.PYT_IN = self.cli_args.pyt_in or self.env.get("PYT_IN") or os.getenv("PYT_IN") or Path(".")
-        self.env.PYT_SKETCH = self.cli_args.pyt_sketch or self.env.get("PYT_SKETCH") or os.getenv("PYT_SKETCH") or Path(".")
+        self.env.OUT = self.cli_args.pyt_out or self.env.get("OUT") or os.getenv("PYT_OUT") or None
+        self.env.IN = self.cli_args.pyt_in or self.env.get("IN") or os.getenv("PYT_IN") or Path(".")
+        self.env.SKETCH = self.cli_args.pyt_sketch or self.env.get("SKETCH") or os.getenv("PYT_SKETCH") or Path(".")
         self.env.PYTHON_PATH = self.cli_args.python_path or self.env.get("PYTHON_PATH") or os.getenv("PYTHON_PATH") or sys.executable
 
-        if isinstance(self.env.PYT_OUT, str): self.env.PYT_OUT = Path(self.env.PYT_OUT)
-        if isinstance(self.env.PYT_IN, str): self.env.PYT_IN = Path(self.env.PYT_IN)
-        if isinstance(self.env.PYT_SKETCH, str): self.env.PYT_SKETCH = Path(self.env.PYT_SKETCH)
+        if isinstance(self.env.OUT, str): self.env.OUT = Path(self.env.OUT)
+        if isinstance(self.env.IN, str): self.env.IN = Path(self.env.IN)
+        if isinstance(self.env.SKETCH, str): self.env.SKETCH = Path(self.env.SKETCH)
         if isinstance(self.env.PYTHON_PATH, str): self.env.PYTHON_PATH = Path(self.env.PYTHON_PATH)
 
     def load_pytrc(self):
@@ -98,6 +98,8 @@ class PytSession:
                     code = compile(rcfile.read(), filename=str(pytrc), mode="exec")
                     exec(code, namespace)
                 log("loaded successfully", mode="info")
+            except (KeyboardInterrupt, SystemExit):
+                raise
             except:
                 log("encountered error in user configuration", mode="error")
                 log.indented().trace()
@@ -146,6 +148,8 @@ class PytSession:
     def update_class(self, new_class):
         try:
             new_instance = new_class(self.cli_args)
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except:
             self.log.trace()
             self.log("New session constructor failed. Session will not be updated.", mode="error")

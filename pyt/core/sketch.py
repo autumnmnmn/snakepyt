@@ -2,7 +2,7 @@
 import ast
 import inspect
 
-from pyt.lib.core.core import Errs, errs
+from pyt.core.core import Errs, errs
 
 class ReturnLocalsWalker(ast.NodeTransformer):
     def visit_Return(self, node):
@@ -72,7 +72,7 @@ def modify_to_dump_locals(func, source, deftime_globals, log):
 
         new_func = sandbox[tree.body[0].name]
         new_func.__code__ = new_func.__code__.replace(co_firstlineno = func.__code__.co_firstlineno)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         raise
     except:
         log.trace()
@@ -88,7 +88,7 @@ def try_dump_locals(fn, fn_source, args, kwargs, deftime_globals, log):
     try:
         scheduled_function = fn_or_err
         res = scheduled_function(*args, **kwargs)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         raise
     except:
         log.indented().trace()

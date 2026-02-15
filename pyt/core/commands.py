@@ -1,18 +1,88 @@
 
-from pyt.lib.core import lsnap
+import shlex
+
+from argparse import ArgumentParser, ArgumentError
+
+from pyt.core import lsnap
+from pyt.lib.ansi import codes as ac
 
 builtin_commands = []
 
 def command_registrar(command_group):
-    def register_command(*aliases):
+    def register_command(*aliases, arg_parser=None):
         alias_set = set(aliases)
         def _register_command(behavior):
-            command_group.append((alias_set, behavior))
+            _behavior = behavior
+            if isinstance(arg_parser, ArgumentParser):
+                arg_parser.exit_on_error = False
+                def _behavior(session, args):
+                    try:
+                        _args = arg_parser.parse_args(shlex.split(args))
+                    except ArgumentError:
+                        session.log(arg_parser.format_usage(), mode="info", indent=4)
+                        raise
+                    return behavior(session, _args)
+            command_group.append((alias_set, _behavior))
             return behavior
         return _register_command
     return register_command
 
 _builtin = command_registrar(builtin_commands)
+
+test_parser = ArgumentParser("test")
+test_parser.add_argument("--foo", dest="bar", type=str, default="baz")
+
+@_builtin("test", arg_parser=test_parser)
+def cmd_test(session, args):
+    print(args.bar)
+
+new_parser = ArgumentParser("new")
+new_parser.add_argument("name", type=str, help="Name of the new sketch")
+new_parser.add_argument("--template", "-t", type=str, default=None,
+                        help="Template to use (verbose, basic, or path to file)")
+
+@_builtin("new", arg_parser=new_parser)
+def cmd_new(session, args):
+    import shutil
+    from pathlib import Path
+
+    log = session.log
+
+    template = args.template or session.env.get("TEMPLATE") or "verbose"
+
+    if template in ["verbose", "basic"]:
+        from importlib import import_module
+        template_module = import_module(f"pyt.core.templates.{template}")
+        template = Path(template_module.__file__)
+    elif isinstance(template, Path):
+        if not template.exists():
+            log(f"template file not found: {template}", mode="error")
+            return
+    elif isinstance(template, str):
+        try:
+            template = Path(template)
+        except:
+            log("template could not be interpreted as a path", mode="error")
+            return
+        if not template.exists():
+            log(f"template file not found: {template}", mode="error")
+            return
+    else:
+        log("template could not be interpreted as a path", mode="error")
+        return
+
+    sketch_dir = session.env.SKETCH
+    new_sketch = sketch_dir / f"{args.name}.py"
+
+    if new_sketch.exists():
+        log(f"sketch {args.name} already exists", mode="error")
+        return
+
+    shutil.copy(template, new_sketch)
+    sketch_link = ac.link(f"file://{new_sketch}", new_sketch.name)
+    template_link = ac.link(f"file://{template}", template.name)
+
+    log(f"created {sketch_link} from template {template_link}", mode="success")
 
 @_builtin("flush")
 def cmd_flush(session, args):
@@ -48,18 +118,20 @@ def cmd_reload(session, args):
     # TODO find a robust way to track which files have
     # actually changed
     for name, module in list(sys.modules.items()):
-        if name.startswith("pyt.lib"):
+        if name.startswith("pyt"):
             try:
                 reload(module)
                 log(f"reloaded {name}")
-                if name == "pyt.lib.core.session":
+                if name == "pyt.core.session":
                     session_reload = True
+            except (KeyboardInterrupt, SystemExit):
+                raise
             except:
                 log.indented().trace()
                 log(f"failed to reload {name}", mode="error")
 
     if session_reload:
-        new_session_module = sys.modules["pyt.lib.core.session"]
+        new_session_module = sys.modules["pyt.core.session"]
         session.update_class(new_session_module.PytSession)
 
 
@@ -135,7 +207,7 @@ def cmd_run(session, args):
     from time import perf_counter
     from importlib import import_module
 
-    from pyt.lib.core.run import run, handle_persistent
+    from pyt.core.run import run, handle_persistent
 
     sketch_name, remainder = lsnap(args)
 
@@ -146,7 +218,7 @@ def cmd_run(session, args):
         module_name = f"{sketch_name}"
         if module_name in sys.modules:
             del sys.modules[module_name]
-        sys.path.insert(0, str(session.env.PYT_SKETCH))
+        sys.path.insert(0, str(session.env.SKETCH))
         sketch = import_module(module_name)
         sys.path.pop(0)
     except ModuleNotFoundError:
@@ -156,6 +228,8 @@ def cmd_run(session, args):
     except KeyboardInterrupt:
         log("aborted", mode="info").blank()
         return
+    except SystemExit:
+        raise
     except:
         log.indented().trace()
         return
@@ -175,10 +249,10 @@ def cmd_run(session, args):
 
     sketch.__dict__.update(session.persistent_state)
 
-    pyt_out = session.env.PYT_OUT
+    pyt_out = session.env.OUT
 
     if not pyt_out:
-        session.log("no output directory has been specified.\nset via --out flag, or session.env.PYT_OUT in your ~/.config/pytrc.py, or by setting the PYT_OUT environment variable", mode="error")
+        session.log("no output directory has been specified.\nset via --out flag, or session.env.OUT in your ~/.config/pytrc.py, or by setting the PYT_OUT environment variable", mode="error")
         session.log("aborting.", mode="error")
         return
 

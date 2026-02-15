@@ -1,11 +1,11 @@
 
 import os
 
-from argparse import ArgumentParser as ArgParser
+from argparse import ArgumentParser
 
-from pyt.lib.core import PytSession
+from pyt.core import PytSession
 
-parser = ArgParser("snakepyt")
+parser = ArgumentParser("snakepyt")
 PytSession.define_cli_args(parser)
 
 cli_args = parser.parse_args()
@@ -22,7 +22,7 @@ def main():
     while session.repl_continue:
         try:
             message = session.log.input(username)
-        except (KeyboardInterrupt, EOFError):
+        except (KeyboardInterrupt, EOFError, SystemExit):
             session.log.blank().log("goodbye <3").blank()
             session.repl_continue = False
             continue
