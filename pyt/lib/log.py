@@ -108,12 +108,16 @@ def inner_log(source, indent):
 
 
 def trace(indent=0, source=None):
+    from pathlib import Path
     exception_type, exception, trace = sys.exc_info()
     trace_frames = traceback.extract_tb(trace)
     _log("error", exception_type.__name__, mode="error", indent=indent)
     for frame in trace_frames[::-1]:
         file, line_number, function, line = frame
         if file == "<string>" and source is not None:
+            if isinstance(source, Path):
+                file = str(source.absolute())
+                line = source.read_text()
             file = inspect.getfile(source)
             lines, first_line = inspect.getsourcelines(source)
             line = lines[line_number-1].strip()

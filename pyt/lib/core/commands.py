@@ -1,140 +1,131 @@
 
-from pyt.lib.internal.parse import lsnap
+from pyt.lib.core import lsnap
 
-commands = []
+builtin_commands = []
 
-def register_command(*aliases):
-    alias_set = set(aliases)
-    def _register_command(behavior):
-        commands.append((alias_set, behavior))
-        return behavior
-    return _register_command
+def command_registrar(command_group):
+    def register_command(*aliases):
+        alias_set = set(aliases)
+        def _register_command(behavior):
+            command_group.append((alias_set, behavior))
+            return behavior
+        return _register_command
+    return register_command
 
-def try_handle_command(_, command, remainder):
-    for alias_set, behavior in commands:
-        if command in alias_set:
-            behavior(_, remainder)
-            return True
-    return False
+_builtin = command_registrar(builtin_commands)
 
-def handle_message(_, message):
-    try:
-        if message.startswith("."):
-            if message.rstrip() == ".":
-                _.log(_.persistent_state)
-            else:
-                segments = [segment.strip() for segment in message.split(".")][1:]
-                selection = ("base scope", _.persistent_state)
-                for segment in segments:
-                    if segment == "":
-                        _.log("repeated dots (..) are redundant", mode="warning")
-                        return
-                    try:
-                        selection = (segment, selection[1][segment])
-                        _.log(f"{selection[0]}: {selection[1]}")
-                    except KeyError:
-                        _.log(f"no \"{segment}\" in {selection[0]}", mode="error")
-                        return
-                    except TypeError:
-                        _.log(f"{selection[0]} is not a scope", mode="error")
-                        _.log.indented()(f"{selection[0]}: {selection[1]}", mode="info")
-
-            return
-
-        (command, remainder) = lsnap(message)
-
-        if not _.try_handle_command(command, remainder):
-            _.log(f"unknown command: {command}", mode="info")
-    except:
-        _.log.indented().trace()
-
-
-@register_command("flush")
-def cmd_flush(_, args):
+@_builtin("flush")
+def cmd_flush(session, args):
     import gc
     import sys
-    _.persistent_state = {}
-    _.persistent_hashes = {}
+    session.persistent_state = {}
+    session.persistent_hashes = {}
     gc.collect()
     if "torch" in sys.modules:
         torch = sys.modules["torch"]
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-    _.log("state flushed")
+    session.log("state flushed")
 
-@register_command("exit", "quit", ":q", ",q")
-def cmd_exit(_, args):
-    _.log.blank().log("goodbye <3").blank()
-    _.repl_continue = False
+@_builtin("exit", "quit", ":q", ",q")
+def cmd_exit(session, args):
+    session.log.blank().log("goodbye <3").blank()
+    session.repl_continue = False
 
-@register_command("hello", "hi")
-def cmd_hi(_, args):
-    _.log("hiii :3")
+@_builtin("hello", "hi")
+def cmd_hi(session, args):
+    session.log("hiii :3")
 
-@register_command("reload", "refresh", "rr")
-def cmd_reload(_, args):
+@_builtin("reload", "refresh", "rr")
+def cmd_reload(session, args):
     import sys
     from importlib import reload
 
+    log = session.log
+
+    session_reload = False
+
+    # TODO find a robust way to track which files have
+    # actually changed
     for name, module in list(sys.modules.items()):
         if name.startswith("pyt.lib"):
             try:
                 reload(module)
-                _.log(f"reloaded {name}")
+                log(f"reloaded {name}")
+                if name == "pyt.lib.core.session":
+                    session_reload = True
             except:
-                _.log.indented().trace()
-                _.log(f"failed to reload {name}", mode="error")
+                log.indented().trace()
+                log(f"failed to reload {name}", mode="error")
 
-@register_command("rrun")
-def cmd_reload_run(_, args):
-    if _.try_handle_command("reload", ""):
-        _.handle_message(f"run {args}")
+    if session_reload:
+        new_session_module = sys.modules["pyt.lib.core.session"]
+        session.update_class(new_session_module.PytSession)
 
-@register_command("crash")
-def cmd_crash(_, args):
+
+@_builtin("rrun")
+def cmd_reload_run(session, args):
+    if session.try_handle_command("reload", ""):
+        session.handle_message(f"run {args}")
+
+@_builtin("crash")
+def cmd_crash(session, args):
     raise Exception("crashing on purpose >:3")
 
-_favorite_dirs = {
-    "data0": "/data/0",
-    "data1": "/data/1",
-    "data2": "/data/2",
-    "ssd0": "/ssd/0",
-    "pyt": "/data/0/code/python/snakepyt",
-    "out": "/data/0/pyt/out",
-    "in": "/data/0/pyt/in",
-    "code": "/data/0/code",
-    "media": "/data/0/media",
-    "crone": "/data/0/code/c/crone",
-}
-
-@register_command("bash")
-def cmd_bash(_, args):
+@_builtin("bash", ";")
+def cmd_bash(session, args):
     import os
     import subprocess
 
+    log = session.log
 
     if args == "":
-        _.log("switching to bash!", mode="info")
+        log("switching to bash!", mode="info")
         subprocess.run(["bash"])
-        _.log("wb bestie!")
+        log("wb bestie!")
         return
 
-    args = _favorite_dirs.get(args, args)
+    args = session.favorite_dirs.get(args, args)
 
     path = os.path.expandvars(os.path.expanduser(args))
 
     if not os.path.isdir(path):
-        _.log(f"{args} is not a directory but that's ok", mode="warning")
-        _.log("switching to bash..", mode="info")
+        log(f"{args} is not a directory but that's ok", mode="warning")
+        log(f"switching to bash. home directory", mode="info")
         subprocess.run(["bash"])
-        _.log("welcome back.")
+        log("welcome back")
     else:
-        _.log(f"switching to bash, working directory {path}", mode="info")
+        log(f"switching to bash, working directory {path}", mode="info")
         subprocess.run(["bash"], cwd=path)
-        _.log("back in the pyt :D")
+        log("back in the pyt :D")
 
-@register_command("run")
-def cmd_run(_, args):
+@_builtin("py", "python", "'")
+def cmd_python(session, args):
+    import os
+    import subprocess
+
+    from pyt.lib.ansi import codes as ac
+
+    log = session.log
+
+    if args == "":
+        log("switching to python!", mode="info")
+        if session.env.PYTHON_PATH != None:
+            try:
+                subprocess.run([session.env.PYTHON_PATH, "-q"])
+            except FileNotFoundError:
+                link = ac.link(f"file://{session.env.PYTHON_PATH}", "preferred python")
+                log(f"your {link} didn't load. trying system python :/", mode="warning")
+                subprocess.run(["python", "-q"])
+        else:
+            subprocess.run(["python", "-q"])
+        log("wb bestie!")
+        return
+
+
+
+@_builtin("run")
+def cmd_run(session, args):
     import os
     import sys
     import inspect
@@ -144,28 +135,29 @@ def cmd_run(_, args):
     from time import perf_counter
     from importlib import import_module
 
-
     from pyt.lib.core.run import run, handle_persistent
 
     sketch_name, remainder = lsnap(args)
 
+    log = session.log
+
     try:
-        _.log(f"loading sketch \"{sketch_name}\"", mode="info")
+        log(f"loading sketch \"{sketch_name}\"", mode="info")
         module_name = f"{sketch_name}"
         if module_name in sys.modules:
             del sys.modules[module_name]
-        sys.path.insert(0, _.pyt_sketch)
+        sys.path.insert(0, str(session.env.PYT_SKETCH))
         sketch = import_module(module_name)
         sys.path.pop(0)
     except ModuleNotFoundError:
-        _.log.indented().trace()
-        _.log("no such sketch", mode="error", indent=4).blank()
+        log.indented().trace()
+        log("no such sketch", mode="error", indent=4).blank()
         return
     except KeyboardInterrupt:
-        _.log("aborted", mode="info").blank()
+        log("aborted", mode="info").blank()
         return
     except:
-        _.log.indented().trace()
+        log.indented().trace()
         return
 
     sources = { name : inspect.getsource(member)
@@ -173,26 +165,34 @@ def cmd_run(_, args):
                 if inspect.isfunction(member) and member.__module__ == module_name
                }
 
-    log = _.log.tag(sketch_name).mode("info")
+    log = log.tag(sketch_name).mode("info")
 
     t0 = perf_counter()
     if hasattr(sketch, "persistent"):
-        if not handle_persistent(_, sketch_name, sketch.persistent, sketch.__dict__, log, sources):
+        if not handle_persistent(session, sketch_name, sketch.persistent, sketch.__dict__, log, sources):
             log.blank()
             return
 
-    sketch.__dict__.update(_.persistent_state)
+    sketch.__dict__.update(session.persistent_state)
 
-    pyt_out = _.pyt_out
+    pyt_out = session.env.PYT_OUT
 
-    run_dir = time.strftime(f"{sketch_name}/%d.%m.%Y/t%H.%M.%S")
+    if not pyt_out:
+        session.log("no output directory has been specified.\nset via --out flag, or session.env.PYT_OUT in your ~/.config/pytrc.py, or by setting the PYT_OUT environment variable", mode="error")
+        session.log("aborting.", mode="error")
+        return
+
+    daily = time.strftime("%d.%m.%Y")
+    moment = time.strftime("t%H.%M.%S")
+
+    run_dir = Path(os.path.join(pyt_out, sketch_name, daily, moment))
     sketch.__dict__["run_dir"] = run_dir
-    Path(f"{pyt_out}/" + run_dir).mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir(parents=True, exist_ok=True)
 
-    shutil.copy(sketch.__file__, f"{pyt_out}/{run_dir}/{sketch_name}.py")
+    shutil.copy(sketch.__file__, run_dir / f"{sketch_name}.py")
 
-    with open(f"{pyt_out}/{run_dir}/.snakepyt", "w") as metadata:
-        metadata.write(f"snakepyt version {_.snakepyt_version[0]}.{_.snakepyt_version[1]}\n")
+    with open(run_dir / f".snakepyt", "w") as metadata:
+        metadata.write(f"snakepyt version {session.snakepyt_version[0]}.{session.snakepyt_version[1]}\n")
 
     if hasattr(sketch, "main"):
         if hasattr(sketch, "final"):
@@ -200,18 +200,18 @@ def cmd_run(_, args):
         else:
             finalizer = None
         try:
-            failures, runs = run(_, sketch.main, None, (), sketch.__dict__, log, sources, finalizer)
+            failures, runs = run(session, sketch.main, None, (), sketch.__dict__, log, sources, finalizer)
         except KeyboardInterrupt:
-            _.log.blank().log("aborted", mode="info").blank()
+            log.blank().log("aborted", mode="info").blank()
             return
     else:
-        _.log("sketch has no main function", mode="error", indent=4)
+        log("sketch has no main function", mode="error", indent=4)
 
     if failures == 0:
-        _.log(f"finished {runs} run(s) in {perf_counter() - t0:.3f}s", mode="success")
+        log(f"finished {runs} run(s) in {perf_counter() - t0:.3f}s", mode="success")
     elif failures < runs:
-        _.log(f"finished {runs-failures} of {runs} run(s) in {perf_counter() - t0:.3f}s", mode="info")
-        _.log(f"{failures} run(s) failed to finish", mode="error")
+        log(f"finished {runs-failures} of {runs} run(s) in {perf_counter() - t0:.3f}s", mode="info")
+        log(f"{failures} run(s) failed to finish", mode="error")
     else:
-        _.log(f"all {failures} run(s) failed to finish", mode="error")
+        log(f"all {failures} run(s) failed to finish", mode="error")
 

@@ -1,0 +1,163 @@
+
+import os
+import sys
+
+from pathlib import Path
+
+from pyt.lib.core.commands import command_registrar, builtin_commands
+from pyt.lib.ansi import codes as ac
+from pyt.lib.log import Logger
+from pyt.lib.core import AttrDict, lsnap
+
+def _find_pytrc():
+    config_home = os.getenv("XDG_CONFIG_HOME")
+    if not config_home:
+        config_home = Path.home() / ".config"
+    else:
+        config_home = Path(config_home)
+
+    snakepyt_dir = config_home / "snakepyt"
+    snakepyt_dir.mkdir(parents=True, exist_ok=True)
+
+    return snakepyt_dir / "pytrc.py"
+
+class PytSession:
+    def define_cli_args(parser):
+        parse_str_list = lambda s: s.split(",")
+
+        parser.add_argument("--out", dest="pyt_out", type=Path,
+                            default=None,
+                            help="Where to place sketch outputs")
+        parser.add_argument("--in", dest="pyt_in", type=Path,
+                            default=".",
+                            help="Where to find input data for sketches (default: current working directory)")
+        parser.add_argument("--sketches", dest="pyt_sketch", type=Path,
+                            default=None,
+                            help="Where to find sketches")
+        parser.add_argument("--write", dest="write_flags", type=parse_str_list,
+                            default=["pytfile","sketch","outputs"],
+                            help="What to include in output directories",
+                            metavar="pytfile,sketch,outputs,...")
+        parser.add_argument("--pytrc", dest="pytrc", type=Path,
+                            default=None,
+                            help="Path of pytrc.py config file")
+        parser.add_argument("--python", dest="python_path", type=Path,
+                            default=None,
+                            help="Path of preferred python interpreter")
+
+    def __init__(self, cli_args):
+        self.cli_args = cli_args
+        self.snakepyt_version = (0, 2)
+        self.repl_continue = True
+
+
+        self.favorite_dirs = {}
+
+        self.persistent_state = {}
+        self.persistent_hashes = {}
+
+        self.log = Logger().mode("success").tag("snakepyt")
+
+        self.commands = AttrDict()
+
+        self.env = AttrDict()
+
+        self.load_pytrc()
+
+        self._get_paths()
+
+        self.commands.all_available = self.commands.user + builtin_commands
+
+    def _get_paths(self):
+        # priority order: cli > pytrc > env > default
+
+        self.env.PYT_OUT = self.cli_args.pyt_out or self.env.get("PYT_OUT") or os.getenv("PYT_OUT") or None
+        self.env.PYT_IN = self.cli_args.pyt_in or self.env.get("PYT_IN") or os.getenv("PYT_IN") or Path(".")
+        self.env.PYT_SKETCH = self.cli_args.pyt_sketch or self.env.get("PYT_SKETCH") or os.getenv("PYT_SKETCH") or Path(".")
+        self.env.PYTHON_PATH = self.cli_args.python_path or self.env.get("PYTHON_PATH") or os.getenv("PYTHON_PATH") or sys.executable
+
+        if isinstance(self.env.PYT_OUT, str): self.env.PYT_OUT = Path(self.env.PYT_OUT)
+        if isinstance(self.env.PYT_IN, str): self.env.PYT_IN = Path(self.env.PYT_IN)
+        if isinstance(self.env.PYT_SKETCH, str): self.env.PYT_SKETCH = Path(self.env.PYT_SKETCH)
+        if isinstance(self.env.PYTHON_PATH, str): self.env.PYTHON_PATH = Path(self.env.PYTHON_PATH)
+
+    def load_pytrc(self):
+        self.commands.user = []
+
+        pytrc = self.cli_args.pytrc if self.cli_args.pytrc else _find_pytrc()
+
+        if pytrc.exists():
+            log = self.log.tag(ac.link(f"file://{pytrc}", "pytrc.py"))
+            namespace = {
+                "command": command_registrar(self.commands.user),
+                "session": self,
+                "print": log
+            }
+            try:
+                with open(pytrc) as rcfile:
+                    code = compile(rcfile.read(), filename=str(pytrc), mode="exec")
+                    exec(code, namespace)
+                log("loaded successfully", mode="info")
+            except:
+                log("encountered error in user configuration", mode="error")
+                log.indented().trace()
+                log("some configuration settings may not be loaded", mode="warning")
+
+    def try_handle_command(self, command, remainder):
+        for alias_set, behavior in self.commands.all_available:
+            if command in alias_set:
+                behavior(self, remainder)
+                return True
+        return False
+
+    def handle_message(self, message):
+        log = self.log
+        try:
+            if message.startswith("."):
+                if message.rstrip() == ".":
+                    state_dump = "\n".join([f"    {k}: {type(v).__name__}" for k, v in self.persistent_state.items()])
+                    log(f"base:\n{state_dump}")
+                else:
+                    segments = [segment.strip() for segment in message.split(".")][1:]
+                    selection = ("base scope", self.persistent_state)
+                    for segment in segments:
+                        if segment == "":
+                            log("repeated dots (..) are redundant", mode="warning")
+                            return
+                        try:
+                            selection = (segment, selection[1][segment])
+                            log(f"{selection[0]}: {selection[1]}")
+                        except KeyError:
+                            log(f"no \"{segment}\" in {selection[0]}", mode="error")
+                            return
+                        except TypeError:
+                            log(f"{selection[0]} is not a scope", mode="error")
+                            log.indented()(f"{selection[0]}: {selection[1]}", mode="info")
+
+                return
+
+            (command, remainder) = lsnap(message)
+
+            if not self.try_handle_command(command, remainder):
+                log(f"unknown command: {command}", mode="info")
+        except:
+            log.indented().trace()
+
+    def update_class(self, new_class):
+        try:
+            new_instance = new_class(self.cli_args)
+        except:
+            self.log.trace()
+            self.log("New session constructor failed. Session will not be updated.", mode="error")
+            return
+
+        state = self.persistent_state
+        hashes = self.persistent_hashes
+
+        self.__class__ = new_instance.__class__
+        self.__dict__.clear()
+        self.__dict__.update(new_instance.__dict__)
+
+        self.persistent_state = state
+        self.persistent_hashes = hashes
+
