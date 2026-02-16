@@ -71,14 +71,18 @@ class PytSession:
     def _get_paths(self):
         # priority order: cli > pytrc > env > default
 
+        # TODO next time a new env var is added, do the obvious refactor here
         self.env.OUT = self.cli_args.pyt_out or self.env.get("OUT") or os.getenv("PYT_OUT") or None
         self.env.IN = self.cli_args.pyt_in or self.env.get("IN") or os.getenv("PYT_IN") or Path(".")
         self.env.SKETCH = self.cli_args.pyt_sketch or self.env.get("SKETCH") or os.getenv("PYT_SKETCH") or Path(".")
+        self.env.TEMPLATE = self.env.get("TEMPLATE") or os.getenv("PYT_TEMPLATE") or "verbose"
         self.env.PYTHON_PATH = self.cli_args.python_path or self.env.get("PYTHON_PATH") or os.getenv("PYTHON_PATH") or sys.executable
 
         if isinstance(self.env.OUT, str): self.env.OUT = Path(self.env.OUT)
         if isinstance(self.env.IN, str): self.env.IN = Path(self.env.IN)
         if isinstance(self.env.SKETCH, str): self.env.SKETCH = Path(self.env.SKETCH)
+        if isinstance(self.env.TEMPLATE, str): self.env.TEMPLATE = Path(self.env.TEMPLATE)
+
         if isinstance(self.env.PYTHON_PATH, str): self.env.PYTHON_PATH = Path(self.env.PYTHON_PATH)
 
     def load_pytrc(self):
@@ -86,8 +90,24 @@ class PytSession:
 
         pytrc = self.cli_args.pytrc if self.cli_args.pytrc else _find_pytrc()
 
+        log = self.log.tag(ac.file_link(pytrc))
+        long_link = ac.file_link(pytrc, full=True)
+
+        if not pytrc.exists():
+            # TODO in the case where no pytrc exists but env vars have been passed as CLI args,
+            # it would be preferable to generate a pytrc that sets those args as its defaults.
+
+            self.log("no pytrc.py found. generating default configuration", mode="info")
+            from importlib.resources import files
+            import shutil
+
+            template = files("pyt.core.templates").joinpath("pytrc.py")
+
+            shutil.copy(template, pytrc)
+
+            log.blank().log(f"generated pytrc.py at {long_link}. you can edit it to customize snakepyt. if you'd prefer to keep your configuration elsewhere, use the --pytrc flag to specify its location, or set the XDG_CONFIG_HOME environment variable.", mode="success").blank()
+
         if pytrc.exists():
-            log = self.log.tag(ac.link(f"file://{pytrc}", "pytrc.py"))
             namespace = {
                 "command": command_registrar(self.commands.user),
                 "session": self,

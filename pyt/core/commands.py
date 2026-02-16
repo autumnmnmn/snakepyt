@@ -79,8 +79,8 @@ def cmd_new(session, args):
         return
 
     shutil.copy(template, new_sketch)
-    sketch_link = ac.link(f"file://{new_sketch}", new_sketch.name)
-    template_link = ac.link(f"file://{template}", template.name)
+    sketch_link = ac.file_link(new_sketch)
+    template_link = ac.file_link(template)
 
     log(f"created {sketch_link} from template {template_link}", mode="success")
 
@@ -171,30 +171,85 @@ def cmd_bash(session, args):
         subprocess.run(["bash"], cwd=path)
         log("back in the pyt :D")
 
-@_builtin("py", "python", "'")
-def cmd_python(session, args):
-    import os
+def _python_subprocess(session):
     import subprocess
 
     from pyt.lib.ansi import codes as ac
 
     log = session.log
 
-    if args == "":
-        log("switching to python!", mode="info")
-        if session.env.PYTHON_PATH != None:
-            try:
-                subprocess.run([session.env.PYTHON_PATH, "-q"])
-            except FileNotFoundError:
-                link = ac.link(f"file://{session.env.PYTHON_PATH}", "preferred python")
-                log(f"your {link} didn't load. trying system python :/", mode="warning")
-                subprocess.run(["python", "-q"])
-        else:
+    log("switching to python!", mode="info")
+
+    if session.env.PYTHON_PATH != None:
+        try:
+            subprocess.run([session.env.PYTHON_PATH, "-q"])
+        except FileNotFoundError:
+            link = ac.link(f"file://{session.env.PYTHON_PATH}", "preferred python")
+            log(f"your {link} didn't load. trying system python :/", mode="warning")
             subprocess.run(["python", "-q"])
-        log("wb bestie!")
-        return
+    else:
+        subprocess.run(["python", "-q"])
+
+    log("wb bestie!")
 
 
+
+def _python_stateful(session):
+    import sys
+
+    log = session.log
+    log("entering python mode. persistent state is available", mode="info")
+
+
+    state = dict(session.persistent_state)
+    state["session"] = session
+    state["print"] = log.tag("python")
+    state["_print"] = print
+
+    # TODO move more of this logic into pywrapl; fallback mechanism becomes its responsibility,
+    # then it can also handle the exit sentinel stuff
+    class _ReplExitSentinel:
+        pass
+
+    exit_repl = _ReplExitSentinel()
+    state["exit"] = exit_repl
+    state["quit"] = exit_repl
+
+    old_hook = sys.displayhook
+
+    def _wrapped_hook(value):
+        if value is exit_repl:
+            raise SystemExit
+        else:
+            return old_hook(value)
+
+    try:
+        sys.displayhook = _wrapped_hook
+
+        from pyt.core.pywrapl import wrapped_repl as repl
+
+        # TODO let pytrc override the on_version_mismatch choice here
+        repl(local=state, log=log, on_version_mismatch="warn")
+
+    except:
+        # Catch everything bc there's no long-term guarantees about how _pyrepl works
+        log.trace()
+        log("failed to launch fancy colorful python repl :( here's a boring one:", mode="warning")
+        import code
+        code.interact(local=state, banner="", exitmsg="", local_exit=True)
+    finally:
+        sys.displayhook = old_hook
+
+    log("back to snakepyt :)")
+
+@_builtin("py", "python", "'")
+def cmd_python(session, args):
+    if args == "fresh":
+        _python_subprocess(session)
+    else:
+        if args != "":
+            session.log("i dunno what u expect me to do w/ that argument lol", mode="info")
+        _python_stateful(session)
 
 @_builtin("run")
 def cmd_run(session, args):

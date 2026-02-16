@@ -5,6 +5,10 @@ import inspect
 from pyt.core.core import Errs, errs
 
 class ReturnLocalsWalker(ast.NodeTransformer):
+    def __init__(self, logger):
+        super().__init__()
+        self.log = logger
+
     def visit_Return(self, node):
         if node.value:
             original_value = node.value
@@ -51,8 +55,12 @@ class ReturnLocalsWalker(ast.NodeTransformer):
 
         return node
 
+    def visit_Yield(self, node):
+        self.log("Encountered a yield in a scheduled function. This will probably break things.", mode="warning")
+        return node
+
+
 class _Errs(metaclass=Errs):
-    FOUND_RETURN = "encountered return instruction"
     IN_DEFINITION = "error in fn definition"
     IN_EXECUTION = "error in fn execution"
     NON_DICT_RETURN = "fn dumped a non-dict"
@@ -60,7 +68,7 @@ class _Errs(metaclass=Errs):
 def modify_to_dump_locals(func, source, deftime_globals, log):
     tree = ast.parse(source)
 
-    rewriter = ReturnLocalsWalker()
+    rewriter = ReturnLocalsWalker(log)
     tree = rewriter.visit(tree)
     ast.fix_missing_locations(tree)
 

@@ -17,6 +17,9 @@ def persistent():
 
     Everything defined in the body of the persistent() function will be inserted into the
     global namespace of your sketch on every run.
+
+    Intended for keeping slow-to-load ML models, datasets, &c loaded while you iterate
+    quickly on your sketch.
     """
     pass
 
@@ -65,6 +68,8 @@ def final():
     Finalizer (Optional)
 
     Runs after main() and all scheduled functions have finished running.
+
+    This is where you'd compile and print summary statistics &c for all your runs.
     """
     pass
 

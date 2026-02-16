@@ -31,6 +31,10 @@ class Logger:
     _mode: str = "standard"
     _indent: int = 0
     _tag: Optional[str] = None
+    # TODO logger denotes mode only by color; it should optionally include non-color-based
+    # markers within the tags. this toggle should be presented to a user the first time they
+    # run snakepyt
+    _a11y_tags: bool = False
 
     def indented(self, n=4):
         return Logger(_indent=self._indent + n, _tag=self._tag, _mode=self._mode)
@@ -52,8 +56,8 @@ class Logger:
             callsite = inspect.stack()[1]
             filepath = callsite[1]
             line_number = callsite[2]
-            filename = filepath.split("/")[-1]
-            tag = ac.link(f"file://{filepath}#{line_number}", f"{filepath} {line_number}")
+            filename = filepath.split("/")[-1] # TODO this assumes unix paths! make it os-agnostic
+            tag = ac.file_link(filepath, line=line_number, full=True)
         _log(tag, content, mode, indent)
         return self
 
@@ -72,10 +76,10 @@ class Logger:
                     line = lines[line_number-1].strip()
                     line_number = first_line + line_number - 1
                 else:
-                    # TODO fix this!!
+                    # TODO try and set up some gnarly errors to see if i can get this path to happen
                     _log(f"SNAKEPYT", "TRACING ERROR", mode="error", indent=self._indent+8)
-            file_end = file.split("/")[-1]
-            frame_tag = ac.link(f"file://{file}#{line_number}", f"{file_end} {line_number}")
+            file_end = file.split("/")[-1] # TODO make os-agnostic
+            frame_tag = ac.file_link(file, line=line_number)
             _log(f"in {frame_tag}", line, mode="error", indent=self._indent+4)
         return self
 
@@ -101,8 +105,8 @@ def inner_log(source, indent):
             file = inspect.getfile(source)
             lines, first_line = inspect.getsourcelines(source)
             line_number += first_line - 1
-        filename = file.split("/")[-1]
-        tag = ac.link(f"file://{file}#{line_number}", f"{filename} {line_number}")
+        filename = file.split("/")[-1] # TODO make os-agnostic
+        tag = ac.file_link(file, line=line_number)
         _log(tag, content, mode, indent)
     return log
 
@@ -122,9 +126,9 @@ def trace(indent=0, source=None):
             lines, first_line = inspect.getsourcelines(source)
             line = lines[line_number-1].strip()
             line_number = first_line + line_number - 1
-        file_end = file.split("/")[-1]
-        frame_tag = ac.link(f"file://{file}#{line_number}", f"in {file_end} {line_number}")
-        _log(f"in {file_end} {line_number}", line, mode="error", indent=indent+4)
+        file_end = file.split("/")[-1] # TODO make os-agnostic
+        frame_tag = ac.file_link(file, line=line_number)
+        _log(f"in {frame_tag}", line, mode="error", indent=indent+4)
 
 class Timer(object):
     def __init__(self, name):
