@@ -1,9 +1,11 @@
 
 # 🐍 🐍 🐍
 
-## Snakepyt V0.2
+## Snakepyt v0.2
 
-> **snakepit** <sub>/ˈsnāk ˌpit/</sub> *noun*
+> **snakepit** <sub>/ˈsnāk ˌpit/</sub>
+> <sub>*noun* </sub>
+>
 > a pit full of snakes
 
 A repl and custom runner environment for python scripts, mainly for making various visualizations and simulations using pytorch.
