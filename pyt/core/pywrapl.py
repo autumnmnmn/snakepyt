@@ -1,14 +1,19 @@
 
+import sys
+
 _VERSION = {
     "major": [3],
     "minor": [14],
     "micro": [2]
 }
 
-def VersionMismatch(RuntimeError):
+class VersionMismatch(RuntimeError):
     pass
 
-def wrapped_repl(local, log, on_version_mismatch="error"):
+class _ReplExitSentinel:
+    pass
+
+def _wrapped_repl(local, log, on_version_mismatch="error"):
     """
     Wraps a `_pyrepl` console to (attempt to) ensure it doesn't make a mess of any global state.
 
@@ -17,7 +22,6 @@ def wrapped_repl(local, log, on_version_mismatch="error"):
     """
 
     import builtins
-    import sys
     import signal
     import threading
     import linecache
@@ -27,10 +31,13 @@ def wrapped_repl(local, log, on_version_mismatch="error"):
     if not (version.major in _VERSION["major"] and version.minor in _VERSION["minor"] and version.micro in _VERSION["micro"]):
         if on_version_mismatch == "error":
             raise VersionMismatch("wrapper for unsupported _pyrepl module was designed around a different version")
-        elif on_version_mismatch == "warn":
+        elif on_version_mismatch == "warning":
             log("wrapper for unsupported _pyrepl module was designed around a different version", mode="warning")
-        elif on_version_mismatch == "none":
-            log("on_version_mismatch should be one of [\"error\", \"warn\", \"none\"]", mode="warning")
+        elif on_version_mismatch == "ignore":
+            log("on_version_mismatch should be one of [\"error\", \"warning\", \"ignore\"]", mode="warning")
+
+    local["exit"] = _ReplExitSentinel()
+    local["quit"] = _ReplExitSentinel()
 
     def save_attr(module, name):
         if hasattr(module, name):
@@ -149,4 +156,34 @@ def wrapped_repl(local, log, on_version_mismatch="error"):
 
 
 
+def repl(local, log, on_version_mismatch="error"):
+    """
+    Wrapped _pyrepl with a fallback to code.interact
+    """
+
+    exit_repl = _ReplExitSentinel()
+    local["exit"] = exit_repl
+    local["quit"] = exit_repl
+
+    old_hook = sys.displayhook
+
+    def _wrapped_hook(value):
+        if isinstance(value, _ReplExitSentinel):
+            raise SystemExit
+        else:
+            return old_hook(value)
+
+    try:
+        sys.displayhook = _wrapped_hook
+
+        _wrapped_repl(local, log, on_version_mismatch)
+
+    except:
+        # Catch everything bc there's no long-term guarantees about how _pyrepl works
+        log.trace()
+        log("failed to launch fancy colorful python repl :( here's a boring one:", mode="warning")
+        import code
+        code.interact(local=local, banner="", exitmsg="", local_exit=True)
+    finally:
+        sys.displayhook = old_hook
 

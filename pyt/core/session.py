@@ -4,10 +4,9 @@ import sys
 
 from pathlib import Path
 
-from pyt.core.commands import command_registrar, builtin_commands
 from pyt.lib.ansi import codes as ac
-from pyt.lib.log import Logger
 from pyt.core import AttrDict, lsnap
+from pyt.core.commands import command_registrar, builtin_commands
 
 def _find_pytrc():
     config_home = os.getenv("XDG_CONFIG_HOME")
@@ -56,7 +55,8 @@ class PytSession:
         self.persistent_state = {}
         self.persistent_hashes = {}
 
-        self.log = Logger().mode("success").tag("snakepyt")
+        from pyt.core import Logger
+        self.log = Logger().mode("ok").tag("snakepyt")
 
         self.commands = AttrDict()
 
@@ -105,7 +105,7 @@ class PytSession:
 
             shutil.copy(template, pytrc)
 
-            log.blank().log(f"generated pytrc.py at {long_link}. you can edit it to customize snakepyt. if you'd prefer to keep your configuration elsewhere, use the --pytrc flag to specify its location, or set the XDG_CONFIG_HOME environment variable.", mode="success").blank()
+            log.blank().log(f"generated pytrc.py at {long_link}. you can edit it to customize snakepyt. if you'd prefer to keep your configuration elsewhere, use the --pytrc flag to specify its location, or set the XDG_CONFIG_HOME environment variable.", mode="ok").blank()
 
         if pytrc.exists():
             namespace = {
@@ -117,7 +117,7 @@ class PytSession:
                 with open(pytrc) as rcfile:
                     code = compile(rcfile.read(), filename=str(pytrc), mode="exec")
                     exec(code, namespace)
-                log("loaded successfully", mode="info")
+                log("loaded successfully", mode="ok")
             except (KeyboardInterrupt, SystemExit):
                 raise
             except:
@@ -126,8 +126,9 @@ class PytSession:
                 log("some configuration settings may not be loaded", mode="warning")
 
     def try_handle_command(self, command, remainder):
-        for alias_set, behavior in self.commands.all_available:
-            if command in alias_set:
+        for aliases, behavior in self.commands.all_available:
+            if command in aliases:
+                self.log = self.log.tag(aliases[0])
                 behavior(self, remainder)
                 return True
         return False
@@ -164,6 +165,8 @@ class PytSession:
                 log(f"unknown command: {command}", mode="info")
         except:
             log.indented().trace()
+        finally:
+            self.log = log.tag("snakepyt")
 
     def update_class(self, new_class):
         try:

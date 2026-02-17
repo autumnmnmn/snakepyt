@@ -111,10 +111,10 @@ disable_app_keypad = ansi(end=">")
 # hyperlinks
 link = lambda url, text: f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
 
-def file_link(path, full=False, line=None):
+def file_link(path, full=False, line=None, text=None):
     if isinstance(path, str):
         path = Path(path)
-    text = path if full else path.name
+    text = text if text else (path if full else path.name)
     if line:
         return link(f"file://{path}#{line}", f"{text} {line}")
     return link(f"file://{path}", text)

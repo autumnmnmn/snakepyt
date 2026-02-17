@@ -30,13 +30,12 @@ def handle_persistent(session, sketch_name, persistent_fn, module_globals, log, 
 def run(session, fn, arg, partial_id, outer_scope, log, sources, finalizer=None):
     from time import perf_counter
 
-    from pyt.lib.log import inner_log
     from pyt.core import try_dump_locals
 
     scope = dict(outer_scope)
     schedule, schedule_fn = establish_scheduler()
     scope["schedule"] = schedule_fn
-    scope["print"] = inner_log(source=fn, indent=4)
+    scope["print"] = log.tag(None).indented()
     scope["_print"] = print
     scope["pyt_in"] = session.env.IN
     run_id = partial_id + (arg,)
@@ -69,7 +68,7 @@ def run(session, fn, arg, partial_id, outer_scope, log, sources, finalizer=None)
             log(f"begin {fn.__name__} {run_id}")
             (_fails, _runs) = run(session, fn, None, run_id, scope, log, sources)
             success = _fails == 0
-            log(f"done in {perf_counter() - t0:.3f}s", mode="success" if success else "error")
+            log(f"done in {perf_counter() - t0:.3f}s", mode="ok" if success else "error")
             log.blank()
             if not success:
                 failures += 1

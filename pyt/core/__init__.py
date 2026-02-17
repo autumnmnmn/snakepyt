@@ -10,9 +10,11 @@
 
 from .core import AttrDict, Errs, errs, lsnap
 
-from .commands import builtin_commands, command_registrar
+from .logger import Logger
 
 from .sketch import try_dump_locals
+
+from .commands import builtin_commands, command_registrar
 
 from .session import PytSession
 

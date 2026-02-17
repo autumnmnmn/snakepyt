@@ -10,7 +10,9 @@ builtin_commands = []
 
 def command_registrar(command_group):
     def register_command(*aliases, arg_parser=None):
-        alias_set = set(aliases)
+        aliases = list(aliases)
+        if any(" " in alias for alias in aliases):
+            raise RuntimeError("spaces are not permitted in command aliases!")
         def _register_command(behavior):
             _behavior = behavior
             if isinstance(arg_parser, ArgumentParser):
@@ -22,7 +24,7 @@ def command_registrar(command_group):
                         session.log(arg_parser.format_usage(), mode="info", indent=4)
                         raise
                     return behavior(session, _args)
-            command_group.append((alias_set, _behavior))
+            command_group.append((aliases, _behavior))
             return behavior
         return _register_command
     return register_command
@@ -82,7 +84,7 @@ def cmd_new(session, args):
     sketch_link = ac.file_link(new_sketch)
     template_link = ac.file_link(template)
 
-    log(f"created {sketch_link} from template {template_link}", mode="success")
+    log(f"created {sketch_link} from template {template_link}", mode="ok")
 
 @_builtin("flush")
 def cmd_flush(session, args):
@@ -115,8 +117,7 @@ def cmd_reload(session, args):
 
     session_reload = False
 
-    # TODO find a robust way to track which files have
-    # actually changed
+    # TODO find a robust way to track which files have actually changed
     for name, module in list(sys.modules.items()):
         if name.startswith("pyt"):
             try:
@@ -171,6 +172,16 @@ def cmd_bash(session, args):
         subprocess.run(["bash"], cwd=path)
         log("back in the pyt :D")
 
+@_builtin("faves", "ff")
+def cmd_faves(session, args):
+    from pyt.lib.ansi import codes as ac
+    links = ["Favorite Directories:"]
+    dirs = session.favorite_dirs
+    for key in dirs.keys():
+        cyan = ac.ansi(ac.fg('cyan'))
+        links.append("    " + ac.file_link(dirs[key], text=f"{cyan}{key}{ac.reset} -> {dirs[key]}"))
+    session.log("\n".join(links))
+
 def _python_subprocess(session):
     import subprocess
 
@@ -195,54 +206,22 @@ def _python_subprocess(session):
 
 
 def _python_stateful(session):
-    import sys
-
     log = session.log
     log("entering python mode. persistent state is available", mode="info")
-
 
     state = dict(session.persistent_state)
     state["session"] = session
     state["print"] = log.tag("python")
     state["_print"] = print
 
-    # TODO move more of this logic into pywrapl; fallback mechanism becomes its responsibility,
-    # then it can also handle the exit sentinel stuff
-    class _ReplExitSentinel:
-        pass
+    from pyt.core.pywrapl import repl
 
-    exit_repl = _ReplExitSentinel()
-    state["exit"] = exit_repl
-    state["quit"] = exit_repl
-
-    old_hook = sys.displayhook
-
-    def _wrapped_hook(value):
-        if value is exit_repl:
-            raise SystemExit
-        else:
-            return old_hook(value)
-
-    try:
-        sys.displayhook = _wrapped_hook
-
-        from pyt.core.pywrapl import wrapped_repl as repl
-
-        # TODO let pytrc override the on_version_mismatch choice here
-        repl(local=state, log=log, on_version_mismatch="warn")
-
-    except:
-        # Catch everything bc there's no long-term guarantees about how _pyrepl works
-        log.trace()
-        log("failed to launch fancy colorful python repl :( here's a boring one:", mode="warning")
-        import code
-        code.interact(local=state, banner="", exitmsg="", local_exit=True)
-    finally:
-        sys.displayhook = old_hook
+    # TODO on_version_mismatch from pytrc
+    repl(local=state, log=log, on_version_mismatch="warning")
 
     log("back to snakepyt :)")
 
-@_builtin("py", "python", "'")
+@_builtin("python", "py", "'")
 def cmd_python(session, args):
     if args == "fresh":
         _python_subprocess(session)
@@ -337,7 +316,7 @@ def cmd_run(session, args):
         log("sketch has no main function", mode="error", indent=4)
 
     if failures == 0:
-        log(f"finished {runs} run(s) in {perf_counter() - t0:.3f}s", mode="success")
+        log(f"finished {runs} run(s) in {perf_counter() - t0:.3f}s", mode="ok")
     elif failures < runs:
         log(f"finished {runs-failures} of {runs} run(s) in {perf_counter() - t0:.3f}s", mode="info")
         log(f"{failures} run(s) failed to finish", mode="error")
