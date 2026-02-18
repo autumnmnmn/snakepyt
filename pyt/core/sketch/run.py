@@ -6,20 +6,29 @@ def establish_scheduler():
     return (schedule, _schedule)
 
 def handle_persistent(session, sketch_name, persistent_fn, module_globals, log, sources):
+    # TODO refactor to not parse the same shit more than once
+    import ast
     import hashlib
-    from pyt.core import try_dump_locals
+    import inspect
+    from pyt.core.sketch.sketch import try_dump_locals
 
-    # TODO better to hash the source code tbh
-    bytecode_hash = hashlib.sha256(persistent_fn.__code__.co_code).hexdigest()
+    # strip semantically-irrelevant whitespace & comments
+    canonicalized_source = ast.unparse(ast.parse(sources[persistent_fn.__name__]))
+    bytecode_hash = hashlib.sha256(canonicalized_source.encode()).hexdigest()
+
     if sketch_name in session.persistent_hashes:
         if bytecode_hash == session.persistent_hashes[sketch_name]:
             return True
+
     (success, locals_or_err) = try_dump_locals(persistent_fn,
                                                sources[persistent_fn.__name__],
                                                [], {},
                                                module_globals, log)
+
     if success:
         session.persistent_hashes[sketch_name] = bytecode_hash
+        # TODO: sketches should get their own persistent state dicts, w/ a non-default
+        # option to persist items into the top-level persistent_state instead
         session.persistent_state.update(locals_or_err)
     else:
         log(f"failed to run persistent function: {locals_or_err}", mode="error")
@@ -30,7 +39,7 @@ def handle_persistent(session, sketch_name, persistent_fn, module_globals, log, 
 def run(session, fn, arg, partial_id, outer_scope, log, sources, finalizer=None):
     from time import perf_counter
 
-    from pyt.core import try_dump_locals
+    from pyt.core.sketch.sketch import try_dump_locals
 
     scope = dict(outer_scope)
     schedule, schedule_fn = establish_scheduler()

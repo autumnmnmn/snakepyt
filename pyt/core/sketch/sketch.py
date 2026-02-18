@@ -2,7 +2,7 @@
 import ast
 import inspect
 
-from pyt.core.core import Errs, errs
+from pyt.core import Errs, errs
 
 class ReturnLocalsWalker(ast.NodeTransformer):
     def __init__(self, logger):
@@ -88,6 +88,7 @@ def modify_to_dump_locals(func, source, deftime_globals, log):
 
     return (True, new_func)
 
+# TODO this function signature is a mess
 @errs(_Errs)
 def try_dump_locals(fn, fn_source, args, kwargs, deftime_globals, log):
     (success, fn_or_err) = modify_to_dump_locals(fn, fn_source, deftime_globals, log)

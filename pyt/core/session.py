@@ -4,9 +4,9 @@ import sys
 
 from pathlib import Path
 
-from pyt.lib.ansi import codes as ac
+from pyt.core.terminal.ansi import codes as ac
 from pyt.core import AttrDict, lsnap
-from pyt.core.commands import command_registrar, builtin_commands
+from pyt.core.commands import registrar_attr, register_builtins
 
 def _find_pytrc():
     config_home = os.getenv("XDG_CONFIG_HOME")
@@ -49,13 +49,14 @@ class PytSession:
         self.snakepyt_version = (0, 2)
         self.repl_continue = True
 
+        self.prefix = None
 
         self.favorite_dirs = {}
 
         self.persistent_state = {}
         self.persistent_hashes = {}
 
-        from pyt.core import Logger
+        from pyt.core.terminal import Logger
         self.log = Logger().mode("ok").tag("snakepyt")
 
         self.commands = AttrDict()
@@ -66,7 +67,11 @@ class PytSession:
 
         self._get_paths()
 
-        self.commands.all_available = self.commands.user + builtin_commands
+        self.commands.builtin = []
+
+        register_builtins(self.commands.builtin)
+
+        self.commands.all_available = self.commands.user + self.commands.builtin
 
     def _get_paths(self):
         # priority order: cli > pytrc > env > default
@@ -81,7 +86,6 @@ class PytSession:
         if isinstance(self.env.OUT, str): self.env.OUT = Path(self.env.OUT)
         if isinstance(self.env.IN, str): self.env.IN = Path(self.env.IN)
         if isinstance(self.env.SKETCH, str): self.env.SKETCH = Path(self.env.SKETCH)
-        if isinstance(self.env.TEMPLATE, str): self.env.TEMPLATE = Path(self.env.TEMPLATE)
 
         if isinstance(self.env.PYTHON_PATH, str): self.env.PYTHON_PATH = Path(self.env.PYTHON_PATH)
 
@@ -109,7 +113,7 @@ class PytSession:
 
         if pytrc.exists():
             namespace = {
-                "command": command_registrar(self.commands.user),
+                "command": registrar_attr(self.commands.user),
                 "session": self,
                 "print": log
             }
@@ -136,6 +140,12 @@ class PytSession:
     def handle_message(self, message):
         log = self.log
         try:
+            if self.prefix:
+                if message in ["un", "unpre", "unprefix"]:
+                    self.prefix = None
+                    return
+                message = " ".join([self.prefix, message])
+
             if message.startswith("."):
                 if message.rstrip() == ".":
                     state_dump = "\n".join([f"    {k}: {type(v).__name__}" for k, v in self.persistent_state.items()])
@@ -180,6 +190,7 @@ class PytSession:
 
         state = self.persistent_state
         hashes = self.persistent_hashes
+        prefix = self.prefix
 
         self.__class__ = new_instance.__class__
         self.__dict__.clear()
@@ -187,4 +198,5 @@ class PytSession:
 
         self.persistent_state = state
         self.persistent_hashes = hashes
+        self.prefix = prefix
 

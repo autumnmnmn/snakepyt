@@ -4,6 +4,7 @@ import os
 from argparse import ArgumentParser
 
 from pyt.core import PytSession
+from pyt.core.terminal import persona
 
 parser = ArgumentParser("snakepyt")
 PytSession.define_cli_args(parser)
@@ -15,20 +16,19 @@ def main():
     try:
         username = os.getlogin()
     except:
-        username = None
-    session.log(f"hello {username}! <3" if username else "hello! <3")
+        username = ""
+
+    session.log(f"{persona.hello()} {username}! {persona.smile()}" if username else f"{persona.hello()}! {persona.smile()}")
     session.log.blank()
 
     while session.repl_continue:
         try:
-            message = session.log.input(username)
+            tag = f"{username}: {session.prefix}" if session.prefix else username + ':'
+            message = session.log.input(tag)
         except (KeyboardInterrupt, EOFError, SystemExit):
-            session.log.blank().log("goodbye <3").blank()
+            session.log.blank().log(f"goodbye {persona.smile()}").blank()
             session.repl_continue = False
             continue
-
-        if "prefix" in session.persistent_state:
-            message = " ".join([session.persistent_state["prefix"], message])
 
         session.handle_message(message.lstrip())
 

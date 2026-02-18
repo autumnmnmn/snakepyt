@@ -82,6 +82,8 @@ _mode_digits = {
     k: str(i) for (i,k) in enumerate(_modes)
 }
 
+def mode(mode):
+    return _mode_digits[mode]
 
 
 # cursor shapes (DECSCUSR)

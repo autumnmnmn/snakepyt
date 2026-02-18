@@ -16,4 +16,5 @@ __pycache__
 build
 *.ipynb
 *.ipynb.py
+.TODO
 

@@ -1,11 +1,9 @@
 
 import sys
 
-_VERSION = {
-    "major": [3],
-    "minor": [14],
-    "micro": [2]
-}
+_VERSION = [
+    (3,14,2)
+]
 
 class VersionMismatch(RuntimeError):
     pass
@@ -28,12 +26,12 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
     from _pyrepl import console, simple_interact, readline, trace, historical_reader
 
     version = sys.version_info
-    if not (version.major in _VERSION["major"] and version.minor in _VERSION["minor"] and version.micro in _VERSION["micro"]):
+    if not ((version.major, version.minor, version.micro) in _VERSION):
         if on_version_mismatch == "error":
             raise VersionMismatch("wrapper for unsupported _pyrepl module was designed around a different version")
         elif on_version_mismatch == "warning":
             log("wrapper for unsupported _pyrepl module was designed around a different version", mode="warning")
-        elif on_version_mismatch == "ignore":
+        elif on_version_mismatch != "ignore":
             log("on_version_mismatch should be one of [\"error\", \"warning\", \"ignore\"]", mode="warning")
 
     local["exit"] = _ReplExitSentinel()

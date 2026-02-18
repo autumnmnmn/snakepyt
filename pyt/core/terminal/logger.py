@@ -9,7 +9,7 @@ from dataclasses import dataclass, replace
 from typing import Optional
 from pathlib import Path
 
-from pyt.lib.ansi import codes as ac
+from pyt.core.terminal.ansi import codes as ac
 
 _tag_colors = {
     "error": ac.ansi(ac.fg("red")),
@@ -104,8 +104,8 @@ class Logger:
         print()
         return self
 
-    def input(self, username=None):
-        if username is None:
-            username = ":"
-        return _input(f"{username}:", mode="user", indent=self._indent)
+    def input(self, fore):
+        if fore is None:
+            fore = ":"
+        return _input(f"{fore}", mode="user", indent=self._indent)
 
