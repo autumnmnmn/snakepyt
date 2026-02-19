@@ -1,5 +1,6 @@
 
 import shlex
+import sys
 
 from argparse import ArgumentParser, ArgumentError
 
@@ -40,8 +41,7 @@ def register_builtins(group):
 
 @_builtin("exit", "quit", ":q", ",q")
 def _exit(session, args):
-    from pyt.core.terminal import persona
-    session.log.blank().log(f"goodbye {persona.smile()}").blank()
+    session.log.blank().log(f"goodbye {session.persona.smile()}").blank()
     session.repl_continue = False
 
 @_builtin("cmds")
@@ -54,8 +54,7 @@ def _commands(session, args):
 
 @_builtin("hello", "hi")
 def _hi(session, args):
-    from pyt.core.terminal import persona
-    session.log(f"{persona.hello()} {persona.smile()}")
+    session.log(f"{session.persona.hello()} {session.persona.smile()}")
 
 @_builtin("reload", "refresh", "rr")
 def _reload(session, args):
@@ -92,26 +91,41 @@ def _prefix(session, args):
 
     session.prefix = args
 
+def _get_default_shell():
+    if sys.platform == "win32":
+        return "powershell"
+    elif sys.platform == "darwin":
+        return "zsh"
+    else:
+        return "bash"
+
+def _get_shell_cmd_flags(shell):
+    if shell == "powershell":
+        return ["-NonInteractive", "-Command"]
+    else:
+        return ["-ic"]
+
+_shell = _get_default_shell()
+_shell_cmd_flags = _get_shell_cmd_flags(_shell)
+
 @_builtin("do", ";")
-def _bash_do(session, args):
+def _shell_do(session, args):
     import subprocess
 
     subprocess.run(
-        ["bash", "-ic", args]
+        [_shell] + _shell_cmd_flags + [args]
     )
 
-@_builtin("bash", ":")
-def _bash(session, args):
+@_builtin(_shell, ":")
+def _shell_run(session, args):
     import os
     import subprocess
-
-    from pyt.core.terminal import persona
 
     log = session.log
 
     if args == "":
-        log("switching to bash!", mode="info")
-        subprocess.run(["bash"])
+        log(f"switching to {_shell}!", mode="info")
+        subprocess.run([_shell])
         log("wb bestie!")
         return
 
@@ -121,13 +135,13 @@ def _bash(session, args):
 
     if not os.path.isdir(path):
         log(f"{args} is not a directory but that's ok", mode="warning")
-        log(f"switching to bash. home directory", mode="info")
-        subprocess.run(["bash"])
+        log(f"switching to {_shell}. home directory", mode="info")
+        subprocess.run([_shell])
         log("welcome back")
     else:
-        log(f"switching to bash, working directory {path}", mode="info")
-        subprocess.run(["bash"], cwd=path)
-        log(f"back in the pyt {persona.smile()}")
+        log(f"switching to {_shell}, working directory {path}", mode="info")
+        subprocess.run([_shell], cwd=path)
+        log(f"back in the pyt {session.persona.smile()}")
 
 @_builtin("faves", "ff")
 def _faves(session, args):
@@ -161,8 +175,6 @@ def _python_subprocess(session):
     log("wb bestie!")
 
 def _python_stateful(session):
-    from pyt.core.terminal import persona
-
     log = session.log
     log("entering python mode. persistent state is available", mode="info")
 
@@ -176,16 +188,14 @@ def _python_stateful(session):
     # TODO on_version_mismatch from pytrc
     repl(local=state, log=log, on_version_mismatch="warning")
 
-    log(f"back to snakepyt {persona.smile()}")
+    log(f"back to snakepyt {session.persona.smile()}")
 
 @_builtin("python", "py", "'")
 def _python(session, args):
-    from pyt.core.terminal import persona
-
     if args == "fresh":
         _python_subprocess(session)
     else:
         if args != "":
-            session.log(f"i dunno what u expect me to do w/ that argument {persona.laugh()}", mode="info")
+            session.log(f"i dunno what u expect me to do w/ that argument {session.persona.laugh()}", mode="info")
         _python_stateful(session)
 

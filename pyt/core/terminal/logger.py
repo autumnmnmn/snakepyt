@@ -3,7 +3,6 @@ import sys
 import inspect
 import traceback
 import time
-import readline
 
 from dataclasses import dataclass, replace
 from typing import Optional

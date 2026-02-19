@@ -1,17 +1,21 @@
 
 from dataclasses import dataclass
 
-class ColorRGB:
-    pass
+# TODO
+# test inside more environments
+# anything that breaks bc of a bug in my system should be addressed but if
+# anything breaks just bc the environment itself is weird and bad, don't do sketchy
+# env-specific workarounds, just downgrade features and pump a warning to the console
+# politely but firmly placing the blame where it belongs if the env's fuckery is
+# *particularly* egregious. if it's just a legacy thing that doesn't merit a warning but
+# if the emulator or passthrough-layer is *just wrong* that warrants making noise about
 
-class Color256:
-    pass
-
-class Color216:
-    pass
-
-class ColorTerm:
-    pass
+# terminals i know ppl that use:
+# default macos terminal
+# powershell
+# ghostty (many cases)
+# alacritty
+# iterm2
 
 # TODO: come up with strong type for color and modes, and anything else that gets added here,
 # and once all that's done, we can make this a frozen dataclass

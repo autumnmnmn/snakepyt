@@ -67,11 +67,23 @@ class PytSession:
 
         self._get_paths()
 
+        from pyt.core.terminal import persona
+        self.persona = persona.Persona.from_config(persona.default) # TODO configurable
+
         self.commands.builtin = []
 
         register_builtins(self.commands.builtin)
 
         self.commands.all_available = self.commands.user + self.commands.builtin
+
+        # TODO store username
+        try:
+            username = os.getlogin()
+        except:
+            username = ""
+
+        self.log(f"{self.persona.hello()} {username}! {self.persona.smile()}" if username else f"{self.persona.hello()}! {self.persona.smile()}")
+        self.log.blank()
 
     def _get_paths(self):
         # priority order: cli > pytrc > env > default
