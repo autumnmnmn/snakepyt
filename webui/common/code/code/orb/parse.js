@@ -4,6 +4,10 @@ const BREAK = "builtin_break";
 
 const cache = {};
 
+const invalidTagCharacters = new Set("{}()<>,;:");
+
+// TODO debug bracket escaping issues
+
 export async function parse(uri) {
     if (uri in cache) {
         return cache[uri];
@@ -40,8 +44,8 @@ function parseSource(input, startIndex = 0) {
     let scanPosition = startIndex;
     let escapeNext = false;
 
-    let contentStart = null;
-    let contentEnd = null;
+    let preContentStart = null;
+    let preContentEnd = null;
     let tagStart = null;
     let tagEnd = null;
     let argStart = null;
@@ -67,16 +71,16 @@ function parseSource(input, startIndex = 0) {
         }
 
         if (!escapeNext && char === "{") {
-            if (contentStart !== null) {
+            if (preContentStart !== null) {
                 nodes.push({
                     tag: {symbol: TEXT, start: null, end: null},
-                    content: {start: contentStart, end: contentEnd},
+                    content: {start: preContentStart, end: preContentEnd},
                     args: {start: null, end: null},
                     origin: "text_before_block"
                 });
 
-                contentStart = null;
-                contentEnd = null;
+                preContentStart = null;
+                preContentEnd = null;
             }
 
             scanPosition += 1; // skip the {
@@ -140,20 +144,23 @@ function parseSource(input, startIndex = 0) {
 
         const isWhitespace = /\s/.test(char);
         const takingArgs = argStart !== null && argEnd === null;
+
         if (!takingArgs && isWhitespace) {
             if (char === "\n") {
                 newlineCount += 1;
                 if (newlineCount === 2) {
                     newlineCount = 0;
-                    if (contentStart !== null) {
+                    const textStart = preContentStart ?? tagStart;
+                    const textEnd = tagEnd ?? preContentEnd;
+                    if (textStart !== null) {
                         nodes.push({
                             tag: {symbol: TEXT, start: null, end: null},
-                            content: {start: contentStart, end: tagEnd},
+                            content: {start: textStart, end: textEnd},
                             args: {start: argStart, end: argEnd},
                             origin: "text_before_break"
                         });
-                        contentStart = null;
-                        contentEnd = null;
+                        preContentStart = null;
+                        preContentEnd = null;
                         tagStart = null;
                         tagEnd = null;
                         argStart = null;
@@ -173,34 +180,60 @@ function parseSource(input, startIndex = 0) {
 
         newlineCount = 0;
 
-        if (tagStart === null) {
+
+        if (char === "[" && !takingArgs) {
+            argStart = scanPosition + 1;
+            argEnd = null;
+        }
+
+
+        const canBeTag = !invalidTagCharacters.has(char);
+
+        if (!canBeTag && !takingArgs) {
+            if (preContentStart === null) {
+                preContentStart = scanPosition;
+                preContentEnd = scanPosition;
+            } else {
+                preContentEnd = scanPosition;
+            }
+            if (tagStart !== null) {
+                preContentStart = Math.min(tagStart, preContentStart);
+                tagStart = null;
+                tagEnd = null;
+            }
+            scanPosition += 1;
+            continue;
+        }
+
+
+
+        if (tagStart === null) { // we are at the start of what may be a tag
             tagStart = scanPosition;
             tagEnd = scanPosition;
-        } else {
-            if (tagEnd === scanPosition - 1) {
+        } else { // we are already parsing what may be a tag
+            if (tagEnd === scanPosition - 1) { // ... and it didn't get interrupted
                 tagEnd += 1;
-            } else {
-                if (contentStart === null) {
-                    contentStart = tagStart;
+            } else { // ... or it did get interrupted
+                if (preContentStart === null) {
+                    preContentStart = tagStart; // so we declare that that was content actually
                 }
-                contentEnd = tagEnd;
-                tagStart = scanPosition;
+                preContentEnd = tagEnd;
+                tagStart = scanPosition; // and now this is the start of the tag
                 tagEnd = scanPosition;
             }
         }
 
-        if (char === "[" && !takingArgs) {
-            argStart = scanPosition + 1;
-        }
 
         scanPosition += 1;
     }
 
     // Finish the current node if it has content
-    if (tagStart !== null) {
+    if (preContentStart !== null || tagStart !== null) {
+        const start = Math.min(preContentStart ?? Infinity, tagStart ?? Infinity);
+        const end = Math.max(preContentEnd ?? -Infinity, tagEnd ?? -Infinity);
         nodes.push({
             tag: {symbol: TEXT, start: null, end: null},
-            content: { start: contentStart ?? tagStart, end: tagEnd },
+            content: { start: start, end: end },
             args: {start: null, end: null},
             origin: "trailing_text"
         });
@@ -234,7 +267,7 @@ function findClosingBracket(input, startIndex) {
 }
 
 function shouldParseContent(tag) {
-    return tag !== "$";
+    return tag !== "$" && tag !== "$css";
 }
 
 function dumpNodes(nodes, input) {

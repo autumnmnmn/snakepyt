@@ -191,7 +191,7 @@ export async function main(target, spec) {
     target.$with(
         control.$with(
             label, label_eq.$with(copyable_value), field,
-            play_button, reset_button,
+            /*play_button,*/ reset_button,
             slider
         )
     );

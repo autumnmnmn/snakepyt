@@ -170,7 +170,7 @@ def set_title(title):
 
 
 def move_to(x, y):
-    return ansi(y, x, end="H")
+    return ansi(str(y), str(x), end="H")
 
 def move_up(n=1):
     return ansi(str(n), end="A")

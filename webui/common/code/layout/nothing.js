@@ -64,6 +64,7 @@ export async function main(target) {
         row3: load("layout/split", [noth3]),
         col2: load("layout/split", [{...noth2, orientation: "col"}]),
         col3: load("layout/split", [{...noth3, orientation: "col"}]),
+        main: load("code/orb", ["/main.orb"]),
         blackboard: load("theme", ["blackboard"]),
         whiteboard: load("theme", ["whiteboard"]),
         spinner: load("spinner"),

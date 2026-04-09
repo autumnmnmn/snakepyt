@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>40x40 Grid</title>
+<style>
+  body { font-family: sans-serif; }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(40, 22px);
+    gap: 2px;
+    margin-top: 10px;
+  }
+  .cell {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .red {
+    background: #f88;
+  }
+</style>
+</head>
+<body>
+
+<div>clear the red box :)</div>
+<div>Moves: <span id="moves">0</span></div>
+<button id="reset">Reset</button>
+
+<div id="grid"></div>
+
+<script>
+const SIZE = 40;
+const RED_LIMIT = 4;
+
+const gridEl = document.getElementById("grid");
+const movesEl = document.getElementById("moves");
+
+let state;
+let moves;
+
+function initState() {
+  state = Array.from({ length: SIZE }, () =>
+    Array.from({ length: SIZE }, () => false)
+  );
+  state[0][0] = true;
+  moves = 0;
+  movesEl.textContent = moves;
+}
+
+function canUncheck(i, j) {
+  if (i + 1 < SIZE && state[i + 1][j]) return false;
+  if (j + 1 < SIZE && state[i][j + 1]) return false;
+  return true;
+}
+
+function render() {
+  gridEl.innerHTML = "";
+
+  for (let n = 0; n < SIZE; n++) {
+    for (let m = 0; m < SIZE; m++) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "cell";
+      if (n < RED_LIMIT && m < RED_LIMIT) {
+        wrapper.classList.add("red");
+      }
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = state[n][m];
+      cb.dataset.n = n;
+      cb.dataset.m = m;
+
+      cb.addEventListener("change", (e) => {
+        const i = +e.target.dataset.n;
+        const j = +e.target.dataset.m;
+
+        if (!state[i][j]) {
+          e.target.checked = false;
+          return;
+        }
+
+        if (!canUncheck(i, j)) {
+          e.target.checked = true;
+          return;
+        }
+
+        state[i][j] = false;
+
+        if (i + 1 < SIZE) state[i + 1][j] = true;
+        if (j + 1 < SIZE) state[i][j + 1] = true;
+
+        moves++;
+        movesEl.textContent = moves;
+
+        render();
+      });
+
+      wrapper.appendChild(cb);
+      gridEl.appendChild(wrapper);
+    }
+  }
+}
+
+document.getElementById("reset").addEventListener("click", () => {
+  initState();
+  render();
+});
+
+initState();
+render();
+</script>
+
+</body>
+</html>

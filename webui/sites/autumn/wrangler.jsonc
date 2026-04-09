@@ -12,6 +12,14 @@
     "vars": {
         "WEBUI_MAIN": "/main.html"
     },
+    "build": {
+        // nop. workaround for wrangler failing to reliably watch for changes thru symlinks
+        "command": ":",
+        "watch_dir": [
+            "../autumn/content",
+            "../../common"
+        ]
+    },
     "main": "_worker.js"
 }
 

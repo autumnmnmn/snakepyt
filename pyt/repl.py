@@ -6,13 +6,18 @@ from argparse import ArgumentParser
 from pyt.core import PytSession
 from pyt.core.terminal import persona
 
-parser = ArgumentParser("snakepyt")
-PytSession.define_cli_args(parser)
-
-cli_args = parser.parse_args()
-session = PytSession(cli_args)
+try:
+    import readline
+except ImportError:
+    pass
 
 def main():
+    parser = ArgumentParser("snakepyt")
+    PytSession.define_cli_args(parser)
+
+    cli_args = parser.parse_args()
+    session = PytSession(cli_args)
+
     try:
         username = os.getlogin()
     except:

@@ -1,0 +1,45 @@
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+SRC_DIR="${1:?usage: $0 <image-dir>}"
+DST_DIR="${2:?usage: $0 <image-dir>}"
+
+mkdir -p "$DST_DIR/full" "$DST_DIR/lightbox" "$DST_DIR/card" "$DST_DIR/thumb"
+
+for png in "$SRC_DIR"/input/*.png; do
+    [[ -e "$png" ]] || { echo "no pngs found"; exit 1; }
+    base=$(basename "$png" .png)
+
+    echo "processing $base..."
+
+    # full: lossless webp, largest dim capped at 2560
+    magick "$png" \
+        -resize '2560x2560>' \
+        -define webp:lossless=true \
+        "$DST_DIR/full/$base.webp"
+
+    # full: lossless webp, largest dim capped at 2048
+    magick "$png" \
+        -resize '2048x2048>' \
+        -define webp:lossless=true \
+        "$DST_DIR/lightbox/$base.webp"
+
+    # card: shrink so smallest dim = 1024, then center-crop to 1024x1024
+    magick "$png" \
+        -resize '1024x1024^' \
+        -gravity Center \
+        -extent 1024x1024 \
+        -quality 60 \
+        "$DST_DIR/card/$base.avif"
+
+    # thumb: 128x128, same logic
+    magick "$png" \
+        -resize '128x128^' \
+        -gravity Center \
+        -extent 128x128 \
+        -quality 60 \
+        "$DST_DIR/thumb/$base.avif"
+
+done
+

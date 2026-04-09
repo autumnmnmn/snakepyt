@@ -61,6 +61,14 @@ def run(session, fn, arg, partial_id, outer_scope, log, sources, finalizer=None)
                                mode="warning")
         else:
             log.indented().log(locals_or_err, mode="error")
+            if finalizer is not None:
+                try:
+                    exec(finalizer, globals=scope)
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    log.trace(source=fn)
+
             return (1, 1)
 
     failures = 0

@@ -75,7 +75,7 @@ function collectItems(element) {
 
     for (let node = element; node; node = node.parentNode) {
         if (node.$contextMenu !== null && node.$contextMenu !== undefined) {
-            const nodeItems = $actualize(node.$contextMenu.items);
+            const nodeItems = $actualize(node.$contextMenu.items) || [];
             for (const item of nodeItems.map($actualize)) {
                 if (Array.isArray(item) && item[0] && Array.isArray(item[0])) {
                     items.push(...item);

@@ -24,6 +24,7 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
     import threading
     import linecache
     from _pyrepl import console, simple_interact, readline, trace, historical_reader
+    from _pyrepl.utils import str_width
 
     version = sys.version_info
     if not ((version.major, version.minor, version.micro) in _VERSION):
@@ -67,7 +68,14 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
                     if readline_wrapper and readline_wrapper.reader else []),
         "module_completer": (readline_wrapper.config.module_completer
                              if readline_wrapper else None),
+        "readline_completer": (readline_wrapper.config.readline_completer
+                                if readline_wrapper else None),
+        "completer_delims": (readline_wrapper.config.completer_delims
+                             if readline_wrapper else None),
     }
+
+    _original_raw_input = readline.raw_input
+    readline.raw_input = None
 
     try:
         repl = console.InteractiveColoredConsole(locals=local, local_exit=True)
@@ -76,6 +84,8 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
         pass
     finally:
         builtins.input = original_state["builtins.input"]
+
+        readline.raw_input = _original_raw_input
 
         for name in ("ps1", "ps2"):
             existed, value = original_state[f"sys.{name}"]
@@ -131,8 +141,13 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
             readline.clear_history()
             for line in original_readline["history"]:
                 readline.add_history(line)
-            if readline_wrapper and original_readline["module_completer"] is not None:
-                readline_wrapper.config.module_completer = original_readline["module_completer"]
+            if readline_wrapper:
+                if original_readline["module_completer"] is not None:
+                    readline_wrapper.config.module_completer = original_readline["module_completer"]
+                if original_readline["readline_completer"] is not None:
+                    readline_wrapper.config.readline_completer = original_readline["readline_completer"]
+                if original_readline["completer_delims"] is not None:
+                    readline_wrapper.config.completer_delims = original_readline["completer_delims"]
         except Exception:
             log.trace()
             log("ran into an issue cleaning up _pyrepl's history/completer changes. might be fine", mode="warning")
@@ -146,6 +161,17 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
                 reader.historyi = len(reader.history) # point to "new" entry
                 reader.transient_history = {}
                 reader.dirty = True # force refresh if reused
+
+                reader.kill_ring.clear()
+
+                reader.input_trans_stack.clear()
+
+                from _pyrepl import input as _input
+                reader.input_trans = _input.KeymapTranslator(
+                    reader.keymap,
+                    invalid_cls="invalid-key",
+                    character_cls="self-insert",
+                )
 
                 reader.restore()
             except Exception:

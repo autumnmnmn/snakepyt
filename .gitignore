@@ -5,6 +5,7 @@ pyt/sketch
 
 webui/sites/_deploy
 webui/sites/local
+webui/common/media
 
 .legacy
 node_modules

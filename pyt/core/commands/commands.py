@@ -59,7 +59,10 @@ def _hi(session, args):
 @_builtin("reload", "refresh", "rr")
 def _reload(session, args):
     import sys
+
     from importlib import reload
+
+    from pyt.core import lsnap
 
     log = session.log
 
@@ -82,6 +85,11 @@ def _reload(session, args):
     if session_reload:
         new_session_module = sys.modules["pyt.core.session"]
         session.update_class(new_session_module.PytSession)
+
+    (cmd, remaining) = lsnap(args)
+    if cmd == "&":
+        (cmd, args) = lsnap(remaining)
+        session.try_handle_command(cmd, args)
 
 @_builtin("prefix", "pfx", "pre")
 def _prefix(session, args):
@@ -135,7 +143,7 @@ def _shell_run(session, args):
 
     if not os.path.isdir(path):
         log(f"{args} is not a directory but that's ok", mode="warning")
-        log(f"switching to {_shell}. home directory", mode="info")
+        log(f"switching to {_shell}", mode="info")
         subprocess.run([_shell])
         log("welcome back")
     else:

@@ -4,6 +4,7 @@
     --main-solid: #112233;
     --main-transparent: #112233DD;
     --main-faded: #11223344;
+    --main-visited: #112233;
     --main-solid-content: #DDDDDD;
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
@@ -47,6 +48,7 @@
     --main-solid: #EEDDEE;
     --main-transparent: #EEDDEEDD;
     --main-faded: #EEDDEE44;
+    --main-visited: #998899;
     --main-solid-content: #333333;
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;

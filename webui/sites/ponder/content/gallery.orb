@@ -1,0 +1,149 @@
+
+$css {
+    .gallery img {
+        width: calc(max(25vw, 64px) - 0.5em);
+        height: calc(max(25vw, 64px) - 0.5em);
+        padding: 0;
+        border-radius: 0.25rem;
+        border: 0.25rem solid transparent;
+    }
+
+    .gallery img:hover {
+        border: 0;
+        clip-path: inset(0) !important;
+    }
+
+    .gallery {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0px;
+        width: fit-content;
+    }
+
+    .blog-content {
+        margin-left: 1em;
+        padding-right: 1em;
+
+        height: 100%;
+        overflow-y: scroll;
+    }
+
+    @media (min-width: 600px) {
+        .gallery img {
+            width: calc(max(min(25vw, 512px), 256px) - 0.875em);
+            height: calc(max(min(25vw, 512px), 256px) - 0.875em);
+        }
+
+        .gallery {
+            gap: 0.5em;
+        }
+    }
+
+    span.center {
+        display: block;
+        margin: auto;
+        width: fit-content;
+    }
+
+    .gallery img:not(.loaded) {
+        filter: url(#thumb-blur);
+        clip-path: inset(0.25rem);
+    }
+
+    #lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #000a;
+        place-items: center;
+        z-index: 2;
+    }
+
+    #lightbox.open {
+        display: grid;
+    }
+
+    #lightbox img {
+        max-width: 98vw;
+        max-height: 98vh;
+        object-fit: contain;
+    }
+}
+
+[id=lightbox| onclick=this.classList.remove('open')] {
+    img[id=lightbox-img]{}
+}
+
+svg[style=height:0;width:0;margin:0;padding:0;display:block] {
+  filter[id=thumb-blur] {
+    feGaussianBlur[stdDeviation=3 | edgeMode=duplicate]{}
+  }
+}
+
+[class=blog-content]{
+
+$[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] {ponder}
+
+$[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
+
+[class=gallery] {
+    img[src=/media/sohl-dickstein/thumb/0.avif] {}
+    img[src=/media/sohl-dickstein/thumb/1.avif] {}
+    img[src=/media/sohl-dickstein/thumb/2.avif] {}
+    img[src=/media/sohl-dickstein/thumb/3.avif] {}
+    img[src=/media/sohl-dickstein/thumb/4.avif] {}
+    img[src=/media/sohl-dickstein/thumb/5.avif] {}
+    img[src=/media/lyapunov/thumb/0.avif] {}
+    img[src=/media/lyapunov/thumb/1.avif] {}
+    img[src=/media/lyapunov/thumb/2.avif] {}
+    img[src=/media/lyapunov/thumb/3.avif] {}
+    img[src=/media/lyapunov/thumb/4.avif] {}
+    img[src=/media/lyapunov/thumb/5.avif] {}
+    img[src=/media/chirikov-taylor/thumb/0.avif] {}
+    img[src=/media/chirikov-taylor/thumb/1.avif] {}
+    img[src=/media/chirikov-taylor/thumb/2.avif] {}
+    img[src=/media/chirikov-taylor/thumb/3.avif] {}
+    img[src=/media/chirikov-taylor/thumb/4.avif] {}
+    img[src=/media/chirikov-taylor/thumb/5.avif] {}
+    img[src=/media/classic_fractals/thumb/0.avif] {}
+    img[src=/media/classic_fractals/thumb/1.avif] {}
+    img[src=/media/classic_fractals/thumb/2.avif] {}
+    img[src=/media/classic_fractals/thumb/3.avif] {}
+    img[src=/media/classic_fractals/thumb/4.avif] {}
+    img[src=/media/classic_fractals/thumb/5.avif] {}
+    img[src=/media/classic_fractals/thumb/6.avif] {}
+    img[src=/media/classic_fractals/thumb/7.avif] {}
+    img[src=/media/classic_fractals/thumb/8.avif] {}
+    img[src=/media/other/thumb/1.avif] {}
+    img[src=/media/other/thumb/2.avif] {}
+    img[src=/media/other/thumb/3.avif] {}
+    img[src=/media/proj_shift/thumb/0.avif] {}
+    img[src=/media/proj_shift/thumb/1.avif] {}
+    img[src=/media/proj_shift/thumb/2.avif] {}
+    img[src=/media/proj_shift/thumb/3.avif] {}
+    img[src=/media/proj_shift/thumb/4.avif] {}
+    img[src=/media/proj_shift/thumb/5.avif] {}
+    img[src=/media/proj_shift/thumb/6.avif] {}
+    img[src=/media/proj_shift/thumb/7.avif] {}
+    img[src=/media/proj_shift/thumb/8.avif] {}
+    img[src=/media/proj_shift/thumb/9.avif] {}
+    img[src=/media/proj_shift/thumb/10.avif] {}
+    img[src=/media/proj_shift/thumb/11.avif] {}
+    img[src=/media/proj_shift/thumb/12.avif] {}
+    img[src=/media/proj_shift/thumb/13.avif] {}
+    img[src=/media/proj_shift/thumb/14.avif] {}
+    img[src=/media/proj_shift/thumb/15.avif] {}
+    img[src=/media/proj_shift/thumb/16.avif] {}
+    img[src=/media/proj_shift/thumb/17.avif] {}
+    img[src=/media/proj_shift/thumb/18.avif] {}
+    img[src=/media/proj_shift/thumb/19.avif] {}
+
+    $gallery-loader {}
+}
+
+}
+
+
+

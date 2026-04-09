@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass
-from math import sqrt, atan2, cos, sin, cbrt
+from math import sqrt, atan2, cos, sin, cbrt, tau
 
 # OkLab Magic Numbers from:
 # Ottosson, Björn "A perceptual color space for image processing"
@@ -160,9 +160,74 @@ class CIEXYZ: # CIE 1931 XYZ
 
     def to_linear_srgb(self) -> LinearSRGB:
         return LinearSRGB(
-            red   =  3.2406*self.x - 1.5372*self.y - 0.4986*self.z
-            green = -0.9689*self.x + 1.8758*self.y + 0.0415*self.z
+            red   =  3.2406*self.x - 1.5372*self.y - 0.4986*self.z,
+            green = -0.9689*self.x + 1.8758*self.y + 0.0415*self.z,
             blue  =  0.0557*self.x - 0.2040*self.y + 1.0570*self.z
         )
 
+
+def oklch_helix_map(
+    lightness: float | tuple[float, float] = (0.2, 0.9),
+    chroma: float | tuple[float, float] = 0.1,
+    hue_start: float = 0.0,
+    rotations: float = 1.0,
+):
+    """returns a function [0,1] -> OkLch tracing a helix through oklch space.
+    lightness ramps linearly, chroma interpolates, hue sweeps rotations*2π."""
+    lightness_start, lightness_end = lightness if isinstance(lightness, tuple) else (lightness, lightness)
+    chroma_start, chroma_end       = chroma    if isinstance(chroma,    tuple) else (chroma,    chroma)
+
+    def sample(t: float) -> OkLch:
+        return OkLch(
+            lightness = lightness_start + t * (lightness_end - lightness_start),
+            chroma    = chroma_start    + t * (chroma_end    - chroma_start),
+            hue       = hue_start       + t * rotations * tau,
+        )
+    return sample
+
+_CONVERSION_EDGES: dict[type, list[tuple[type, Callable]]] = {
+    NonlinearSRGB: [
+        (LinearSRGB, lambda x: x.to_linear_srgb()),
+    ],
+    LinearSRGB: [
+        (NonlinearSRGB, lambda x: x.to_nonlinear_srgb()),
+        (OkLab,         lambda x: x.to_oklab()),
+        (CIEXYZ,        lambda x: x.to_cie_xyz()),
+    ],
+    OkLab: [
+        (LinearSRGB, lambda x: x.to_linear_srgb()),
+        (OkLch,      lambda x: x.to_oklch()),
+    ],
+    OkLch: [
+        (OkLab, lambda x: x.to_oklab()),
+    ],
+    CIEXYZ: [
+        (LinearSRGB, lambda x: x.to_linear_srgb()),
+    ],
+}
+
+def color_map(source: type, target: type) -> Callable:
+    """Returns a function converting instances of `source` to `target`
+    by chaining the shortest path of conversion calls."""
+    if source is target:
+        return lambda x: x
+
+    queue = deque([(source, [])])
+    visited = {source}
+
+    while queue:
+        node, path = queue.popleft()
+        for neighbor, convert in _CONVERSION_EDGES.get(node, []):
+            new_path = path + [convert]
+            if neighbor is target:
+                def chain_fn(x, p=new_path):
+                    for f in p:
+                        x = f(x)
+                    return x
+                return chain_fn
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, new_path))
+
+    raise ValueError(f"no conversion path: {source.__name__} -> {target.__name__}")
 

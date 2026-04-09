@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass, replace
 from typing import Optional
 from pathlib import Path
+from pprint import pformat
 
 from pyt.core.terminal.ansi import codes as ac
 
@@ -45,6 +46,7 @@ class Logger:
     # TODO this toggle should be presented to a user the first time they
     # run snakepyt, and preference kept in pytrc
     _use_a11y_tags: bool = False
+    _on_except: Callable[[Exception],None] | None = None
 
     def indented(self, n=4):
         return replace(self, _indent=self._indent + n)
@@ -54,6 +56,9 @@ class Logger:
 
     def mode(self, mode: str):
         return replace(self, _mode=mode)
+
+    def on_except(self, handler):
+        return replace(self, _on_except=handler)
 
     def __call__(self, content, mode=None, indent=None, tag=None):
         if mode is None:
@@ -68,11 +73,16 @@ class Logger:
             line_number = callsite[2]
             filename = Path(filepath).name
             tag = ac.file_link(filepath, line=line_number)
+        if isinstance(content, dict):
+            content = "\n"+pformat(content)
         _log(tag, content, mode, indent, self._use_a11y_tags)
         return self
 
     def trace(self, source=None):
         exception_type, exception, trace = sys.exc_info()
+        if self._on_except is not None:
+            self._on_except(exception)
+
         if exception_type is None:
             raise RuntimeError("Logger.trace was called in a context without an exception to trace")
         trace_frames = traceback.extract_tb(trace)

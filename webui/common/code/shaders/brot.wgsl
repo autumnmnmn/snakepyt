@@ -181,7 +181,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var color: vec4<f32>;
     if (escaped) {
-        let escape_speed = 1.0 - pow(f32(iter) / f32(uniforms.iterations), 2.0);
+        let escape_speed = log(f32(iter));//1.0 - pow(f32(iter) / f32(uniforms.iterations), 2.0);
         color = vec4<f32>(escape_speed, escape_speed, escape_speed, 1.0);
     } else {
         let final_mag = complex_mag(z);

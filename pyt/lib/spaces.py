@@ -112,7 +112,7 @@ def xrange_yrange(center, span):
 def map_space(origin, span, zooms, target_aspect, scale) -> region_mapping:
     ((x_min, x_max), (y_min, y_max)) = apply_zooms(origin, span, zooms)
 
-    aspect = span[0] / span[1]
+    aspect = span[0] / span[1] if target_aspect is None or () else target_aspect
 
     if aspect < 1:
         h = scale

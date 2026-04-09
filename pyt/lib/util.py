@@ -44,7 +44,7 @@ def cpilify(z):
 
 # complex, from -1 to 1 & -i to i
 def csave(x, f):
-    cpilify(x).save(f"out/{f}.png")
+    cpilify(x).save(f"{f}.png")
 
 # monochrome, 0 to 1
 def mpilify_cpu(z):
@@ -61,10 +61,10 @@ def mstreamify(z):
     return torch.clone(z).clamp_(0,1).mul_(255).round().unsqueeze(2).expand(-1,-1,3).type(torch.uint8).cpu().numpy().tobytes()
 
 def msave_cpu(x, f):
-    mpilify_cpu(x).save(f"out/{f}.png")
+    mpilify_cpu(x).save(f"{f}.png")
 
 def msave(x, f):
-    mpilify(x).save(f"out/{f}.png")
+    mpilify(x).save(f"{f}.png")
 
 def msave_alt(x, f):
     with io.BytesIO() as buffer:
@@ -88,7 +88,7 @@ def load_image_tensor(path):
     return torch.from_numpy(np_image).permute(2,0,1)
 
 def save(x, f):
-    pilify(x).save(f"out/{f}.png")
+    pilify(x).save(f"{f}.png")
 
 def streamify(z):
     z_norm = z.clamp(0, 1)

@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from typing import List, Dict
 
-from pyt.lib.core import AttrDict
+from pyt.core import AttrDict
 
 def chatEntry(role: str, content: str) -> AttrDict:
     return AttrDict({"role": role, "content": content})
@@ -48,7 +48,7 @@ class ChatCollector(Collector):
         self.current_collector = Collector()
 
     def collect(self, line):
-        if line in ['.user:', '.system:', '.assistant:']:
+        if line.startswith(".") and line.endswith(":") and len(line) > 2:
             role = line[1:-1]
             if self.current_collector.name is not None:
                 self.chat.append(chatEntry(
@@ -78,7 +78,7 @@ def apply_substitutions(source, substitutions: Dict):
         return re.sub(r'\$\{\s*([^}]+?)\s*\}', replacer, source)
     elif isinstance(source, list):
         return [
-            chatEntry(entry.role, apply_substitutions(entry.content, substitutions))
+            chatEntry(apply_substitutions(entry.role, substitutions), apply_substitutions(entry.content, substitutions))
             for entry in source
         ]
     else:

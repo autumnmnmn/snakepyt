@@ -205,7 +205,7 @@ export async function main(target) {
         usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
     });
 
-    const sampler = $gpu.device.createSampler({ magFilter: "nearest", minfilter: "nearest" });
+    const sampler = $gpu.device.createSampler({ magFilter: "nearest", minFilter: "nearest" });
 
     let computeBindGroup = $gpu.device.createBindGroup({
         layout: computePipeline.getBindGroupLayout(0),
@@ -504,7 +504,7 @@ export async function main(target) {
         const scale = 4.0 / uniforms.vars.zoom.value;
         const cMouse = c.fromPixel(pMouse, dims, center, scale);
 
-        const isTrackpad = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
+        const isTrackpad = e.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
         const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;
 
         // negative deltaY means zoom in

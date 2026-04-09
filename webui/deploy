@@ -6,7 +6,15 @@ else
 fi
 
 mkdir sites/_deploy/content
-cp -ans "$(pwd)/$TARGET"/content/* sites/_deploy/content/
+
+src="$(pwd)/$TARGET/content"
+find "$src" -path "$src/media/*/input" -prune -o -type f -print0 | while IFS= read -r -d '' f; do
+  rel="${f#"$src/"}"
+  dest="sites/_deploy/content/$rel"
+  mkdir -p "$(dirname "$dest")"
+  ln -sn "$f" "$dest"
+done
+
 cp -ans "$(pwd)"/common/* sites/_deploy/content/
 
 ln -s "$(pwd)/$TARGET/wrangler.jsonc" "./sites/_deploy/wrangler.jsonc"

@@ -44,6 +44,9 @@ class PytSession:
                             default=None,
                             help="Path of preferred python interpreter")
 
+    def _except_callback(self, exception):
+        self.last_exception = exception
+
     def __init__(self, cli_args):
         self.cli_args = cli_args
         self.snakepyt_version = (0, 2)
@@ -57,7 +60,8 @@ class PytSession:
         self.persistent_hashes = {}
 
         from pyt.core.terminal import Logger
-        self.log = Logger().mode("ok").tag("snakepyt")
+        self.log = Logger().mode("ok").tag("snakepyt").on_except(self._except_callback)
+        self.last_exception = None
 
         self.commands = AttrDict()
 

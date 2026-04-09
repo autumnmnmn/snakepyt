@@ -164,6 +164,7 @@ def _run(session, args):
             return
     else:
         log("sketch has no main function", mode="error", indent=4)
+        return
 
     if failures == 0:
         log(f"finished {runs} run(s) in {perf_counter() - t0:.3f}s", mode="ok")
