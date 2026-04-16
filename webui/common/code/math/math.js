@@ -230,7 +230,7 @@ export async function main(target, expression) {
         declaredTokens[text] = { type: "leaf", make: makeLeaf("mtext", texts[text]) };
     }
 
-    for (const line of contentLines) {
+    for (const [index, line] of contentLines.entries()) {
         const trimmed = line.trim();
         if (!trimmed) continue;
 
@@ -279,6 +279,9 @@ export async function main(target, expression) {
         }
 
         target.appendChild(make(root));
+        if (index < contentLines.length - 1) {
+            target.appendChild($element("br"));
+        }
     }
 }
 

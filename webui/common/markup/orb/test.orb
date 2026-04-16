@@ -1,4 +1,18 @@
 
+[style=height: 100%; overflow-y:scroll] {
+
+[style=width:2000px;height:550px;] {
+    $math/plot { logistic_3d }
+}
+
+[style=width:2000px;height:550px;] {
+    $math/plot { logistic }
+}
+
+[style=width:2000px;height:550px;] {
+    $math/plot { logistic_discontinuous }
+}
+
 abc a[href=foo]{test 123} def
 
 abc a[href=foo]{test (123)} def
@@ -9,11 +23,7 @@ abc ( a[href=foo]{test (123)} ) def
 
 abc )a[href=foo]{test (123)}) def
 
-[style=width:2000px;height:500px;] {
-    $math/plot { logistic }
 }
 
-[style=width:2000px;height:500px;] {
-    $math/plot { logistic_discontinuous }
-}
+
 

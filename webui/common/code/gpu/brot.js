@@ -19,8 +19,7 @@ import { greek } from "/code/math/math.js";
 
 import "/code/math/constants.js";
 import "/code/math/vector.js";
-
-import { translatedProjectiveShift } from "/code/math/proj_shift.js";
+import "/code/math/complex.js";
 
 export async function main(target) {
     let showTrajectory = false;
@@ -144,7 +143,7 @@ export async function main(target) {
             const url = URL.createObjectURL(blob);
             const a = $element("a");
             a.href = url;
-            a.download = `ps_web_${Date.now()}.png`;
+            a.download = `brot_${Date.now()}.png`;
             a.click();
             URL.revokeObjectURL(url);
         });
@@ -497,7 +496,7 @@ export async function main(target) {
         const scale = 1.0 / uniforms.vars.zoom.value;
         const cMouse = c.fromPixel(pMouse, dims, center, scale);
 
-        const isTrackpad = e.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
+        const isTrackpad = e.deltaX > 0; // sloppy heuristic but whatever
         const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;
 
         // negative deltaY means zoom in

@@ -45,6 +45,8 @@ const wgslSizes = {
 };
 
 const wgslAligns = {
+    vec3f: 16,
+    vec3u: 16,
     vec2f: 8,
     vec2u: 8,
     f32: 4, i32: 4, u32: 4,
@@ -73,6 +75,16 @@ const compositeTypes = {
         { type: "u32", name: "x" },
         { type: "u32", name: "y" }
     ],
+    vec3u: [
+        { type: "u32", name: "x" },
+        { type: "u32", name: "y" },
+        { type: "u32", name: "z" }
+    ],
+    vec3f: [
+        { type: "f32", name: "x" },
+        { type: "f32", name: "y" },
+        { type: "f32", name: "z" }
+    ],
 };
 
 const constants = {
@@ -89,9 +101,9 @@ function getUiName(varName) {
 function processNumeric(value) {
     if (value === undefined) return value;
     if (value[0] === '-') {
-        return -constants[value.substring(1)] || value;
+        return -constants[value.substring(1)] || Number(value);
     }
-    return constants[value] || value;
+    return constants[value] || Number(value);
 }
 
 // TODO: make this more debuggable lol
@@ -155,11 +167,12 @@ async function loadShader(shaderName, substitutions = {}) {
         const buildControl = (v, afterChangeCallback) => ({
             type: "number",
             label: v.uiName,
+            name: v.varName,
             value: v.value,
             min: v.min,
             max: v.max,
             step: v.isIntegral ? 1 : 0.001,
-            onUpdate: (value, set) => {
+            onUpdate: (value, set, panel) => {
                 v.value = value;
                 if (v.hardMin && v.value < v.min) {
                     v.value = v.min;

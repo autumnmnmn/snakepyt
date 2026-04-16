@@ -7,10 +7,6 @@ $css(`
     padding-left: 0.5rem;
 }
 
-.number:has(input:focus) {
-    border-left: 3px solid var(--main-solid);
-    padding-left: calc(0.5rem - 2px);
-}
 
 .number label {
     color: var(--main-solid);
@@ -93,7 +89,7 @@ $css(`
     height: 1rem;
     border-radius: 2px;
     background: var(--main-solid);
-    margin-top: calc(1px - 1rem); /* center the thumb on the track */
+    margin-top: calc(1px - 0.5rem); /* center the thumb on the track */
 
 }
 
@@ -117,7 +113,7 @@ const defaults = {
     onUpdate: null
 };
 
-export async function main(target, spec) {
+export async function main(target, spec, panelState) {
     spec = { ...defaults, ...spec };
 
     const control = document.createElement("div");
@@ -172,20 +168,20 @@ export async function main(target, spec) {
     reset_button.label = "reset";
     reset_button.addEventListener("click", () => {
         set(spec.value);
-        spec.onUpdate?.(spec.value, set);
+        spec.onUpdate?.(spec.value, set, panelState);
     });
 
 
     slider.addEventListener("input", () => {
         field.value = slider.value;
         copyable_value.innerText = slider.value;
-        spec.onUpdate?.(slider.value, set);
+        spec.onUpdate?.(slider.value, set, panelState);
     });
 
     field.addEventListener("input", () => {
         slider.value = field.value;
         copyable_value.innerText = field.value;
-        spec.onUpdate?.(field.value, set);
+        spec.onUpdate?.(field.value, set, panelState);
     });
 
     target.$with(
@@ -195,5 +191,15 @@ export async function main(target, spec) {
             slider
         )
     );
+
+    const hide = () => {
+        control.setAttribute("hidden", "");
+    }
+
+    const show = () => {
+        control.removeAttribute("hidden");
+    }
+
+    return { set, show, hide };
 }
 

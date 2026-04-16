@@ -12,18 +12,35 @@
 }
 
 math {
-    display: block;
+    display: math;
     line-height: 2em;
 }
 
+math * {
+    overflow: visible;
+}
+
+math:not(last-child) {
+    padding-bottom: 0.5em;
+}
+
 mtext {
-    padding-left: 1em;
     padding-right: 1em;
 }
 
+mtext:not(:first-child) {
+    padding-left: 1em;
+}
+
 msub > :last-child {
-    font-size: 0.8rem;
-    transform: translateY(0.15em);
+    padding-top: 0.45em;
+}
+
+@supports (-moz-appearance: none) {
+    msub > :last-child {
+        font-size: 0.75rem;
+        transform: translateY(0.3em);
+    }
 }
 
 msup > :last-child {

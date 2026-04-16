@@ -128,11 +128,11 @@ export async function build(target, nodes, source, inline=false, namespace=null)
         const errTarget = segment;
         const noth = document.createElement("div");
         noth.style = "display: none";
-        segment.appendChild(noth);
+        //segment.appendChild(noth); // just a bug?? figure out wtf noth was ever accomplishing
         $mod(tag.substring(1), target, [...bracketArgs, source.substring(node.content.start, node.content.end)])
+            .finally(() => noth.remove())
             .catch((err) => {
                 console.log(err)
-                noth.remove();
                 const _sp = document.createElement("span");
                 // TODO better error message, differentiate btwn module error & lack of module
                 _sp.innerText = ` [no module "${tag}"] `;

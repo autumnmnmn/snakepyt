@@ -13,42 +13,23 @@ $css(`
         left: 0;
         pointer-events: none;
     }
+
+    .color-detector {
+        display: none;
+        background-color: var(--main-background);
+    }
 `);
 
 import { greek } from "/code/math/math.js";
 
 import "/code/math/constants.js";
 import "/code/math/vector.js";
-
-import { translatedProjectiveShift } from "/code/math/proj_shift.js";
+import "/code/math/complex.js";
 
 export async function main(target) {
-    let showTrajectory = false;
 
     const c = $complex.cartesian;
     const v2 = $vector.v2;
-
-    function computeTrajectory(startZ, maxIters, escapeThreshold) {
-        const translation = c.of(uniforms.vars.c_x.value, uniforms.vars.c_y.value);
-
-        const trajectory = [startZ];
-        let z = startZ;
-
-        for (let i = 0; i < maxIters; i++) {
-            if (c.magSq(z) > escapeThreshold * escapeThreshold) {
-                break;
-            }
-            z = translatedProjectiveShift(
-                z,
-                translation,
-                uniforms.vars.phi.value,
-                uniforms.vars.psi.value
-            );
-            trajectory.push(c.copy(z));
-        }
-
-        return trajectory;
-    }
 
     const renderStack = $div("full");
     renderStack.dataset.name = "renderer";
@@ -60,11 +41,14 @@ export async function main(target) {
     const context = gpuModule.context;
 
     canvas.setAttribute("aria-label",
-        "Interactive visualization of the iterated projective shift map.");
+        "Interactive visualization of a Lyapunov fractal.");
     canvas.setAttribute("role", "application");
     canvas.setAttribute("aria-keyshortcuts", "f");
 
-    const compShader = await $gpu.loadShader("proj_shift", {
+    const colorDetector = $div("color-detector");
+    canvas.$with(colorDetector);
+
+    const compShader = await $gpu.loadShader("lyapunov", {
         "pixel_mapping" : "pixel_to_complex"
     });
     const blitShader = await $gpu.loadShader("blit");
@@ -73,9 +57,9 @@ export async function main(target) {
 
     const uniforms = compShader.bufferDefinitions["0,0"];
 
-    uniforms.vars.zoom.value = 4.0;
-    uniforms.vars.center_x.value = -(uniforms.vars.c_x.value / 2);
-    uniforms.vars.center_y.value = 0.0;
+    uniforms.vars.zoom.value = 0.25;
+    uniforms.vars.center_x.value = 2.001;
+    uniforms.vars.center_y.value = -2.001;
 
     const controls = await $prepMod("control/panel",
         ["Parameters", uniforms.getControlSettings(render)]
@@ -132,12 +116,40 @@ export async function main(target) {
         }];
     }
 
-    function toggleTrajectory() {
-        if (showTrajectory) return ["hide trajectory", () => {showTrajectory = false}];
-        return ["show trajectory", () => {showTrajectory = true}];
+    const observers = {};
+
+    function parseRgb(rgbString) {
+        const m = rgbString.match(/rgba?\(([^)]+)\)/);
+        if (!m) return { r: 0, g: 0, b: 0, a: 1 };
+        const [r, g, b, a = 1] = m[1].split(',').map(v => parseFloat(v) / 255);
+        return { r, g, b, a };
     }
 
+    let style = getComputedStyle(colorDetector);
+    let backgroundColor = parseRgb(style.backgroundColor);
+    uniforms.vars.nan_color_x.value = backgroundColor.r;
+    uniforms.vars.nan_color_y.value = backgroundColor.g;
+    uniforms.vars.nan_color_z.value = backgroundColor.b;
+
+    observers.theme = new MutationObserver(() => {
+        style = getComputedStyle(colorDetector);
+        backgroundColor = parseRgb(style.backgroundColor);
+        uniforms.vars.nan_color_x.value = backgroundColor.r;
+        uniforms.vars.nan_color_y.value = backgroundColor.g;
+        uniforms.vars.nan_color_z.value = backgroundColor.b;
+
+        render();
+    });
+    observers.theme.observe(document.documentElement, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-theme"]
+    });
+
     function exitRenderer() {
+        // TODO do this cleanup in other webgpu renderers
+        observers.resize?.disconnect();
+        observers.theme?.disconnect();
         // relying on showControls' topmost check to have occurred before this can be called,
         // which is true bc that happens while the context menu is built.
         // this may not remain true if a hotkey is added for exiting w/o opening the menu
@@ -151,25 +163,10 @@ export async function main(target) {
             const url = URL.createObjectURL(blob);
             const a = $element("a");
             a.href = url;
-            a.download = `ps_web_${Date.now()}.png`;
+            a.download = `lyap_${Date.now()}.png`;
             a.click();
             URL.revokeObjectURL(url);
         });
-    }
-
-    function saveTrajectory() {
-        if (!showTrajectory) return;
-
-        return ["save trajectory", () => {
-            const svgString = new XMLSerializer().serializeToString(overlay);
-            const blob = new Blob([svgString], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const a = $element("a");
-            a.href = url;
-            a.download = `ps_traj_${Date.now()}.svg`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }];
     }
 
     renderStack.$preventCollapse = true;
@@ -198,6 +195,12 @@ export async function main(target) {
     let height = canvas.clientHeight;
     canvas.width = width;
     canvas.height = height;
+
+    style = getComputedStyle(colorDetector);
+    backgroundColor = parseRgb(style.backgroundColor);
+    uniforms.vars.nan_color_x.value = backgroundColor.r;
+    uniforms.vars.nan_color_y.value = backgroundColor.g;
+    uniforms.vars.nan_color_z.value = backgroundColor.b;
 
     let outputTexture = $gpu.device.createTexture({
         size: [width, height],
@@ -234,11 +237,11 @@ export async function main(target) {
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 
-        const orig_height = uniforms.vars.extent_y.value;
-        const orig_width = uniforms.vars.extent_x.value;
+        const orig_height = uniforms.vars.height.value;
+        const orig_width = uniforms.vars.width.value;
 
-        uniforms.vars.extent_y.value *= scalingFactor;
-        uniforms.vars.extent_x.value *= scalingFactor;
+        uniforms.vars.height.value *= scalingFactor;
+        uniforms.vars.width.value *= scalingFactor;
 
         computeBindGroup = $gpu.device.createBindGroup({
             layout: computePipeline.getBindGroupLayout(0),
@@ -260,15 +263,15 @@ export async function main(target) {
 
         render(offscreen.context, dims);
 
-        uniforms.vars.extent_y.value = orig_height;
-        uniforms.vars.extent_x.value = orig_width;
+        uniforms.vars.height.value = orig_height;
+        uniforms.vars.width.value = orig_width;
 
         const blob = await offscreen.canvas.convertToBlob({ type: "image/png" });
 
         const url = URL.createObjectURL(blob);
         const a = $element("a");
         a.href = url;
-        a.download = `ps_web_${Date.now()}.png`;
+        a.download = `lyapunov_${Date.now()}.png`;
         a.click();
         URL.revokeObjectURL(url);
         texture.destroy();
@@ -291,6 +294,10 @@ export async function main(target) {
 
     }
 
+
+    observers.resize = new ResizeObserver(resize);
+    observers.resize.observe(canvas);
+
     function resize() {
         width = canvas.clientWidth;
         height = canvas.clientHeight;
@@ -304,8 +311,8 @@ export async function main(target) {
 
         const uniforms = compShader.bufferDefinitions["0,0"];
 
-        uniforms.vars.extent_x.value = width;
-        uniforms.vars.extent_y.value = height;
+        uniforms.vars.width.value = width;
+        uniforms.vars.height.value = height;
 
         if (width * height <= 0) {
             canRender = false;
@@ -341,8 +348,6 @@ export async function main(target) {
         render();
     }
 
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(canvas);
 
     function render(targetContext = context, dims = null) {
 
@@ -401,52 +406,9 @@ export async function main(target) {
 
         const dims = v2.of(width, height);
         const center = c.of(uniforms.vars.center_x.value, uniforms.vars.center_y.value);
-        const scale = 4.0 / uniforms.vars.zoom.value;
+        const scale = 1.0 / uniforms.vars.zoom.value;
 
         const cMouse = c.fromPixel(pMouse, dims, center, scale);
-
-        const trajectory = computeTrajectory(
-            cMouse,
-            Math.min(uniforms.vars.iterations.value, 500),
-            uniforms.vars.escape_distance.value
-        );
-
-        // Clear existing trajectory
-        const existingPath = overlay.querySelector(".trajectory-path");
-        if (existingPath) {
-            existingPath.remove();
-        }
-
-        if (showTrajectory && trajectory.length > 1) {
-            const path = $svgElement("path");
-            path.setAttribute("class", "trajectory-path");
-            path.setAttribute("fill", "none");
-            path.setAttribute("stroke", "lime");
-            path.setAttribute("stroke-width", "2");
-            path.setAttribute("opacity", "1.0");
-
-            let pathData = "";
-            for (let i = 0; i < trajectory.length; i++) {
-                const pixel = c.toPixel(trajectory[i], dims, center, scale);
-
-                // Skip points outside visible area
-                if (pixel.x < -10 || pixel.x > width + 10 ||
-                    pixel.y < -10 || pixel.y > height + 10) {
-                    //continue;
-                }
-
-                if (pathData === "") {
-                    pathData = `M ${pixel.x} ${pixel.y}`;
-                } else {
-                    pathData += ` L ${pixel.x} ${pixel.y}`;
-                }
-            }
-
-            if (pathData !== "") {
-                path.setAttribute("d", pathData);
-                overlay.appendChild(path);
-            }
-        }
 
 
         if (!isDragging) return;
@@ -471,12 +433,10 @@ export async function main(target) {
     renderStack.$contextMenu = {
         items: [
             showControls,
-            saveTrajectory,
             ["save frame", saveFrame],
             ["save 4x", () => offscreenRender(2)],
             ["save 9x", () => offscreenRender(3)],
             ["save 16x", () => offscreenRender(4)],
-            toggleTrajectory,
             ["exit", exitRenderer]
         ]
     };
@@ -501,7 +461,7 @@ export async function main(target) {
 
         const dims = v2.of(width, height);
         const center = c.of(uniforms.vars.center_x.value, uniforms.vars.center_y.value);
-        const scale = 4.0 / uniforms.vars.zoom.value;
+        const scale = 1.0 / uniforms.vars.zoom.value;
         const cMouse = c.fromPixel(pMouse, dims, center, scale);
 
         const isTrackpad = e.deltaX > 0; // sloppy heuristic but whatever
@@ -513,7 +473,7 @@ export async function main(target) {
         uniforms.vars.zoom.value *= zoomFactor;
 
         // Adjust center to keep mouse position fixed in complex plane
-        const newScale = 4.0 / uniforms.vars.zoom.value;
+        const newScale = 1.0 / uniforms.vars.zoom.value;
         const newCenterX = cMouse.re - (pMouse.x - width * 0.5) * newScale / height;
         const newCenterY = cMouse.im - (pMouse.y - height * 0.5) * newScale / height;
 
@@ -530,4 +490,5 @@ export async function main(target) {
 
     return { replace: true };
 }
+
 

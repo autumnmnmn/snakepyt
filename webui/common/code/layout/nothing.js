@@ -57,16 +57,15 @@ export async function main(target) {
     const noth3 = {content: [noth, noth, noth]};
 
     const menuItems = {
-        fractal: load("gpu/proj_shift"),
-        brot: load("gpu/brot"),
+        projective_shift: load("gpu/proj_shift"),
+        mandelbrot: load("gpu/brot"),
+        lyapunov: load("gpu/lyapunov"),
         //prompt: load("prompt"),
         row2: load("layout/split", [noth2]),
         row3: load("layout/split", [noth3]),
         col2: load("layout/split", [{...noth2, orientation: "col"}]),
         col3: load("layout/split", [{...noth3, orientation: "col"}]),
         main: load("code/orb", ["/main.orb"]),
-        blackboard: load("theme", ["blackboard"]),
-        whiteboard: load("theme", ["whiteboard"]),
         spinner: load("spinner"),
         highlight: load("code/highlight")
     };
@@ -74,8 +73,6 @@ export async function main(target) {
     backdrop.$contextMenu = {
         items: Object.entries(menuItems)
     };
-
-    //const menu = await $mod("control/menu", backdrop, [menuItems]);
 
     backdrop.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === "o") {

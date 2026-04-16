@@ -8,6 +8,15 @@ const tick_range = (min, max, step) =>
 const linspace = (start, end, n) =>
     Array.from({ length: n }, (_, i) => start + (end - start) * i / (n - 1))
 
+const line = (p1, p2, _class) => {
+    const element = $svgElement("line");
+    element.setAttribute("x1", p1.x);
+    element.setAttribute("x2", p2.x);
+    element.setAttribute("y1", p1.y);
+    element.setAttribute("y2", p2.y);
+    element.setAttribute("class", _class);
+    return element;
+};
 
 
 export async function main(svg) {
@@ -23,8 +32,16 @@ export async function main(svg) {
     const y_ticks = tick_range(y_min, y_max, 0.1);
 
     const get_layout = () => {
-        const width = svg.clientWidth;
-        const height = svg.clientHeight;
+        let width = svg.clientWidth;
+        let height = svg.clientHeight;
+
+        const target_aspect = (y_max - y_min) / (x_max - x_min);
+
+        if (height / width > target_aspect) {
+            height = width * target_aspect;
+        } else {
+            width = height / target_aspect;
+        }
 
         const plot_left = 0.1 * width;
         const plot_right = 0.9 * width;
@@ -55,39 +72,33 @@ export async function main(svg) {
     const draw_grid = (layout) => {
         const { x, y, overhang_x, overhang_y, inset_x, inset_y } = layout;
 
-        const x_axis = $svgElement("line");
-        x_axis.setAttribute("x1", x(x_min) - overhang_x);
-        x_axis.setAttribute("x2", x(x_max) + overhang_x);
-        x_axis.setAttribute("y1", y(0));
-        x_axis.setAttribute("y2", y(0));
-        x_axis.setAttribute("class", "axis");
+        const x_axis = line(
+            { x: x(x_min) - overhang_x, y: y(0) },
+            { x: x(x_max) + overhang_x, y: y(0) },
+            "axis"
+        );
 
-        const y_axis = $svgElement("line");
-        y_axis.setAttribute("x1", x(0));
-        y_axis.setAttribute("x2", x(0));
-        y_axis.setAttribute("y1", y(y_min) - overhang_y);
-        y_axis.setAttribute("y2", y(y_max) + overhang_y);
-        y_axis.setAttribute("class", "axis");
+        const y_axis = line(
+            { y: y(y_min) - overhang_y, x: x(0) },
+            { y: y(y_max) + overhang_y, x: x(0) },
+            "axis"
+        );
 
-        const x_guides = x_ticks.map(x_val => {
-            const tick = $svgElement("line");
-            tick.setAttribute("x1", x(x_val));
-            tick.setAttribute("x2", x(x_val));
-            tick.setAttribute("y1", y(y_min) - inset_y);
-            tick.setAttribute("y2", y(y_max) + inset_y);
-            tick.setAttribute("class", "guide");
-            return tick;
-        });
+        const x_guides = x_ticks.map(x_val =>
+            line(
+                { x: x(x_val), y: y(y_min) - inset_y },
+                { x: x(x_val), y: y(y_max) + inset_y },
+                "guide"
+            )
+        );
 
-        const y_guides = y_ticks.map(y_val => {
-            const tick = $svgElement("line");
-            tick.setAttribute("x1", x(x_min) - inset_x);
-            tick.setAttribute("x2", x(x_max) + inset_x);
-            tick.setAttribute("y1", y(y_val));
-            tick.setAttribute("y2", y(y_val));
-            tick.setAttribute("class", "guide");
-            return tick;
-        });
+        const y_guides = y_ticks.map(y_val =>
+            line(
+                { y: y(y_val), x: x(x_min) - inset_x },
+                { y: y(y_val), x: x(x_max) + inset_x },
+                "guide"
+            )
+        );
 
         grid_group.replaceChildren(x_axis, y_axis, ...x_guides, ...y_guides);
     };

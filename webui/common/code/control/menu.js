@@ -182,6 +182,8 @@ const showMenu = (target, position = null) => {
 };
 
 document.addEventListener("contextmenu", (e) => {
+    if (e.shiftKey) return;
+
     menu.replaceChildren();
 
     const items = collectItems(e.target);

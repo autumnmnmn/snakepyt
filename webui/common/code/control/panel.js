@@ -34,10 +34,19 @@ $css(`
     flex-shrink: 0;
 }
 
+.control:has(:focus) {
+    border-left: 3px solid var(--main-solid);
+    padding-left: calc(0.5rem - 2px);
+}
+
+.control[hidden] {
+    display: none;
+}
+
 `);
 
-async function createControl(target, spec) {
-    await $mod(`control/${spec.type}`, target, [spec]);
+async function createControl(target, spec, state) {
+    return await $mod(`control/${spec.type}`, target, [spec, state]);
 }
 
 export async function main(target, name, controls) {
@@ -52,12 +61,15 @@ export async function main(target, name, controls) {
     legend.innerText = name;
     container.appendChild(legend);
 
+    const controlState = {};
+
     for (const control of controls) {
-        await createControl(container, control);
+        const name = control.name ?? control.label;
+        controlState[name] = await createControl(container, control, controlState);
     }
 
     target.appendChild(container);
 
-    return { replace: true };
+    return { replace: true, controls: controlState };
 }
 
