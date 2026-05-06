@@ -1,10 +1,5 @@
 
 $css(`
-    .proj-shift-container {
-        display: flex;
-        flex-direction: row;
-    }
-
     .overlay {
         user-select: none;
         position: absolute;
@@ -23,22 +18,21 @@ $css(`
 import { greek } from "/code/math/math.js";
 
 import "/code/math/constants.js";
-import "/code/math/vector.js";
-import "/code/math/complex.js";
+import { v2 } from "/code/math/vector.js";
+import { cartesian as c } from "/code/math/complex.js";
+import { splitDouble } from "/code/math/precision.js";
 
-export async function main(target) {
-
-    const c = $complex.cartesian;
-    const v2 = $vector.v2;
+export async function main() {
 
     const renderStack = $div("full");
+    let topmost = renderStack;
     renderStack.dataset.name = "renderer";
     renderStack.style.position = "relative";
 
-    const gpuModule = await $mod("gpu/webgpu", renderStack);
+    const canvasModule = await $apply("gpu/canvas", renderStack);
 
-    const canvas = gpuModule.canvas;
-    const context = gpuModule.context;
+    const canvas = canvasModule.canvas;
+    const context = canvasModule.context;
 
     canvas.setAttribute("aria-label",
         "Interactive visualization of a Lyapunov fractal.");
@@ -56,13 +50,25 @@ export async function main(target) {
     if (!compShader || !blitShader) return;
 
     const uniforms = compShader.bufferDefinitions["0,0"];
+    const params = uniforms.vars;
 
-    uniforms.vars.zoom.value = 0.25;
-    uniforms.vars.center_x.value = 2.001;
-    uniforms.vars.center_y.value = -2.001;
+    const blitUniforms = blitShader.bufferDefinitions["0,0"];
+    const blitParams = blitUniforms.vars;
 
-    const controls = await $prepMod("control/panel",
-        ["Parameters", uniforms.getControlSettings(render)]
+    params.zoom = 0.25;
+
+
+    var center_x = splitDouble(2.001);
+    var center_y = splitDouble(-2.001);
+
+
+    params.center_low_x = center_x[1];
+    params.center_low_y = center_y[1];
+    params.center_high_x = center_x[0];
+    params.center_high_y = center_y[0];
+
+    const controls = await $mod("control/panel",
+        "Parameters", uniforms.getControlSettings(render).concat(blitUniforms.getControlSettings(render))
     );
 
     const computePipeline = $gpu.device.createComputePipeline({
@@ -105,12 +111,12 @@ export async function main(target) {
         else if (topmost.querySelector(".control-panel")) return;
 
         return ["show controls", async () => {
-            const split = await $mod("layout/split",
+            const split = await $apply("layout/split",
                 renderStack.parentNode,
-                [{
-                    content: [controls, renderStack],
+                {
+                    content: [controls.dom, renderStack],
                     percents: [20, 80]
-                }]
+                }
             );
             topmost = split.topmost;
         }];
@@ -127,16 +133,16 @@ export async function main(target) {
 
     let style = getComputedStyle(colorDetector);
     let backgroundColor = parseRgb(style.backgroundColor);
-    uniforms.vars.nan_color_x.value = backgroundColor.r;
-    uniforms.vars.nan_color_y.value = backgroundColor.g;
-    uniforms.vars.nan_color_z.value = backgroundColor.b;
+    blitParams.nan_color_x = backgroundColor.r;
+    blitParams.nan_color_y = backgroundColor.g;
+    blitParams.nan_color_z = backgroundColor.b;
 
     observers.theme = new MutationObserver(() => {
         style = getComputedStyle(colorDetector);
         backgroundColor = parseRgb(style.backgroundColor);
-        uniforms.vars.nan_color_x.value = backgroundColor.r;
-        uniforms.vars.nan_color_y.value = backgroundColor.g;
-        uniforms.vars.nan_color_z.value = backgroundColor.b;
+        blitParams.nan_color_x = backgroundColor.r;
+        blitParams.nan_color_y = backgroundColor.g;
+        blitParams.nan_color_z = backgroundColor.b;
 
         render();
     });
@@ -147,15 +153,17 @@ export async function main(target) {
     });
 
     function exitRenderer() {
-        // TODO do this cleanup in other webgpu renderers
         observers.resize?.disconnect();
         observers.theme?.disconnect();
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
         // relying on showControls' topmost check to have occurred before this can be called,
         // which is true bc that happens while the context menu is built.
         // this may not remain true if a hotkey is added for exiting w/o opening the menu
         const target = topmost.parentNode;
         target.replaceChildren();
-        $mod("layout/nothing", target);
+        $apply("layout/nothing", target);
     }
 
     function saveFrame() {
@@ -177,71 +185,50 @@ export async function main(target) {
                 document.exitFullscreen();
             }
             else {
-                renderStack.requestFullscreen();
+                (topmost.isConnected ? topmost : renderStack).requestFullscreen();
             }
         }
     });
 
     const split = await $mod("layout/split",
-        target,
-        [{
-            content: [controls, renderStack],
+        {
+            content: [controls.dom, renderStack],
             percents: [20, 80]
-        }]
+        }
     );
-    let topmost = split.topmost;
+    topmost = split.topmost;
 
     let width = canvas.clientWidth;
     let height = canvas.clientHeight;
-    canvas.width = width;
-    canvas.height = height;
 
     style = getComputedStyle(colorDetector);
     backgroundColor = parseRgb(style.backgroundColor);
-    uniforms.vars.nan_color_x.value = backgroundColor.r;
-    uniforms.vars.nan_color_y.value = backgroundColor.g;
-    uniforms.vars.nan_color_z.value = backgroundColor.b;
+    blitParams.nan_color_x = backgroundColor.r;
+    blitParams.nan_color_y = backgroundColor.g;
+    blitParams.nan_color_z = backgroundColor.b;
 
-    let outputTexture = $gpu.device.createTexture({
-        size: [width, height],
-        format: "rgba8unorm",
-        usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-    });
+    let outputTexture;
+    let computeBindGroup;
+    let renderBindGroup;
 
     const sampler = $gpu.device.createSampler({ magFilter: "nearest", minFilter: "nearest" });
 
-    let computeBindGroup = $gpu.device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: { buffer: uniforms.gpuBuffer } },
-            { binding: 1, resource: outputTexture.createView() }
-        ]
-    });
-
-    let renderBindGroup = $gpu.device.createBindGroup({
-        layout: renderPipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: sampler },
-            { binding: 1, resource: outputTexture.createView() }
-        ]
-    });
-
-    let canRender = true;
+    let canRender = false;
 
     async function offscreenRender(scalingFactor) {
         const dims = v2.of(width * scalingFactor, height * scalingFactor);
 
         const texture = $gpu.device.createTexture({
             size: [dims.x, dims.y],
-            format: "rgba8unorm",
+            format: "r32float",
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 
-        const orig_height = uniforms.vars.height.value;
-        const orig_width = uniforms.vars.width.value;
+        const orig_height = params.height;
+        const orig_width = params.width;
 
-        uniforms.vars.height.value *= scalingFactor;
-        uniforms.vars.width.value *= scalingFactor;
+        params.height *= scalingFactor;
+        params.width *= scalingFactor;
 
         computeBindGroup = $gpu.device.createBindGroup({
             layout: computePipeline.getBindGroupLayout(0),
@@ -254,7 +241,8 @@ export async function main(target) {
         renderBindGroup = $gpu.device.createBindGroup({
             layout: renderPipeline.getBindGroupLayout(0),
             entries: [
-                { binding: 0, resource: sampler },
+                { binding: 0, resource: { buffer: blitUniforms.gpuBuffer } },
+                //{ binding: 0, resource: sampler },
                 { binding: 1, resource: texture.createView() }
             ]
         });
@@ -263,8 +251,8 @@ export async function main(target) {
 
         render(offscreen.context, dims);
 
-        uniforms.vars.height.value = orig_height;
-        uniforms.vars.width.value = orig_width;
+        params.height = orig_height;
+        params.width = orig_width;
 
         const blob = await offscreen.canvas.convertToBlob({ type: "image/png" });
 
@@ -287,7 +275,8 @@ export async function main(target) {
         renderBindGroup = $gpu.device.createBindGroup({
             layout: renderPipeline.getBindGroupLayout(0),
             entries: [
-                { binding: 0, resource: sampler },
+                { binding: 0, resource: { buffer: blitUniforms.gpuBuffer } },
+                //{ binding: 0, resource: sampler },
                 { binding: 1, resource: outputTexture.createView() }
             ]
         });
@@ -295,8 +284,6 @@ export async function main(target) {
     }
 
 
-    observers.resize = new ResizeObserver(resize);
-    observers.resize.observe(canvas);
 
     function resize() {
         width = canvas.clientWidth;
@@ -311,8 +298,14 @@ export async function main(target) {
 
         const uniforms = compShader.bufferDefinitions["0,0"];
 
-        uniforms.vars.width.value = width;
-        uniforms.vars.height.value = height;
+        style = getComputedStyle(colorDetector);
+        backgroundColor = parseRgb(style.backgroundColor);
+        blitParams.nan_color_x = backgroundColor.r;
+        blitParams.nan_color_y = backgroundColor.g;
+        blitParams.nan_color_z = backgroundColor.b;
+
+        params.width = width;
+        params.height = height;
 
         if (width * height <= 0) {
             canRender = false;
@@ -321,11 +314,11 @@ export async function main(target) {
 
         canRender = true;
 
-        outputTexture.destroy();
+        outputTexture?.destroy();
 
         outputTexture = $gpu.device.createTexture({
             size: [width, height],
-            format: "rgba8unorm",
+            format: "r32float",
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 
@@ -340,13 +333,18 @@ export async function main(target) {
         renderBindGroup = $gpu.device.createBindGroup({
             layout: renderPipeline.getBindGroupLayout(0),
             entries: [
-                { binding: 0, resource: sampler },
+                { binding: 0, resource: { buffer: blitUniforms.gpuBuffer } },
+                //{ binding: 0, resource: sampler },
                 { binding: 1, resource: outputTexture.createView() }
             ]
         });
 
         render();
     }
+
+
+    observers.resize = new ResizeObserver(resize);
+    observers.resize.observe(canvas);
 
 
     function render(targetContext = context, dims = null) {
@@ -360,6 +358,8 @@ export async function main(target) {
 
         const uniforms = compShader.bufferDefinitions["0,0"];
         uniforms.updateBuffers();
+        const blitUniforms = blitShader.bufferDefinitions["0,0"];
+        blitUniforms.updateBuffers();
 
         const commandEncoder = $gpu.device.createCommandEncoder();
 
@@ -385,50 +385,11 @@ export async function main(target) {
 
         renderPass.setPipeline(renderPipeline);
         renderPass.setBindGroup(0, renderBindGroup);
-        renderPass.draw(6); // 1 quad, 2 tris
+        renderPass.draw(6); // 1 quad -> 2 tris
         renderPass.end();
 
         $gpu.device.queue.submit([commandEncoder.finish()]);
     }
-
-    let isDragging = false;
-    let lastMouse = v2.of(0,0);
-
-    canvas.addEventListener("pointerdown", (e) => {
-        if (e.button !== 0) return;
-        isDragging = true;
-        lastMouse = v2.fromMouse(e, canvas);
-        canvas.style.cursor = "all-scroll";
-    });
-
-    canvas.addEventListener("pointermove", (e) => {
-        const pMouse = v2.fromMouse(e, canvas);
-
-        const dims = v2.of(width, height);
-        const center = c.of(uniforms.vars.center_x.value, uniforms.vars.center_y.value);
-        const scale = 1.0 / uniforms.vars.zoom.value;
-
-        const cMouse = c.fromPixel(pMouse, dims, center, scale);
-
-
-        if (!isDragging) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-
-        const delta = v2.sub(pMouse, lastMouse);
-
-        // Convert pixel delta to complex plane delta
-        const cDelta = v2.scale(delta, -scale / height);
-
-        uniforms.vars.center_x.value += cDelta.x;
-        uniforms.vars.center_y.value += cDelta.y;
-
-        lastMouse = pMouse;
-
-        render();
-    });
 
     renderStack.$contextMenu = {
         items: [
@@ -441,54 +402,9 @@ export async function main(target) {
         ]
     };
 
+    canvasModule.addNavigation("2d", params, render);
 
-    canvas.addEventListener("pointerup", () => {
-        if (!isDragging) return;
-        isDragging = false;
-        canvas.style.cursor = "crosshair";
-    });
-
-    canvas.addEventListener("pointerleave", () => {
-        if (!isDragging) return;
-        isDragging = false;
-        canvas.style.cursor = "crosshair";
-    });
-
-    canvas.addEventListener("wheel", (e) => {
-        e.preventDefault();
-
-        const pMouse = v2.fromMouse(e, canvas);
-
-        const dims = v2.of(width, height);
-        const center = c.of(uniforms.vars.center_x.value, uniforms.vars.center_y.value);
-        const scale = 1.0 / uniforms.vars.zoom.value;
-        const cMouse = c.fromPixel(pMouse, dims, center, scale);
-
-        const isTrackpad = e.deltaX > 0; // sloppy heuristic but whatever
-        const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;
-
-        // negative deltaY means zoom in
-        const zoomFactor = e.deltaY > 0 ? 1.0 - zoomFactorDiff : 1.0 + zoomFactorDiff;
-
-        uniforms.vars.zoom.value *= zoomFactor;
-
-        // Adjust center to keep mouse position fixed in complex plane
-        const newScale = 1.0 / uniforms.vars.zoom.value;
-        const newCenterX = cMouse.re - (pMouse.x - width * 0.5) * newScale / height;
-        const newCenterY = cMouse.im - (pMouse.y - height * 0.5) * newScale / height;
-
-        uniforms.vars.center_x.value = newCenterX;
-        uniforms.vars.center_y.value = newCenterY;
-
-        render();
-    });
-
-    canvas.style.cursor = "crosshair";
-
-    render();
-
-
-    return { replace: true };
+    return { dom: [topmost], replace: true };
 }
 
 

@@ -35,30 +35,33 @@ svg.plot .data.dashed {
 
 `);
 
-export async function main(target, plot_id) {
+export async function main(plot_id) {
     const plot = await import(`/code/math/plot/${plot_id.trim()}.js`);
 
-    const plotContainer = $div("full");
     const svg = $svgElement("svg");
+    const plotContainer = $div("full").$with(svg);
+
+    const dom = [];
 
     svg.setAttribute("class", "plot");
 
     // attach immediately to get actual dimensions
-    target.$with(plotContainer.$with(svg));
+    //target.$with(plotContainer.$with(svg));
 
     const plotModule = await plot.main(svg);
 
     if (plotModule?.controls) {
-        const controls = await $prepMod("control/panel",
-            ["Parameters", plotModule.controls]
+        const controls = await $mod("control/panel",
+            "Parameters", plotModule.controls
         );
 
-        await $mod("layout/split",
-            target,
-            [{ content: [controls, plotContainer], percents: [20, 80] }]
+        const split = await $mod("layout/split",
+            { content: [controls.dom, plotContainer], percents: [20, 80] }
         );
+
+        dom.push(...split.dom);
     } else {
-        target.$with(plotContainer);
+        dom.push(plotContainer);
     }
 
     svg.$contextMenu = {
@@ -96,5 +99,7 @@ export async function main(target, plot_id) {
             }]
         ]
     };
+
+    return { dom };
 }
 

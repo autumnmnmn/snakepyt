@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta property="og:image" content="/media/lyapunov/preview.png">
+        <meta property="og:title" content="Lyapunov Fractals">
+        <meta property="og:description" content="Exploring and explaining Mario Markus's logistic Lyapunov fractals">
+        <title>Lyapunov Fractals</title>
+        <link rel="icon" href="/media/favicon.png">
+        <link id="themeLink" rel="stylesheet" type="text/css" href="/style/theme/themes.css">
+        <link rel="stylesheet" type="text/css" href="/style/main.css">
+    <style>
+    .gallery img {
+        width: calc(max(25vw, 64px) - 0.5em);
+        height: calc(max(25vw, 64px) - 0.5em);
+        padding: 0;
+        border-radius: 0.25rem;
+        border: 0.25rem solid transparent;
+    }
+
+    .gallery img:hover {
+        border: 0;
+        clip-path: inset(0) !important;
+    }
+
+    .gallery {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0px;
+        width: fit-content;
+    }
+
+    .blog-content {
+        margin-left: 1em;
+        padding-right: 1em;
+
+        height: 100%;
+        overflow-y: scroll;
+    }
+
+    @media (min-width: 600px) {
+        .gallery img {
+            width: calc(max(min(25vw, 512px), 256px) - 0.875em);
+            height: calc(max(min(25vw, 512px), 256px) - 0.875em);
+        }
+
+        .gallery {
+            gap: 0.5em;
+        }
+    }
+
+    span.center {
+        display: block;
+        margin: auto;
+        width: fit-content;
+    }
+
+    .gallery img:not(.loaded) {
+        filter: url(#thumb-blur);
+        clip-path: inset(0.25rem);
+    }
+
+    #lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #000a;
+        place-items: center;
+        z-index: 2;
+    }
+
+    #lightbox.open {
+        display: grid;
+    }
+
+    #lightbox img {
+        max-width: 98vw;
+        max-height: 98vh;
+        object-fit: contain;
+    }
+</style></head>
+    <body data-theme="blackboard">
+        <script src="/code/core.js"></script>
+        <script type="module" src="/code/main.js"></script>
+        
+    
+
+
+
+
+<div id="lightbox" onclick="this.classList.remove('open')"><img id="lightbox-img"></div><svg style="height:0;width:0;margin:0;padding:0;display:block"><filter id="thumb-blur"><feGaussianBlur stdDeviation="3 " edgeMode="duplicate"></feGaussianBlur></filter></svg><div class="blog-content"><span class="center " style="font-size: 1.5rem; margin-top: 1rem; overflow: visible; ">the logistic lyapunov fractal</span><span class="center " style="font-size: 0.7rem; ">⸺ ooo ⸺</span><script>$replace(document.currentScript, "layout/switch", ...[], " content #content | gallery #gallery ");</script><div style="height: 75%"><script>$replace(document.currentScript, "gpu/lyapunov", ...[], "");</script></div><h3 style="text-decoration:underline"><p><span>TODO</span></p></h3><p><span>archival links to combat link rot</span></p><p><span>first plots: widen the 2d plots maybe?</span></p><p><span>generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases</span></p><p><span>gradient and color picker input controls</span></p><p><span>advanced colorization controls for the renderer</span></p><p><span>subpanel control for panels</span></p><p><span>finish writeup; other plots building up toward what lyap exp is and why</span></p><p><span>log LUT like in the original paper</span></p><p><span>emulated double-precision; maybe just for center / position calculations?</span></p><h3 style="text-decoration:underline"><p><span>Overview</span></p></h3><p><span>The</span> <a href="https://en.wikipedia.org/wiki/Lyapunov_fractal"><span><span>Lyapunov fractal</span></span></a><span>,
+named after</span> <a href="https://en.wikipedia.org/wiki/Aleksandr_Lyapunov"><span><span>Aleksandr Lyapunov</span></span></a><span>, was
+introduced by</span> <a href="https://en.wikipedia.org/wiki/Mario_Markus"><span><span>Mario Markus</span></span></a> <span>and</span> <a href="https://onlinelibrary.wiley.com/doi/10.1002/anie.200390466"><span><span>Benno Hess</span></span></a> <span>in their 1989
+paper</span> <a href="https://doi.org/10.1016/0097-8493(89)90019-8"><span><span>Lyapunov exponents of the logistic
+map with periodic forcing</span></span></a> <span>(</span><a href="https://sci-hub.ru/10.1016/0097-8493(89)90019-8"><span><span>pirate link</span></span></a><span>).</span></p><p><span>The fractal is a visualization of the behavior of the following iterative formula:</span><span class="center " style="padding-top:0.5rem"><math><mtext>given a sequence of real numbers</mtext><mo>{</mo><msub><mi>r</mi><mn>0</mn></msub><mn>,</mn><msub><mi>r</mi><mn>1</mn></msub><mn>,</mn><msub><mi>r</mi><mn>2</mn></msub><mn>,</mn><mn>...</mn><msub><mi>r</mi><mi>n</mi></msub><mo>}</mo></math><br><math><mtext>let</mtext><msub><mi>x</mi><mn>0</mn></msub><mo>=</mo><mn>0.5,</mn></math><br><math><mtext>then</mtext><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>r</mi><mi>n</mi></msub><mo>·</mo><msub><mi>x</mi><mi>n</mi></msub><mo>·</mo><mo>(</mo><mn>1</mn><mo>-</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></math></span></p><p> <span>This formula is known as the</span> <a href="https://en.wikipedia.org/wiki/Logistic_map"><span><span>logistic map</span></span></a> <span>(though in other settings the logistic map is usually taken to have a fixed r-value). We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.</span></p><p><span>Let's try and get a feel for what this map is, beginning with some simple plots:</span></p><div style="width:100%;height:500px;"><script>$replace(document.currentScript, "math/plot", ...[], " logistic_3d ");</script></div><p><span>Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the</span> <i><span><span>same</span></span></i> <span>two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.</span></p><p><span>The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from any x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a</span> <i><span><span>single</span></span></i> <span>x_0 and plot its behavior for many timesteps:</span></p><div style="width:100%;height:500px;"><script>$replace(document.currentScript, "math/plot", ...[], " logistic_trajectory ");</script></div><p><span>In the original paper, the sequence has only two distinct r-values, denoted A and B, and is given as a short string like "AB", "BBABA", &amp;c, which repeats indefinitely. The fractal, then, is a parameter sweep: each pixel's x-coordinate determines its A-value, and the y-coordinate determines B. The pixel's color is determined by measuring the long-term stability of the system under that parametrization.</span></p><p><span>The stability measure employed is the</span> <a href="https://en.wikipedia.org/wiki/Lyapunov_exponent"><span><span>maximal Lyapunov exponent (MLE)</span></span></a><span>, and this is where the fractal gets its name (although, since Aleksandr Lyapunov never lived to see these fractals, they are sometimes called "Markus-Lyapunov fractals" instead). In the case of this discrete system, the idea is to take the average of the logarithm of the magnitude of the derivative. We then take a negative MLE to indicate stability or convergence, while a positive MLE indicates chaos. Often, these cases are colorized separately. The values are unbounded, so some normalization is required.</span></p><p><span>Usually when one says "Lyapunov fractal", it is in reference to the system just described, based on the logistic map. However, Lyapunov exponents can be computed for many different systems, and similar visualizations of those systems can just as well be called Lyapunov fractals. Indeed, Markus himself would go on to expand on the idea in a 1990 publication,</span> <a href="https://doi.org/10.1063/1.4822940"><span><span>Chaos in Maps with Continuous and Discontinuous Maxima</span></span></a><span>, in which he explored two interesting modifications to the system, one of which was to use a different, discontinuous map:</span><span class="center " style="padding-top:0.5rem"><math><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>r</mi><mi>n</mi></msub><mo>·</mo><msub><mi>x</mi><mi>n</mi></msub><mo>·</mo><mo>(</mo><mn>1</mn><mo>-</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo><mtext>if</mtext><msub><mi>x</mi><mi>n</mi></msub><mo>&gt;</mo><mn>0.5</mn></math><br><math><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>r</mi><mi>n</mi></msub><mo>·</mo><msub><mi>x</mi><mi>n</mi></msub><mo>·</mo><mo>(</mo><mn>1</mn><mo>-</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo><mo>+</mo><mn>0.25</mn><mo>(</mo><mi>α</mi><mo>-</mo><mn>1</mn><mo>)</mo><mo>(</mo><msub><mi>r</mi><mi>n</mi></msub><mo>-</mo><mn>2</mn><mo>)</mo><mtext>if</mtext><msub><mi>x</mi><mi>n</mi></msub><mo>≤</mo><mn>0.5</mn></math></span></p><p> <span>Where α is a real parameter, typically just a little less than 1.</span></p><p><span>Note that in the discontinuous case, Markus chose to set the starting x value to 0.499 instead of 0.5. The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's.</span></p><p><span>A somewhat more common modification is to include a third value, C, corresponding either to a third spatial dimension or time.</span> <a href="https://gidden.net/2017/03/09/exploring-lyapunov-space/"><span><span>Tom Gidden's 2017 blog post</span></span></a> <span>provides a more in-depth description of that, and</span> <a href="https://www.youtube.com/shorts/KAK6IJMbhwI"><span><span>this short animation by @desden0va on youtube</span></span></a> <span>makes the idea intuitive.</span></p><h3 style="text-decoration:underline"><p><span>Implementation</span></p></h3><p> <a href="https://tangled.org/ponder.ooo/sketches/blob/main/lyapunov.py"><span><span>The code used to render these fractals</span></span></a> <span>is publicly available. It is written as a</span> <a href="https://tangled.org/ponder.ooo/snakepyt"><span><span>snakepyt</span></span></a> <span>sketch, not a normal python script, and is a bit messy, since it's a snapshot of the working copy. However, it's only about 200 lines, and the logic is a fairly straightforward encoding of the methods described here.</span></p><h3 style="text-decoration:underline"><p><span>Replication</span></p></h3><h3 style="text-decoration:underline"><p><span>Other Results</span></p></h3><p><span>The original paper concerns itself only with A and B values in the range [0,4]. However, there is no technical constraint that prevents us from peeking outside that box. When we do, it becomes visually apparent that this range is not entirely arbitrary (</span><a href="https://en.wikipedia.org/wiki/Logistic_map#Characterization_of_the_logistic_map"><span><span>the logistic map remains finite there</span></span></a><span>). The crisp edge of this "blessed" square stands out prominently. Nevertheless, there is some interesting structure outside of it. Some of the superstable curves poke out into the void of divergence. A smaller, distorted square exists where A and B are both negative. There are even isolated islands of stability,</span> <i><span><span>apparently</span></span></i> <span>disconnected from the rest.</span> <i><span><span>Apparently</span></span></i> <span>is emphasized as this is only a visual assessment of a finite-resolution render.</span></p><h3 style="text-decoration:underline"><p><span>Gallery</span></p></h3><div class="gallery"><img src="/media/lyapunov/thumb/0.avif"><img src="/media/lyapunov/thumb/1.avif"><img src="/media/lyapunov/thumb/2.avif"><img src="/media/lyapunov/thumb/3.avif"><img src="/media/lyapunov/thumb/4.avif"><img src="/media/lyapunov/thumb/5.avif"><script>$replace(document.currentScript, "gallery-loader", ...[], "");</script></div></div></body></html>

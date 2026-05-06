@@ -34,6 +34,11 @@ $css(`
     flex-shrink: 0;
 }
 
+.control {
+    border-left: 1px solid var(--main-faded);
+    padding-left: 0.5rem;
+}
+
 .control:has(:focus) {
     border-left: 3px solid var(--main-solid);
     padding-left: calc(0.5rem - 2px);
@@ -46,10 +51,10 @@ $css(`
 `);
 
 async function createControl(target, spec, state) {
-    return await $mod(`control/${spec.type}`, target, [spec, state]);
+    return await $apply(`control/${spec.type}`, target, spec, state);
 }
 
-export async function main(target, name, controls) {
+export async function main(name, controls) {
     const id = name.toLowerCase().replace(/\s+/g, "-");
 
     const container = document.createElement("fieldset");
@@ -66,10 +71,15 @@ export async function main(target, name, controls) {
     for (const control of controls) {
         const name = control.name ?? control.label;
         controlState[name] = await createControl(container, control, controlState);
+        if (control.hidden) {
+            controlState[name].hide?.();
+        }
     }
 
-    target.appendChild(container);
-
-    return { replace: true, controls: controlState };
+    return {
+        dom: [container],
+        replace: true,
+        controls: controlState
+    };
 }
 

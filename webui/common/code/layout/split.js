@@ -7,6 +7,7 @@ $css(`
         width: 100%;
         overflow: visible;
         padding: 0rem;
+        background-color: var(--main-background);
     }
 
     [data-theme-changed] > split- {
@@ -129,7 +130,7 @@ customElements.define("split-", class extends HTMLElement {});
 customElements.define("divider-", class extends HTMLElement {});
 customElements.define("portion-", class extends HTMLElement {});
 
-export async function main(target, settings) {
+export async function main(settings) {
     settings = { ... defaults, ... settings };
 
     const content = settings.content;
@@ -317,14 +318,16 @@ export async function main(target, settings) {
         createDragHandler(splitter, i);
     }
 
-    target.appendChild(container);
-
     for (let i = 0; i < n; i++) {
         if (content[i].$isInitializer) {
             await content[i](portions[i]);
         }
         else {
-            portions[i].appendChild(content[i]);
+            if (Array.isArray(content[i])) {
+                portions[i].append(...content[i]);
+            } else {
+                portions[i].appendChild(content[i]);
+            }
         }
     }
 
@@ -333,6 +336,7 @@ export async function main(target, settings) {
     };
 
     return {
+        dom: [container],
         replace: true,
         topmost: container
     };

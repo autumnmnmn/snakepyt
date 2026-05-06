@@ -3,10 +3,8 @@
 
 
 
-export async function main(target, settings) {
+export async function main(settings) {
 
-    console.log(target);
-    console.log(settings);
 
 }
 

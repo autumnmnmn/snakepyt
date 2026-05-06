@@ -47,6 +47,7 @@ class WorkerMode:
             new_document,
             share_document,
             save_or_load,
+            view_image,
             #move_file,
             #delete_file,
             #create_file,
@@ -65,6 +66,8 @@ class WorkerMode:
             tools.append(kill_command)
         if len(session.commands) > 0:
             tools.append(discard_command)
+        if len(session.image_sources) > 0:
+            tools.append(discard_image)
         return tools
 
     def get_template(agent, session, step):

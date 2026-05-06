@@ -115,9 +115,12 @@ function tokenize(expression, declarations) {
     return tokens;
 }
 
-export async function main(target, expression) {
+export const staticModule = true;
+
+export async function main(expression) {
 
     const lines = expression.trim().split("\n");
+    const dom = [];
 
     const idents = {};
     const texts = {};
@@ -278,10 +281,14 @@ export async function main(target, expression) {
 
         }
 
-        target.appendChild(make(root));
+
+
+        dom.push(make(root));
         if (index < contentLines.length - 1) {
-            target.appendChild($element("br"));
+            dom.push($element("br"));
         }
     }
+
+    return { dom };
 }
 

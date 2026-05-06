@@ -8,6 +8,7 @@ from typing import Literal, Optional
 from pathlib import Path
 
 from pyt.core.llm.tools import tool, toolprop
+from pyt.core.llm.tools.images import image_content_entry
 
 AGENT_HOME = Path("/data/2/agents")
 
@@ -29,10 +30,17 @@ def agent_home(agent):
 
 def agent_resolve(agent: str, filename: str) -> Path:
     home = agent_home(agent).resolve()
-    target = (home / filename.lstrip("/")).resolve()
-    if not target.is_relative_to(home):
+    path = Path(filename)
+    if path.is_absolute():
+        resolved = path.resolve()
+        if not resolved.is_relative_to(home):
+            # treat as agent-rooted, re-root under home
+            resolved = (home / path.relative_to("/")).resolve()
+    else:
+        resolved = (home / path).resolve()
+    if not resolved.is_relative_to(home):
         raise ValueError(f"path traversal detected: {filename!r}")
-    return target
+    return resolved
 
 def agent_write(agent, filename, content):
     target = agent_resolve(agent, filename)
@@ -77,8 +85,9 @@ def agent_tree(agent):
     lines = []
     for path in sorted(home.rglob("*")):
         depth = len(path.relative_to(home).parts) - 1
-        prefix = "    " * depth + ("-> " if depth > 0 else "")
-        lines.append(prefix + "`" + path.name + ("/` (directory)" if path.is_dir() else "` (file)"))
+        if depth < 3:
+            prefix = "    " * depth + ("-> " if depth > 0 else "")
+            lines.append(prefix + "`" + path.name + ("/` (directory)" if path.is_dir() else "` (file)"))
     return "\n".join(lines)
 
 class Document:
@@ -209,7 +218,7 @@ class update_self:
             agent_write(agent.name, file_name, args.new_value)
             for file in session.files.values():
                 if file.path == file_name:
-                    file.content = args.new_valuetexts
+                    file.content = args.new_value
                     file.dirty = False
 
 @tool
@@ -246,7 +255,7 @@ class rewrite_note:
             new_note.handler(agent, session, args)
         else:
             f.rewrite(args.content)
-            print(f"rewrote file {args.note_name!r}")
+            print(f"rewrote note {args.note_name!r}")
             session.thoughts.append(f"Rewrote {args.note_name!r}")
 
 @tool
@@ -278,7 +287,7 @@ class rewrite_document:
             new_document.handler(agent, session, args)
         else:
             f.rewrite(args.content)
-            print(f"rewrote file {args.document_name!r}")
+            print(f"rewrote document {args.document_name!r}")
             session.thoughts.append(f"Rewrote {args.document_name!r}")
 
 @tool
@@ -325,8 +334,87 @@ class close_document:
             session.thoughts.append(f"Closed {args.document_name!r}")
 
 @tool
+class view_image:
+    """Load an image from a file in your personal directory."""
+    file_path: str = toolprop(desc="Path to the image file, relative to your root directory")
+    scale: Literal["thumbnail", "full"]
+
+    def handler(agent, session, args):
+        try:
+            path = agent_resolve(agent.name, args.file_path)
+
+            if not path.exists():
+                raise FileNotFoundError(f"no file at {args.file_path!r}")
+
+            if not hasattr(session, "images"):
+                session.images = []
+            if not hasattr(session, "image_sources"):
+                session.image_sources = []
+
+            image_index = len(session.image_sources)
+
+            imagemagick_args = None
+            if args.scale == "thumbnail":
+                imagemagick_args = ["-resize", "512x512>"]
+
+            block = image_content_entry(
+                path,
+                imagemagick_args=imagemagick_args,
+                output_format="png",
+            )
+
+            source = f"{agent.name}:{args.file_path}:{args.scale}"
+
+            descriptor = f"[image {image_index}: source={source}]"
+
+            session.images.append(descriptor)
+            session.images.append(block)
+
+            session.image_sources.append(source)
+
+            print(f"loaded image {args.file_path!r} ({args.scale}) as index {image_index}")
+            session.thoughts.append(f"Loaded image {args.file_path!r} ({args.scale})")
+
+        except Exception as e:
+            print(f"view_image failed: {e}")
+            session.thoughts.append(f"Failed to view image {args.file_path!r}: {e}")
+
+@tool
+class discard_image:
+    """Remove an image from the context."""
+    index: int = toolprop(desc="Logical image index (0-based)")
+
+    def handler(agent, session, args):
+        try:
+            if not hasattr(session, "images") or not hasattr(session, "image_sources"):
+                print("discard failed: no images loaded")
+                return
+
+            i = args.index
+
+            if i < 0 or i >= len(session.image_sources):
+                raise IndexError(f"index {i} out of range")
+
+            text_idx = 2 * i
+            image_idx = text_idx + 1
+
+            removed_source = session.image_sources[i]
+
+            # Remove in reverse order
+            del session.images[image_idx]
+            del session.images[text_idx]
+            del session.image_sources[i]
+
+            print(f"discarded image at index {i}")
+            session.thoughts.append(f"Discarded image {removed_source}")
+
+        except Exception as e:
+            print(f"discard failed: {e}")
+            session.thoughts.append(f"Failed to discard image: {e}")
+
+@tool
 class save_or_load:
-    """Save/load documents to/from files in your personal directory. You can have more than one copy of the same file open at a time, as separate documents, for example if you want to keep un unmodified copy of a file open while you make changes to it in another document. The file_path is the path of the file on disk, while document_name is what you are calling the open copy in your working memory.
+    """Save/load text documents to/from files in your personal directory. You can have more than one copy of the same file open at a time, as separate documents, for example if you want to keep un unmodified copy of a file open while you make changes to it in another document. The file_path is the path of the file on disk, while document_name is what you are calling the open copy in your working memory.
     Operations:
     `load`: Load the contents of the file at `file_path` into the document `document_name`, overwriting any previous document contents. If no file is found at that path, this will open a fresh new document.
     `save`: Saves the contents of the document `document_name` into the file `file_path`, overwriting any previous file contents.

@@ -53,20 +53,37 @@ function c_cart_to_polar(z) {
     };
 }
 
-function c_cart_to_pixel(z, dims, center, scale) {
+function c_cart_to_pixel(z, dims, center, rotation, scale) {
     const aspect = dims.x / dims.y;
-    const px = (z.re - center.re) * dims.x / (scale * aspect) + dims.x * 0.5;
-    const py = (z.im - center.im) * dims.y / scale + dims.y * 0.5;
+    const angle = -$tau * rotation;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    const coords = c_cart_sub(z, center);
+    const coords_x = c * coords.re - s * coords.im;
+    const coords_y = s * coords.re + c * coords.im;
+
+    const px = (coords_x) * dims.x / (scale * aspect) + dims.x * 0.5;
+    const py = (coords_y) * dims.y / scale + dims.y * 0.5;
     return {
         x: px,
         y: py
     };
 }
 
-function c_cart_from_pixel(z, dims, center, scale) {
+
+import { v2 } from "/code/math/vector.js";
+import "/code/math/constants.js";
+
+function c_cart_from_pixel(z, dims, center, rotation, scale) {
     const aspect = dims.x / dims.y;
-    const cx = (z.x - dims.x * 0.5) * scale * aspect / dims.x + center.re;
-    const cy = (z.y - dims.y * 0.5) * scale / dims.y + center.im;
+    const coords = v2.sub(z, v2.scale(dims, 0.5));
+    const angle = $tau * rotation;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    const coords_x = c * coords.x - s * coords.y;
+    const coords_y = s * coords.x + c * coords.y;
+    const cx = (coords_x) * scale * aspect / dims.x + center.re;
+    const cy = (coords_y) * scale / dims.y + center.im;
     return {
         re: cx,
         im: cy
@@ -95,30 +112,28 @@ function c_polar_to_cart(z) {
 }
 
 
-window.$complex = {
-    cartesian: {
-        of: c_cart_constructor,
-        dot: c_cart_dot,
-        add: c_cart_add,
-        sub: c_cart_sub,
-        mul: c_cart_mul,
-        mag: c_cart_mag,
-        magSq: c_cart_mag_squared,
-        mod: c_cart_mag,
-        angle: c_cart_angle,
-        arg: c_cart_angle,
-        toPolar: c_cart_to_polar,
-        toPixel: c_cart_to_pixel,
-        fromPixel: c_cart_from_pixel,
-        copy: c_cart_copy
-    },
-
-    polar: {
-        of: c_polar_constructor,
-        im: c_polar_im,
-        y: c_polar_im,
-        re: c_polar_re,
-        x: c_polar_re
-    }
+export const cartesian = {
+    of: c_cart_constructor,
+    dot: c_cart_dot,
+    add: c_cart_add,
+    sub: c_cart_sub,
+    mul: c_cart_mul,
+    mag: c_cart_mag,
+    magSq: c_cart_mag_squared,
+    mod: c_cart_mag,
+    angle: c_cart_angle,
+    arg: c_cart_angle,
+    toPolar: c_cart_to_polar,
+    toPixel: c_cart_to_pixel,
+    fromPixel: c_cart_from_pixel,
+    copy: c_cart_copy
 };
+
+export const polar = {
+    of: c_polar_constructor,
+    im: c_polar_im,
+    y: c_polar_im,
+    re: c_polar_re,
+    x: c_polar_re
+}
 

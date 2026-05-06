@@ -43,7 +43,7 @@ def transform(
         )
     return result.stdout, media_type
 
-def image_block(
+def image_content_entry(
     path: str | Path,
     media_type: Optional[str] = None,
     *,
@@ -70,7 +70,7 @@ def image_message(
     output_format: str = "png",
 ) -> dict:
     content = [
-        image_block(p, imagemagick_args=imagemagick_args, output_format=output_format)
+        image_content_entry(p, imagemagick_args=imagemagick_args, output_format=output_format)
         for p in image_paths
     ] + [{"type": "text", "text": text}]
     return {"role": role, "content": content}

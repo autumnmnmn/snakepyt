@@ -7,7 +7,7 @@ from typing import List, Dict
 
 from pyt.core import AttrDict
 
-def chatEntry(role: str, content: str) -> AttrDict:
+def chatEntry(role: str, content) -> AttrDict:
     return AttrDict({"role": role, "content": content})
 
 class Collector:
@@ -67,22 +67,66 @@ class ChatCollector(Collector):
             ))
         return self.chat
 
-def apply_substitutions(source, substitutions: Dict):
-    if isinstance(source, str):
+def apply_substitutions(source, substitutions: Dict, mode="chat"):
+
+    if mode == "chat":
+        return [
+            chatEntry(apply_substitutions(entry.role, substitutions, mode="str"), apply_substitutions(entry.content, substitutions, mode="content"))
+            for entry in source
+        ]
+
+    if mode == "str":
         def replacer(match):
             key = match.group(1)
             if key not in substitutions:
-                print(f"Substitution error, missing {key}.")
-                return ""
+                return match.group(0)
             return json.dumps(substitutions[key], indent=4)
         return re.sub(r'\$\{\s*([^}]+?)\s*\}', replacer, source)
-    elif isinstance(source, list):
-        return [
-            chatEntry(apply_substitutions(entry.role, substitutions), apply_substitutions(entry.content, substitutions))
-            for entry in source
-        ]
-    else:
-        raise TypeError(f"source must be str or list of chatEntry, got {type(source)}")
+
+    if mode == "content":
+        keys_in_source = set(re.findall(r'\$\{\s*([^}]+?)\s*\}', source))
+        typed_keys = {
+            k for k in keys_in_source
+            if (isinstance(substitutions.get(k), dict) and "type" in substitutions.get(k, {}))
+            or isinstance(substitutions.get(k), list)
+        }
+
+        if not typed_keys:
+            return apply_substitutions(source, substitutions, mode="str")
+
+        # apply only non-typed substitutions
+        text_subs = {k: v for k, v in substitutions.items() if k not in typed_keys}
+        intermediate = apply_substitutions(source, text_subs, mode="str")
+
+        # split alternates [text, key, text, key, ..., text] even if some texts are empty
+        parts = re.split(r'\$\{\s*([^}]+?)\s*\}', intermediate)
+        result = []
+        for i, part in enumerate(parts):
+            if i % 2 == 0:
+                if part: # ignore empties
+                    result.append({"type": "text", "text": part})
+            else:
+                key = part.strip()
+                value = substitutions.get(key)
+
+                if value is None:
+                    print(f"Substitution error, missing {key}.")
+
+                if isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict) and "type" in item:
+                            result.append(item)
+                        elif isinstance(item, str):
+                            result.append({"type": "text", "text": item})
+                        else:
+                            raise ValueError(f"Invalid block in list for key '{key}': {item}")
+                elif isinstance(value, dict) and "type" in value:
+                    result.append(value)
+                else:
+                    # not a string, list, or dict... weird but we'll just stringify it *shrug*
+                    result.append({"type": "text", "text": str(value)})
+
+        return result
 
 def read_chatlog(text: str) -> Dict:
     lines = text.split('\n')

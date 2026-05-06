@@ -31,7 +31,7 @@ $css(`
 
 customElements.define("nothing-", class extends HTMLElement {});
 
-export async function main(target) {
+export async function main() {
     const backdrop = $element("nothing-");
     //const backdrop = $div("nothing");
 
@@ -45,7 +45,7 @@ export async function main(target) {
 
     const load = (modName, args=[]) => {
         return async () => {
-            const result = await $mod(modName, backdrop.parentNode, args);
+            const result = await $apply(modName, backdrop.parentNode, ...args);
             if (result?.replace) {
                 backdrop.remove();
             }
@@ -86,11 +86,10 @@ export async function main(target) {
         }
     });
 
-    target.appendChild(backdrop);
-
     backdrop.focus();
 
     return {
+        dom: [backdrop],
         replace: true
     };
 }

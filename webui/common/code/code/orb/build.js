@@ -11,10 +11,12 @@ const namespacedElements = {
 // TODO elide spaces in cases like "( a[href=foo]{bar})",
 // maybe make such spaces unnecessary in the parser
 
-export async function build(target, nodes, source, inline=false, namespace=null) {
+export async function build(nodes, source, inline=false, namespace=null) {
     let segment = document.createElement(inline ? "span" : "p");
     let inlineEnded = false;
     let pendingSpace = false;
+
+    const domNodes = [];
 
     const outer_namespace = namespace;
 
@@ -42,7 +44,7 @@ export async function build(target, nodes, source, inline=false, namespace=null)
             } else {
                 if (segment.childNodes.length > 0) {
                     segment.$contextMenu = { override: true };
-                    target.appendChild(segment);
+                    domNodes.push(segment);
                     segment = document.createElement("p");
                 }
             }
@@ -64,7 +66,8 @@ export async function build(target, nodes, source, inline=false, namespace=null)
                 segment.appendChild(document.createTextNode(" "));
             }
             pendingSpace = false;
-            build(tagElement, node.content.nodes, source, true, namespace);
+            const children = await build(node.content.nodes, source, true, namespace);
+            tagElement.append(...children);
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
                 tagElement.setAttribute(split[0].trim(), split[1]);
@@ -77,7 +80,7 @@ export async function build(target, nodes, source, inline=false, namespace=null)
         if (tag[0] !== "$") {
             if (segment.childNodes.length > 0) {
                 segment.$contextMenu = { items: [], override: true };
-                target.appendChild(segment);
+                domNodes.push(segment);
                 segment = document.createElement(inline ? "span" : "p");
             }
             try {
@@ -86,8 +89,9 @@ export async function build(target, nodes, source, inline=false, namespace=null)
                     const split = arg.split("=");
                     tagElement.setAttribute(split[0].trim(), split[1]);
                 }
-                build(tagElement, node.content.nodes, source, false, namespace);
-                target.appendChild(tagElement);
+                const children = await build(node.content.nodes, source, false, namespace);
+                tagElement.append(...children);
+                domNodes.push(tagElement);
             }
             catch {
                 const _sp = document.createElement("span");
@@ -99,7 +103,7 @@ export async function build(target, nodes, source, inline=false, namespace=null)
 
         if (segment.childNodes.length > 0) {
             segment.$contextMenu = { items: [], override: true };
-            target.appendChild(segment);
+            domNodes.push(segment);
             segment = document.createElement(inline ? "span" : "p");
         }
 
@@ -111,38 +115,41 @@ export async function build(target, nodes, source, inline=false, namespace=null)
             }
             span.innerText = source.substring(node.content.start, node.content.end);
             span.$contextMenu = { items: [], override: true };
-            target.appendChild(span);
+            domNodes.push(span);
             continue;
         }
 
         if (tag.substring(1) === "css") {
-            $css(source.substring(node.content.start, node.content.end));
+            $css(source.substring(node.content.start, node.content.end), true);
             continue;
         }
 
         if (tag.substring(1) === "title") {
-            document.title = source.substring(node.content.start, node.content.end);
+            const title = source.substring(node.content.start, node.content.end).trim();
+            document.title = title;
+            document.querySelector('meta[property="og:title"]').setAttribute('content', title)
             continue;
         }
 
-        const errTarget = segment;
-        const noth = document.createElement("div");
-        noth.style = "display: none";
-        //segment.appendChild(noth); // just a bug?? figure out wtf noth was ever accomplishing
-        $mod(tag.substring(1), target, [...bracketArgs, source.substring(node.content.start, node.content.end)])
-            .finally(() => noth.remove())
-            .catch((err) => {
-                console.log(err)
-                const _sp = document.createElement("span");
-                // TODO better error message, differentiate btwn module error & lack of module
-                _sp.innerText = ` [no module "${tag}"] `;
-                errTarget.appendChild(_sp);
-            });
+        if (tag.substring(1,4) === "og_") {
+            const content = source.substring(node.content.start, node.content.end).trim();
+            document.querySelector(`meta[property="og:${tag.substring(4)}"]`).setAttribute('content', content)
+            continue;
+        }
+
+        const script = $element("script");
+        const modName = JSON.stringify(tag.substring(1));
+        const modContent = JSON.stringify(source.substring(node.content.start, node.content.end));
+        const modArgs = JSON.stringify(bracketArgs);
+        script.innerText = `$replace(document.currentScript, ${modName}, ...${modArgs}, ${modContent});`;
+        domNodes.push(script);
     }
 
     if (segment.childNodes.length > 0) {
         segment.$contextMenu = { items: [], override: true };
-        target.appendChild(segment);
+        domNodes.push(segment);
     }
+
+    return domNodes;
 }
 

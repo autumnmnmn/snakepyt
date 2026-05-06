@@ -1,6 +1,10 @@
 
 $title { Lyapunov Fractals }
 
+$og_image { /media/lyapunov/preview.png }
+
+$og_description { Exploring and explaining Mario Markus's logistic Lyapunov fractals }
+
 $css {
     .gallery img {
         width: calc(max(25vw, 64px) - 0.5em);
@@ -86,36 +90,41 @@ svg[style=height:0;width:0;margin:0;padding:0;display:block] {
 
 [class=blog-content]{
 
-$[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] {lyapunov fractals}
+$[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] {the logistic lyapunov fractal}
 
 $[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
 
 $layout/switch { content #content | gallery #gallery }
 
 
+div[style=height: 75%]{ $gpu/lyapunov {} }
+
 h3[style=text-decoration:underline]{TODO}
-archive links
 
-maybe pseudocode
+archival links to combat link rot
 
-replicated results
+first plots: widen the 2d plots maybe?
 
-outside [0,4] explanation and renders
+generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases
 
-separate gallery into other tab
+gradient and color picker input controls
 
-log scale?
+advanced colorization controls for the renderer
 
-fix mathml on chrome mobile (also check desktop!)
+subpanel control for panels
+
+finish writeup; other plots building up toward what lyap exp is and why
+
+log LUT like in the original paper
+
+emulated double-precision; maybe just for center / position calculations?
 
 
-h3[style=text-decoration:underline]{Abstract}
+mention "verhulst dynamics" and link:
+https://www.lactamme.polytechnique.fr/Mosaic/descripteurs/Commentaires_EspaceLyapunovComplexe.01.html
 
-We investigate Lyapunov fractals.
 
-We recreate renders from the earliest publications dating back to the late 1980s and early 90s. Using a modern consumer GPU and some straightforward pytorch code, we are able to produce high-fidelity results with relative ease.
-
-h3[style=text-decoration:underline]{Background}
+h3[style=text-decoration:underline]{Overview}
 
 The a[href=https://en.wikipedia.org/wiki/Lyapunov_fractal]{Lyapunov fractal},
 named after a[href=https://en.wikipedia.org/wiki/Aleksandr_Lyapunov]{Aleksandr Lyapunov}, was
@@ -129,7 +138,7 @@ span[class=center | style=padding-top:0.5rem]{
     $math/math {
         ident r x n A B R:ℝ S s m:M i
         op ( ) + - = · in:∈ ll:{ rr:} %:mod
-        text given:"given a sequence of real numbers" andaseq:"and a sequence of" symbols:~ where:~ let:~ and:~ values:~ then:"then"
+        text given:"given a sequence of real numbers" where:~ let:~ and:~ values:~ then:"then"
         in
         given ll r_0 , r_1 , r_2 , ... r_n rr
         let x_0 = 0.5,
@@ -137,9 +146,17 @@ span[class=center | style=padding-top:0.5rem]{
     }
 }
 
-This formula is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}; though in other settings the logistic map is usually taken to have a fixed r-value. Here's a plot of a single iteration:
+This formula is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} (though in other settings the logistic map is usually taken to have a fixed r-value). We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
 
-[style=width:2000px;height:500px;] { $math/plot { logistic } }
+Let's try and get a feel for what this map is, beginning with some simple plots:
+
+[style=width:100%;height:500px;] { $math/plot { logistic_3d } }
+
+Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the i{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
+
+The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from any x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} x_0 and plot its behavior for many timesteps:
+
+[style=width:100%;height:500px;] { $math/plot { logistic_trajectory } }
 
 In the original paper, the sequence has only two distinct r-values, denoted A and B, and is given as a short string like "AB", "BBABA", &c, which repeats indefinitely. The fractal, then, is a parameter sweep: each pixel's x-coordinate determines its A-value, and the y-coordinate determines B. The pixel's color is determined by measuring the long-term stability of the system under that parametrization.
 
@@ -159,7 +176,6 @@ span[class=center | style=padding-top:0.5rem]{
 
 Where α is a real parameter, typically just a little less than 1.
 
-[style=width:2000px;height:500px;] { $math/plot { logistic_discontinuous } }
 
 Note that in the discontinuous case, Markus chose to set the starting x value to 0.499 instead of 0.5. The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's.
 
@@ -189,8 +205,4 @@ h3[style=text-decoration:underline]{Gallery}
 
     $gallery-loader {}
 }
-
-
-
-
 

@@ -31,12 +31,14 @@ ${g length warning}
 
 ${files_text}
 
+${images}
+
 - Working Directory:
 Here is a full recursive view of the working directory:
 ${file_tree}
 
 Your worker agents can analyze these files, pass notes to you, and integrate your
-notes into the filesystem for you.
+notes into the filesystem for you. It can even analyze images.
 
 [log of previous thoughts and actions, summarized in plain text]
 ```

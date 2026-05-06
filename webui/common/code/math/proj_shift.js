@@ -1,7 +1,5 @@
 
-import "/code/math/complex.js";
-
-const c = $complex.cartesian;
+import { cartesian as c } from "/code/math/complex.js";
 
 export function projectiveShift(z, phi=0, psi=1) {
     const xMag = c.mag(z);

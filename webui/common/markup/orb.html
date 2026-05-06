@@ -5,22 +5,77 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <meta property="og:image" content="/media/test_image.png">
-        <meta property="og:title" content="Test 1 2 3">
-        <meta property="og:description" content="lorem ipsum dolor sit amet">
+        <meta property="og:image" content="">
+        <meta property="og:title" content="...">
+        <meta property="og:description" content="">
         <title>...</title>
         <link rel="icon" href="/media/favicon.png">
         <link id="themeLink" rel="stylesheet" type="text/css" href="/style/theme/themes.css">
         <link rel="stylesheet" type="text/css" href="/style/main.css">
     </head>
     <body>
-        <script src="/code/main.js"></script>
-        <script>
-            const orb = new URLSearchParams(window.location.search).get("orb");
+        <script src="/code/core.js"></script>
+        <script type="module" src="/code/main.js"></script>
+        <script type="module" id="_orb_load">
+            const params = new URLSearchParams(window.location.search);
+            const orb = params.get("orb");
+
+            if (params.has("bake")) {
+                const replace = window.$replace;
+
+                document.$replaces = [];
+
+                window.$replace = async (target, module, ...args) => {
+                    document.$replaces.push(import(`/code/${module}.js`).then(async result => {
+                        if (result.staticModule) {
+                            await replace(target, module, ...args);
+                        }
+                    }));
+                };
+            }
+            else
+            {
+                document.$contextMenu = document.$contextMenu ?? { items: [] };
+
+                document.$contextMenu.items.push(["bake", () => {
+                    params.set("bake", "");
+                    location.search = params.toString();
+                }]);
+            }
+
             if (orb) {
-                $mod("code/orb", document.body, [`/markup/orb/${orb}.orb`]);
+                $apply("code/orb", document.body, `/markup/orb/${orb}.orb`)
+                    .then(async () => {
+                        if (params.has("bake")) {
+                            await Promise.allSettled(document.$replaces);
+
+                            for (const script of document.body.querySelectorAll("script")) {
+                                if (script.textContent.includes("WRANGLER")) script.remove();
+                                if (script.id.includes("_orb_")) script.remove();
+                            }
+
+                            if (document.$orbSheets) {
+                                for (const sheetText of document.$orbSheets) {
+                                    const sheet = $element("style");
+                                    sheet.textContent = sheetText;
+                                    document.head.appendChild(sheet);
+                                }
+                                document.$orbSheets = null;
+                            }
+
+                            const blob = new Blob(["<!DOCTYPE html>\n" + document.documentElement.outerHTML], {type: 'text/html'});
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = `${orb ?? "page"}.html`;
+                            a.click();
+
+                            params.delete("bake")
+                            const cleanSearch = params.toString()
+                            location.search = cleanSearch;
+                        }
+                    });
             } else {
-                $mod("layout/nothing", document.body);
+                $apply("layout/nothing", document.body);
             }
         </script>
     </body>

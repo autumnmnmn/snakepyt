@@ -1,12 +1,4 @@
 
-$css(`
-    .orb-container {
-        color: var(--main-solid);
-        line-height: 1.5rem;
-        height: 100%;
-    }
-`);
-
 function printNodes(nodes, source, depth = 0) {
   const indent = '  '.repeat(depth)
   for (const node of nodes) {
@@ -22,10 +14,7 @@ function printNodes(nodes, source, depth = 0) {
   }
 }
 
-export async function main(target, orb) {
-    const container = document.createElement("div");
-    container.classList = "orb-container";
-
+export async function main(orb) {
     const parserModule = await import(`/code/code/orb/parse.js`);
     const buildModule = await import(`/code/code/orb/build.js`);
 
@@ -33,10 +22,8 @@ export async function main(target, orb) {
 
     //printNodes(parsed.nodes, parsed.source);
 
-    await buildModule.build(container, parsed.nodes, parsed.source);
+    const domNodes = await buildModule.build(parsed.nodes, parsed.source);
 
-    target.appendChild(container);
-
-    return { replace: true };
+    return { dom: domNodes, replace: true };
 }
 

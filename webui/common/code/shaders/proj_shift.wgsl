@@ -1,8 +1,10 @@
 
 struct Uniforms /* buffer 0 0 */ {
     extent: vec2u,
-    center: vec2f,
+    center_low: vec2f,
+    center_high: vec2f,
     zoom: f32,
+    rotation: f32, // 0 to 1 = 0
     c: vec2f, // 0 to 1 = 0.85,0
     iterations: u32, // hard 0 to 500 = 100
     twist: f32, // -pi to pi = 0
@@ -15,17 +17,9 @@ struct Uniforms /* buffer 0 0 */ {
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var output_texture: texture_storage_2d<rgba8unorm, write>;
 
-fn complex_mag_sq(z: vec2<f32>) -> f32 {
-    return z.x * z.x + z.y * z.y;
-}
-
-fn complex_mag(z: vec2<f32>) -> f32 {
-    return sqrt(complex_mag_sq(z));
-}
-
-fn complex_angle(z: vec2<f32>) -> f32 {
-    return atan2(z.y, z.x);
-}
+$paste(core.wgsl);
+$paste(complex.wgsl);
+$paste(rng.wgsl);
 
 fn projective_shift(x: vec2<f32>, phi: f32, psi: f32) -> vec2<f32> {
     let x_mag = complex_mag(x);
@@ -70,139 +64,6 @@ fn iterate_cartesian(z: vec2<f32>, phi: f32, c: vec2f) -> vec2<f32> {
     return result - c;
 }
 
-fn pixel_to_complex(px: u32, py: u32) -> vec2<f32> {
-    let aspect = f32(uniforms.extent.x) / f32(uniforms.extent.y);
-    let scale = 4.0 / uniforms.zoom;
-    let half_width = f32(uniforms.extent.x) * 0.5;
-    let half_height = f32(uniforms.extent.y) * 0.5;
-    let x = (f32(px) - half_width) * scale * aspect / f32(uniforms.extent.x) + uniforms.center.x;
-    let y = (f32(py) - half_height) * scale / f32(uniforms.extent.y) + uniforms.center.y;
-    return vec2<f32>(x, y);
-}
-
-fn pixel_to_complex_alt(px: u32, py: u32) -> vec2<f32> {
-    let aspect = f32(uniforms.extent.x) / f32(uniforms.extent.y);
-    let scale = 4.0 / uniforms.zoom;
-    let half_width = f32(uniforms.extent.x) * 0.5;
-    let half_height = f32(uniforms.extent.y) * 0.5;
-
-    // map y-axis to magnitude, x-axis to angle
-    let angle = (f32(px) - half_width) * scale * aspect / f32(uniforms.extent.x) + uniforms.center.x;
-    let mag = (f32(py) - half_height) * scale / (2.0 * f32(uniforms.extent.y)) + uniforms.center.y;
-
-    return vec2<f32>(mag * cos(angle), mag * sin(angle));
-}
-
-fn pixel_to_complex_inverted(px: u32, py: u32) -> vec2<f32> {
-    let aspect = f32(uniforms.extent.x) / f32(uniforms.extent.y);
-    let scale = 4.0 / uniforms.zoom;
-    let half_width = f32(uniforms.extent.x) * 0.5;
-    let half_height = f32(uniforms.extent.y) * 0.5;
-
-    let x = (f32(px) - half_width) * scale * aspect / f32(uniforms.extent.x) + uniforms.center.x;
-    let y = (f32(py) - half_height) * scale / f32(uniforms.extent.y) + uniforms.center.y;
-
-    let z = vec2<f32>(x, y);
-    let mag_sq = x * x + y * y;
-
-    // handle singularity at origin
-    if (mag_sq < 1e-10) {
-        return vec2<f32>(1e10, 0.0); // or whatever you want infinity to map to
-    }
-
-    return vec2<f32>(x / mag_sq, -y / mag_sq);
-}
-
-fn pixel_to_complex_inverted_d(px: u32, py: u32) -> vec2<f32> {
-    let aspect = f32(uniforms.extent.x) / f32(uniforms.extent.y);
-    let scale = 4.0 / uniforms.zoom;
-    let half_width = f32(uniforms.extent.x) * 0.5;
-    let half_height = f32(uniforms.extent.y) * 0.5;
-    
-    // get position relative to center
-    let x = (f32(px) - half_width) * scale * aspect / f32(uniforms.extent.x);
-    let y = (f32(py) - half_height) * scale / f32(uniforms.extent.y);
-    
-    let mag_sq = x * x + y * y;
-    if (mag_sq < 1e-10) {
-        return vec2<f32>(uniforms.center.x + 1e10, uniforms.center.y);
-    }
-    
-    // invert then add center back
-    return vec2<f32>(
-        uniforms.center.x + x / mag_sq,
-        uniforms.center.y - y / mag_sq
-    );
-}
-
-fn pixel_to_complex_inverted_b(px: u32, py: u32) -> vec2<f32> {
-    let aspect = f32(uniforms.extent.x) / f32(uniforms.extent.y);
-    let scale = 4.0 / uniforms.zoom;
-    let half_width = f32(uniforms.extent.x) * 0.5;
-    let half_height = f32(uniforms.extent.y) * 0.5;
-    
-    let x = (f32(px) - half_width) * scale * aspect / f32(uniforms.extent.x) + uniforms.center.x;
-    let y = (f32(py) - half_height) * scale / f32(uniforms.extent.y) + uniforms.center.y;
-    
-    // translate by (c/2, d/2)
-    let tx = x + uniforms.c.x * 0.5;
-    let ty = y + uniforms.c.y * 0.5;
-    
-    let mag_sq = tx * tx + ty * ty;
-    
-    if (mag_sq < 1e-10) {
-        return vec2<f32>(1e10, 0.0);
-    }
-    
-    // invert, then translate back
-    return vec2<f32>(tx / mag_sq - uniforms.c.x * 0.5, -ty / mag_sq - uniforms.c.y * 0.5);
-}
-
-fn pixel_to_complex_inverted_c(px: u32, py: u32) -> vec2<f32> {
-    let aspect = f32(uniforms.extent.x) / f32(uniforms.extent.y);
-    let scale = 4.0 / uniforms.zoom;
-    let half_width = f32(uniforms.extent.x) * 0.5;
-    let half_height = f32(uniforms.extent.y) * 0.5;
-    
-    let x = (f32(px) - half_width) * scale * aspect / f32(uniforms.extent.x) + uniforms.center.x;
-    let y = (f32(py) - half_height) * scale / f32(uniforms.extent.y) + uniforms.center.y;
-    
-    // translate by (c/2, d/2), then scale down by 0.5
-    let tx = (x + uniforms.c.x * 0.5) * 2.0;
-    let ty = (y + uniforms.c.y * 0.5) * 2.0;
-    
-    let mag_sq = tx * tx + ty * ty;
-    
-    if (mag_sq < 1e-10) {
-        return vec2<f32>(1e10, 0.0);
-    }
-    
-    // invert, scale up by 2x, then translate back
-    return vec2<f32>((tx / mag_sq) * 0.5 - uniforms.c.x * 0.5, (-ty / mag_sq) * 0.5 - uniforms.c.y * 0.5);
-}
-
-fn c_avg(prev: f32, val: f32, n: f32) -> f32 {
-    return prev + (val - prev) / n;
-}
-
-fn hash(seed: u32) -> u32 {
-    var x = seed;
-    x = ((x >> 16u) ^ x) * 0x45d9f3bu;
-    x = ((x >> 16u) ^ x) * 0x45d9f3bu;
-    x = (x >> 16u) ^ x;
-    return x;
-}
-
-fn pcg_hash(x: u32) -> u32 {
-    let state = x * 747796405u + 2891336453u;
-    let word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-    return (word >> 22u) ^ word;
-}
-
-fn random_float(seed: u32) -> f32 {
-    return f32(hash(seed)) / 4294967296.0; // 2^32
-}
-
 @compute @workgroup_size(16, 16)
 fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     let px = id.x;
@@ -212,7 +73,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         return;
     }
 
-    var z = ${pixel_mapping}(px, py);
+    var z = ${pixel_mapping}(id.xy, uniforms.center_low, uniforms.center_high, uniforms.extent, uniforms.rotation, uniforms.zoom);
     let orig_z = z;
     let n_perturbations = 1u;
     let escape_threshold = uniforms.escape_distance * uniforms.escape_distance;
@@ -255,7 +116,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
             avg_abs_df_z_p /= f32(n_perturbations);
 
-            cavg = c_avg(cavg, log(avg_abs_df_z_p), f32(iter + 1 - transient_skip));
+            cavg = c_avg(cavg, log(avg_abs_df_z_p), u32(iter + 1 - transient_skip));
         }
 
         z = f_z;

@@ -18,7 +18,7 @@ function getOppositeTheme(theme) {
     return theme;
 }
 
-export function main(target, initialTheme = null) {
+export function applyTheme(target, initialTheme = null) {
     const storedTheme = localStorage.getItem("theme");
 
     let theme = storedTheme || "blackboard";

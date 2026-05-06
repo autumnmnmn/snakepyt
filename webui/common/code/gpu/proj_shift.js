@@ -18,18 +18,19 @@ $css(`
 import { greek } from "/code/math/math.js";
 
 import "/code/math/constants.js";
-import "/code/math/vector.js";
+import { v2 } from "/code/math/vector.js";
+import { cartesian as c } from "/code/math/complex.js";
+import { splitDouble } from "/code/math/precision.js";
 
 import { translatedProjectiveShift } from "/code/math/proj_shift.js";
 
-export async function main(target) {
+export async function main() {
     let showTrajectory = false;
 
-    const c = $complex.cartesian;
-    const v2 = $vector.v2;
+    const observers = {};
 
     function computeTrajectory(startZ, maxIters, escapeThreshold) {
-        const translation = c.of(uniforms.vars.c_x.value, uniforms.vars.c_y.value);
+        const translation = c.of(params.c_x, params.c_y);
 
         const trajectory = [startZ];
         let z = startZ;
@@ -41,8 +42,8 @@ export async function main(target) {
             z = translatedProjectiveShift(
                 z,
                 translation,
-                uniforms.vars.phi.value,
-                uniforms.vars.psi.value
+                params.phi,
+                params.psi
             );
             trajectory.push(c.copy(z));
         }
@@ -54,10 +55,10 @@ export async function main(target) {
     renderStack.dataset.name = "renderer";
     renderStack.style.position = "relative";
 
-    const gpuModule = await $mod("gpu/webgpu", renderStack);
+    const canvasModule = await $apply("gpu/canvas", renderStack);
 
-    const canvas = gpuModule.canvas;
-    const context = gpuModule.context;
+    const canvas = canvasModule.canvas;
+    const context = canvasModule.context;
 
     canvas.setAttribute("aria-label",
         "Interactive visualization of the iterated projective shift map.");
@@ -67,18 +68,28 @@ export async function main(target) {
     const compShader = await $gpu.loadShader("proj_shift", {
         "pixel_mapping" : "pixel_to_complex"
     });
-    const blitShader = await $gpu.loadShader("blit");
+    const blitShader = await $gpu.loadShader("blit_original");
 
     if (!compShader || !blitShader) return;
 
     const uniforms = compShader.bufferDefinitions["0,0"];
+    const params = uniforms.vars;
 
-    uniforms.vars.zoom.value = 4.0;
-    uniforms.vars.center_x.value = -(uniforms.vars.c_x.value / 2);
-    uniforms.vars.center_y.value = 0.0;
+    params.zoom = 1.0;
+    //params.center_x = -(params.c_x / 2);
+    //params.center_y = 0.0;
 
-    const controls = await $prepMod("control/panel",
-        ["Parameters", uniforms.getControlSettings(render)]
+    var center_x = splitDouble(-(params.c_x / 2));
+    var center_y = splitDouble(0.0);
+
+
+    params.center_low_x = center_x[1];
+    params.center_low_y = center_y[1];
+    params.center_high_x = center_x[0];
+    params.center_high_y = center_y[0];
+
+    const controls = await $mod("control/panel",
+        "Parameters", uniforms.getControlSettings(render)
     );
 
     const computePipeline = $gpu.device.createComputePipeline({
@@ -121,12 +132,12 @@ export async function main(target) {
         else if (topmost.querySelector(".control-panel")) return;
 
         return ["show controls", async () => {
-            const split = await $mod("layout/split",
+            const split = await $apply("layout/split",
                 renderStack.parentNode,
-                [{
-                    content: [controls, renderStack],
+                {
+                    content: [controls.dom, renderStack],
                     percents: [20, 80]
-                }]
+                }
             );
             topmost = split.topmost;
         }];
@@ -138,12 +149,16 @@ export async function main(target) {
     }
 
     function exitRenderer() {
+        observers.resize?.disconnect();
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
         // relying on showControls' topmost check to have occurred before this can be called,
         // which is true bc that happens while the context menu is built.
         // this may not remain true if a hotkey is added for exiting w/o opening the menu
         const target = topmost.parentNode;
         target.replaceChildren();
-        $mod("layout/nothing", target);
+        $apply("layout/nothing", target);
     }
 
     function saveFrame() {
@@ -180,50 +195,32 @@ export async function main(target) {
                 document.exitFullscreen();
             }
             else {
-                renderStack.requestFullscreen();
+                (topmost.isConnected ? topmost : renderStack).requestFullscreen();
             }
         }
     });
 
     const split = await $mod("layout/split",
-        target,
-        [{
-            content: [controls, renderStack],
+        {
+            content: [controls.dom, renderStack],
             percents: [20, 80]
-        }]
+        }
     );
     let topmost = split.topmost;
 
+
     let width = canvas.clientWidth;
     let height = canvas.clientHeight;
-    canvas.width = width;
-    canvas.height = height;
 
-    let outputTexture = $gpu.device.createTexture({
-        size: [width, height],
-        format: "rgba8unorm",
-        usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-    });
+    let outputTexture;
+    let computeBindGroup;
+    let renderBindGroup;
 
     const sampler = $gpu.device.createSampler({ magFilter: "nearest", minFilter: "nearest" });
 
-    let computeBindGroup = $gpu.device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: { buffer: uniforms.gpuBuffer } },
-            { binding: 1, resource: outputTexture.createView() }
-        ]
-    });
 
-    let renderBindGroup = $gpu.device.createBindGroup({
-        layout: renderPipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: sampler },
-            { binding: 1, resource: outputTexture.createView() }
-        ]
-    });
 
-    let canRender = true;
+    let canRender = false;
 
     async function offscreenRender(scalingFactor) {
         const dims = v2.of(width * scalingFactor, height * scalingFactor);
@@ -234,11 +231,11 @@ export async function main(target) {
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 
-        const orig_height = uniforms.vars.extent_y.value;
-        const orig_width = uniforms.vars.extent_x.value;
+        const orig_height = params.extent_y;
+        const orig_width = params.extent_x;
 
-        uniforms.vars.extent_y.value *= scalingFactor;
-        uniforms.vars.extent_x.value *= scalingFactor;
+        params.extent_y *= scalingFactor;
+        params.extent_x *= scalingFactor;
 
         computeBindGroup = $gpu.device.createBindGroup({
             layout: computePipeline.getBindGroupLayout(0),
@@ -260,8 +257,8 @@ export async function main(target) {
 
         render(offscreen.context, dims);
 
-        uniforms.vars.extent_y.value = orig_height;
-        uniforms.vars.extent_x.value = orig_width;
+        params.extent_y = orig_height;
+        params.extent_x = orig_width;
 
         const blob = await offscreen.canvas.convertToBlob({ type: "image/png" });
 
@@ -304,8 +301,8 @@ export async function main(target) {
 
         const uniforms = compShader.bufferDefinitions["0,0"];
 
-        uniforms.vars.extent_x.value = width;
-        uniforms.vars.extent_y.value = height;
+        params.extent_x = width;
+        params.extent_y = height;
 
         if (width * height <= 0) {
             canRender = false;
@@ -314,7 +311,7 @@ export async function main(target) {
 
         canRender = true;
 
-        outputTexture.destroy();
+        outputTexture?.destroy();
 
         outputTexture = $gpu.device.createTexture({
             size: [width, height],
@@ -341,8 +338,8 @@ export async function main(target) {
         render();
     }
 
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(canvas);
+    observers.resize = new ResizeObserver(resize);
+    observers.resize.observe(canvas);
 
     function render(targetContext = context, dims = null) {
 
@@ -386,29 +383,23 @@ export async function main(target) {
         $gpu.device.queue.submit([commandEncoder.finish()]);
     }
 
-    let isDragging = false;
     let lastMouse = v2.of(0,0);
 
-    canvas.addEventListener("pointerdown", (e) => {
-        if (e.button !== 0) return;
-        isDragging = true;
-        lastMouse = v2.fromMouse(e, canvas);
-        canvas.style.cursor = "all-scroll";
-    });
 
-    canvas.addEventListener("pointermove", (e) => {
+    renderStack.addEventListener("pointermove", (e) => {
         const pMouse = v2.fromMouse(e, canvas);
 
         const dims = v2.of(width, height);
-        const center = c.of(uniforms.vars.center_x.value, uniforms.vars.center_y.value);
-        const scale = 4.0 / uniforms.vars.zoom.value;
+        const center = c.of(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
+        const scale = 1.0 / params.zoom;
+        const rotation = params.rotation;
 
-        const cMouse = c.fromPixel(pMouse, dims, center, scale);
+        const cMouse = c.fromPixel(pMouse, dims, center, rotation, scale);
 
         const trajectory = computeTrajectory(
             cMouse,
-            Math.min(uniforms.vars.iterations.value, 500),
-            uniforms.vars.escape_distance.value
+            Math.min(params.iterations, 500),
+            params.escape_distance
         );
 
         // Clear existing trajectory
@@ -427,7 +418,7 @@ export async function main(target) {
 
             let pathData = "";
             for (let i = 0; i < trajectory.length; i++) {
-                const pixel = c.toPixel(trajectory[i], dims, center, scale);
+                const pixel = c.toPixel(trajectory[i], dims, center, rotation, scale);
 
                 // Skip points outside visible area
                 if (pixel.x < -10 || pixel.x > width + 10 ||
@@ -449,23 +440,6 @@ export async function main(target) {
         }
 
 
-        if (!isDragging) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-
-        const delta = v2.sub(pMouse, lastMouse);
-
-        // Convert pixel delta to complex plane delta
-        const cDelta = v2.scale(delta, -scale / height);
-
-        uniforms.vars.center_x.value += cDelta.x;
-        uniforms.vars.center_y.value += cDelta.y;
-
-        lastMouse = pMouse;
-
-        render();
     });
 
     renderStack.$contextMenu = {
@@ -481,53 +455,8 @@ export async function main(target) {
         ]
     };
 
+    canvasModule.addNavigation("2d", params, render);
 
-    canvas.addEventListener("pointerup", () => {
-        if (!isDragging) return;
-        isDragging = false;
-        canvas.style.cursor = "crosshair";
-    });
-
-    canvas.addEventListener("pointerleave", () => {
-        if (!isDragging) return;
-        isDragging = false;
-        canvas.style.cursor = "crosshair";
-    });
-
-    canvas.addEventListener("wheel", (e) => {
-        e.preventDefault();
-
-        const pMouse = v2.fromMouse(e, canvas);
-
-        const dims = v2.of(width, height);
-        const center = c.of(uniforms.vars.center_x.value, uniforms.vars.center_y.value);
-        const scale = 4.0 / uniforms.vars.zoom.value;
-        const cMouse = c.fromPixel(pMouse, dims, center, scale);
-
-        const isTrackpad = e.deltaX > 0; // sloppy heuristic but whatever
-        const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;
-
-        // negative deltaY means zoom in
-        const zoomFactor = e.deltaY > 0 ? 1.0 - zoomFactorDiff : 1.0 + zoomFactorDiff;
-
-        uniforms.vars.zoom.value *= zoomFactor;
-
-        // Adjust center to keep mouse position fixed in complex plane
-        const newScale = 4.0 / uniforms.vars.zoom.value;
-        const newCenterX = cMouse.re - (pMouse.x - width * 0.5) * newScale / height;
-        const newCenterY = cMouse.im - (pMouse.y - height * 0.5) * newScale / height;
-
-        uniforms.vars.center_x.value = newCenterX;
-        uniforms.vars.center_y.value = newCenterY;
-
-        render();
-    });
-
-    canvas.style.cursor = "crosshair";
-
-    render();
-
-
-    return { replace: true };
+    return { dom: [topmost], replace: true };
 }
 

@@ -82,23 +82,24 @@ function mat3x3_mat3x3_matmul(a, b) {
     );
 }
 
-window.$vector = {
-    v2: {
-        of: vec2_of,
-        fromMouse: vec2_from_mouse,
-        sub: vec2_sub,
-        scale: vec2_scalar_mult
-    },
-    v3: {
-        of: vec3_of,
-        matmul: vec3_left_matmul_3x3
-    },
-    m33: {
-        rot_x: mat3x3_rot_x,
-        rot_y: mat3x3_rot_y,
-        rot_z: mat3x3_rot_z,
-        matmul: mat3x3_mat3x3_matmul,
-        ident: mat3x3_ident
-    }
+export const v2 = {
+    of: vec2_of,
+    fromMouse: vec2_from_mouse,
+    sub: vec2_sub,
+    scale: vec2_scalar_mult
 };
+
+    // TODO m22, rot, ident
+export const v3 = {
+    of: vec3_of,
+    matmul: vec3_left_matmul_3x3
+};
+
+export const m33 = {
+    rot_x: mat3x3_rot_x,
+    rot_y: mat3x3_rot_y,
+    rot_z: mat3x3_rot_z,
+    matmul: mat3x3_mat3x3_matmul,
+    ident: mat3x3_ident
+}
 

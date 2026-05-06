@@ -47,14 +47,11 @@ const defaults = {
     action: () => {}
 };
 
-export async function main(target, spec, panelState) {
+export async function main(spec, panelState) {
     spec = { ...defaults, ...spec };
 
     const control = document.createElement("div");
     control.className = "control button";
-
-    const label = document.createElement("label");
-    label.innerText = spec.label;
 
     const button = document.createElement("button");
     button.innerText = spec.label;
@@ -63,8 +60,6 @@ export async function main(target, spec, panelState) {
         spec.action(panelState);
     });
 
-    target.$with(
-        control.$with(button)
-    );
+    return { dom: [control.$with(button)] };
 }
 

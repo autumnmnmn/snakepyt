@@ -10,7 +10,7 @@ def register_builtins(group):
 
 # TODO get from session
 API = "http://localhost:1312"
-MODEL = "qwen3.5-agent"
+MODEL = "locus"
 
 from pyt.core.llm import chatlog
 from pyt.core.llm.tools import tool, toolprop, tool_call

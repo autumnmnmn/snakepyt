@@ -7,8 +7,6 @@ import uuid
 
 from pyt.core.terminal.ansi import codes as ac
 
-
-
 CLEAR = ac.clear_screen + ac.move_to(1, 1)
 
 class MonitorWindow:
@@ -29,7 +27,12 @@ while True:
     print({repr(CLEAR)}, end="", flush=True)
     print(frame, end="", flush=True)
 """
-        subprocess.Popen(["alacritty", "-e", "python3", "-c", reader_script])
+
+        self.proc = subprocess.Popen(
+            ["alacritty", "-e", "python3", "-c", reader_script],
+            preexec_fn=os.setsid
+        )
+
         time.sleep(0.5)
 
     def write(self, content: str):
@@ -37,6 +40,11 @@ while True:
             f.write(content)
 
     def _cleanup(self):
+        if hasattr(self, "proc") and self.proc.poll() is None:
+            try:
+                os.killpg(os.getpgid(self.proc.pid), 15)
+            except Exception:
+                pass
+
         if os.path.exists(self.fifo_path):
             os.remove(self.fifo_path)
-

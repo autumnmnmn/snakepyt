@@ -166,18 +166,18 @@ const showMenu = (target, position = null) => {
     menu.style.top = y + "px";
 
     const rect = menu.getBoundingClientRect();
-
-    if (rect.right > bounds.right) {
-        menu.style.left = (x - rect.width) + "px";
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (rect.right > vw) {
+        menu.style.left = (parseFloat(menu.style.left) - (rect.right - vw)) + "px";
     }
-    if (rect.left < bounds.left) {
-        menu.style.left = bounds.left + "px";
+    if (rect.left < 0) {
+        menu.style.left = "0px";
     }
-    if (rect.bottom > bounds.bottom) {
-        menu.style.top = (y - rect.height) + "px";
+    if (rect.bottom > vh) {
+        menu.style.top = (parseFloat(menu.style.top) - (rect.bottom - vh)) + "px";
     }
-    if (rect.top < bounds.top) {
-        menu.style.top = bounds.top + "px";
+    if (rect.top < 0) {
+        menu.style.top = "0px";
     }
 };
 

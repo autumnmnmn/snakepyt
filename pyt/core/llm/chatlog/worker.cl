@@ -23,6 +23,8 @@ ${timestamp}
 
 ${files_text}
 
+${images}
+
 ${commands_text}
 
 [log of previous thoughts and actions, summarized in plain text]

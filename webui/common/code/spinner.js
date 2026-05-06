@@ -83,7 +83,7 @@ $css(`
     }
 `);
 
-export async function main(target, modNext = "layout/nothing") {
+export async function main(modNext = "layout/nothing") {
     let spinner = $div("spinner");
     let orb0 = $div("spinner-orb 0");
     let orb1 = $div("spinner-orb 1");
@@ -93,14 +93,14 @@ export async function main(target, modNext = "layout/nothing") {
     button.innerText = "enter";
     button.classList.add("spinner-button");
 
-    target.$with(
+    const dom = [
         spinner.$with(
             orb0.$with(
                 orb1.$with(orb2)
             )
         ),
         button
-    );
+    ];
 
     let removeLoader = async (e) => {
         spinner.style.opacity = "0";
@@ -108,7 +108,7 @@ export async function main(target, modNext = "layout/nothing") {
         orb0.style.left = "50%";
         orb1.style.left = "50%";
         orb2.style.left = "50%";
-        await $mod(modNext, spinner.parentNode);
+        await $apply(modNext, spinner.parentNode);
         setTimeout(async () => {
             spinner.remove();
             button.remove();
@@ -122,6 +122,7 @@ export async function main(target, modNext = "layout/nothing") {
     button.style.display = "initial";
 
     return {
+        dom,
         replace: true
     };
 }

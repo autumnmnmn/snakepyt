@@ -103,6 +103,12 @@ class run_program:
 
         session.thoughts.append(f"Ran a command (#{index}: {args.program})")
 
+        if args.program == "bash" and "python" in args.cli_args:
+            session.thoughts.append("[automatic] Looks like you wrote 'python' in a bash command. This message is to remind you that running python through bash will bypass your venv and use the system python installation, which does not have all the packages you expect. You have to use python *directly* to access your sandbox's venv properly.")
+
+        if args.program == "bash" and "-ls" in args.cli_args[:5]:
+            session.thoughts.append("[automatic] Looks like you passed -ls as flags to bash. That creates an interactive session. You may have meant to write `-c ls`.")
+
 @tool
 class send_input:
     """Send text to a command's standard input stream"""

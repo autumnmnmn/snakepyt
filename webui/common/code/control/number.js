@@ -3,8 +3,6 @@ $css(`
 .number {
     display: block;
     line-height: 1.5rem;
-    border-left: 1px solid var(--main-faded);
-    padding-left: 0.5rem;
 }
 
 
@@ -113,7 +111,7 @@ const defaults = {
     onUpdate: null
 };
 
-export async function main(target, spec, panelState) {
+export async function main(spec, panelState) {
     spec = { ...defaults, ...spec };
 
     const control = document.createElement("div");
@@ -184,13 +182,11 @@ export async function main(target, spec, panelState) {
         spec.onUpdate?.(field.value, set, panelState);
     });
 
-    target.$with(
-        control.$with(
-            label, label_eq.$with(copyable_value), field,
-            /*play_button,*/ reset_button,
-            slider
-        )
-    );
+    const dom = [control.$with(
+        label, label_eq.$with(copyable_value), field,
+        /*play_button,*/ reset_button,
+        slider
+    )];
 
     const hide = () => {
         control.setAttribute("hidden", "");
@@ -200,6 +196,6 @@ export async function main(target, spec, panelState) {
         control.removeAttribute("hidden");
     }
 
-    return { set, show, hide };
+    return { dom, set, show, hide };
 }
 

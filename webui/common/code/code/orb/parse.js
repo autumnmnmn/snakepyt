@@ -23,8 +23,8 @@ export async function parse(uri) {
 
     const parsed = parseSource(source);
 
-    if (parsed.scanPosition != source.length) {
-        console.warn(`parse concluded before end of file for ${uri}`);
+    if (parsed.scanPosition < source.length) {
+        console.warn(`parse concluded before end of file for ${uri} (${parsed.scanPosition} / ${source.length})`);
     }
 
     parsed.source = source;
