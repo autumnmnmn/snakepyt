@@ -115,9 +115,12 @@ function tokenize(expression, declarations) {
     return tokens;
 }
 
+const allModifiers = new Set(["inline", "auto"])
+
 export const staticModule = true;
 
-export async function main(expression) {
+export async function main(expression, inline=false) {
+    console.log(inline);
 
     const lines = expression.trim().split("\n");
     const dom = [];
@@ -126,6 +129,9 @@ export async function main(expression) {
     const texts = {};
     const ops = {};
     const contentLines = [];
+
+    let isInline = false;
+    let isAuto = false;
 
     let contentStarted = false;
     for (const line of lines) {
@@ -137,6 +143,25 @@ export async function main(expression) {
         if (trimmed === "in") {
             contentStarted = true;
             continue;
+        }
+
+        const firstWord = line.match(/^\S+/)?.[0];
+
+        if (allModifiers.has(firstWord)) {
+            const words = line.split(/\s+/);
+            let i = 0;
+            while (i < words.length && allModifiers.has(words[i])) { i++; }
+            const modifiers = new Set(words.slice(0, i));
+
+            isInline = modifiers.has("inline");
+            isAuto = modifiers.has("auto");
+
+            if (isAuto) {
+                contentStarted = true;
+                const rest = words.slice(i).join(" ");
+                if (rest) contentLines.push(rest);
+                continue;
+            }
         }
 
         if (trimmed.startsWith("ident ")) {

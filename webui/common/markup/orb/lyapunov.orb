@@ -181,11 +181,10 @@ Note that in the discontinuous case, Markus chose to set the starting x value to
 
 A somewhat more common modification is to include a third value, C, corresponding either to a third spatial dimension or time. a[href=https://gidden.net/2017/03/09/exploring-lyapunov-space/]{Tom Gidden's 2017 blog post} provides a more in-depth description of that, and a[href=https://www.youtube.com/shorts/KAK6IJMbhwI]{this short animation by @desden0va on youtube} makes the idea intuitive.
 
-h3[style=text-decoration:underline]{Implementation}
+h3[style=text-decoration:underline]{Implementations}
 
 a[href=https://tangled.org/ponder.ooo/sketches/blob/main/lyapunov.py]{The code used to render these fractals} is publicly available. It is written as a a[href=https://tangled.org/ponder.ooo/snakepyt]{snakepyt} sketch, not a normal python script, and is a bit messy, since it's a snapshot of the working copy. However, it's only about 200 lines, and the logic is a fairly straightforward encoding of the methods described here.
 
-h3[style=text-decoration:underline]{Replication}
 
 
 h3[style=text-decoration:underline]{Other Results}

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Snowflake: Hyperbolic, Spherical, Euclidean</title>
+    <style>
+        body {
+            background-color: #0b0d17;
+            color: #e0e6ed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* --- UI PANEL --- */
+        .ui-panel {
+            flex-shrink: 0; background: rgba(15, 20, 35, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.08); padding: 15px 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 10;
+        }
+        .header-row {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; max-width: 1200px;
+        }
+        h2 { margin: 0; font-weight: 400; color: #fff; font-size: 1.2em;}
+        
+        .controls-row {
+            display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+            width: 100%; max-width: 1200px;
+        }
+        .buttons { display: flex; gap: 8px; align-items: center; }
+        .btn {
+            background: #4da8da; color: #0b0d17; border: none; padding: 6px 14px;
+            font-size: 0.9em; font-weight: 600; border-radius: 4px; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 0 10px rgba(77, 168, 218, 0.2);
+        }
+        .btn:hover { background: #76c5f0; transform: translateY(-1px); }
+        .btn:active { transform: translateY(1px); }
+        .btn.pause-state { background: #ff6b6b; color: white; box-shadow: 0 0 10px rgba(255, 107, 107, 0.3); }
+        .btn.pause-state:hover { background: #ff8e8e; }
+
+        .panel-group {
+            display: flex; gap: 15px; flex-wrap: wrap; align-items: center;
+            background: rgba(255,255,255,0.03); padding: 8px 15px;
+            border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .input-group {
+            display: flex; flex-direction: column; align-items: center;
+            font-size: 0.8em; color: #8fa0b5; min-width: 110px;
+        }
+        .input-group span { margin-bottom: 4px; font-weight: 600; color: #cbd5e1;}
+        input[type="range"] { width: 100px; accent-color: #4da8da; cursor: pointer; }
+        select {
+            background: #1e2436; color: #fff; border: 1px solid #4da8da;
+            padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; outline: none;
+        }
+
+        .stats { display: flex; gap: 15px; font-size: 0.85em; font-weight: 600; color: #4da8da; }
+        
+        #canvas-container {
+            flex-grow: 1; position: relative; overflow: hidden;
+        }
+        canvas {
+            display: block; position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #000; cursor: grab;
+        }
+        canvas:active { cursor: grabbing; }
+
+        .hint {
+            position: absolute; bottom: 15px; right: 20px; font-size: 0.8em;
+            color: #5d6f88; pointer-events: none; text-align: right; line-height: 1.4;
+            background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-panel">
+        <div class="header-row">
+            <h2>Universal Snowflake Architecture (v6)</h2>
+            <div class="stats">
+                <span>Step: <span id="stepCount">0</span></span>
+                <span>Cells: <span id="polyCount">0</span></span>
+            </div>
+        </div>
+        
+        <div class="controls-row">
+            <div class="buttons">
+                <button class="btn pause-state" id="btnPause">Resume</button>
+                <button class="btn" id="btnStep">Step</button>
+                <button class="btn" id="btnReset">Reset</button>
+            </div>
+
+            <div class="panel-group">
+                <div class="input-group">
+                    <span>Macro Geometry</span>
+                    <select id="geometrySelect">
+                        <option value="hyperbolic">Hyperbolic {5,4} Disk</option>
+                        <option value="spherical">Spherical Icosahedron</option>
+                        <option value="euclidean">Euclidean Plane</option>
+                    </select>
+                </div>
+                
+                <div class="input-group" id="euclideanContainer" style="display: none; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                    <span>Tiling Type</span>
+                    <select id="euclideanSelect">
+                        <option value="hex">Hexagonal</option>
+                        <option value="octsq">Truncated Square (4-8-8)</option>
+                        <option value="penrose">Penrose (Aperiodic)</option>
+                    </select>
+                </div>
+
+                <div class="input-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                    <span><span id="resLabel">Max Cells</span>: <span id="resVal">8000</span></span>
+                    <input type="range" id="resSlider" min="1000" max="15000" step="1000" value="8000">
+                </div>
+            </div>
+            
+            <div class="panel-group">
+                <div class="input-group">
+                    <span>Diffusion (α): <span id="alphaVal">0.80</span></span>
+                    <input type="range" id="alphaSlider" min="0" max="1" step="0.01" value="0.8">
+                </div>
+                <div class="input-group">
+                    <span>Vapor Base (β): <span id="betaVal">0.40</span></span>
+                    <input type="range" id="betaSlider" min="0" max="1" step="0.01" value="0.4">
+                </div>
+                <div class="input-group">
+                    <span>Growth (γ): <span id="gammaVal">0.001</span></span>
+                    <input type="range" id="gammaSlider" min="0.0001" max="0.01" step="0.0001" value="0.001">
+                </div>
+                <div class="input-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                    <span>Speed: <span id="speedVal">5</span></span>
+                    <input type="range" id="speedSlider" min="1" max="20" step="1" value="5">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+        <div class="hint">
+            <strong id="hintMode">Hyperbolic Mode</strong><br>
+            <span id="hintDrag">Drag: Pan Möbius Space</span><br>
+            <span>Scroll: Zoom</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+
+        // --- GLOBAL APP STATE ---
+        let mode = 'hyperbolic'; 
+        let euclideanMode = 'hex';
+        let isPaused = true; 
+        let zoom = 1.0;
+        let steps = 0;
+        let dpr = 1; 
+        
+        let alpha = 0.8, beta = 0.4, gamma = 0.001, simSpeed = 5;
+        let currentRes = 8000;
+        
+        const RES_CONFIG = {
+            hyperbolic: { min: 1000, max: 15000, step: 1000, default: 8000, label: "Max Cells" },
+            spherical: { min: 2, max: 6, step: 1, default: 4, label: "Subdivisions" },
+            hex: { min: 10, max: 80, step: 1, default: 35, label: "Grid Radius" },
+            octsq: { min: 10, max: 60, step: 1, default: 22, label: "Grid Radius" },
+            penrose: { min: 4, max: 10, step: 1, default: 7, label: "Deflations" }
+        };
+
+        // Navigation Trackers
+        let globalA = {x: 0, y: 0};  // Hyperbolic
+        let rotX = 0, rotY = 0;      // Spherical
+        let panX = 0, panY = 0;      // Euclidean
+
+        let polygons = [];
+        let N = 0;
+        let u, next_u, state;
+        const VAPOR = 0, RECEPTIVE = 1, ICE = 2;
+
+        // --- PRE-CACHED COLOR ENGINE ---
+        const colorCache = { vapor: [], receptive: [], ice: [] };
+        function initColorCache() {
+            for (let i = 0; i <= 255; i++) {
+                let val = i / 255;
+                colorCache.vapor[i] = `rgb(${Math.floor(15 * val)}, ${Math.floor(30 * val)}, ${Math.floor(70 * val)})`;
+                colorCache.receptive[i] = `rgb(${Math.floor(50 * val)}, ${Math.floor(120 * val)}, ${Math.floor(220 * val)})`;
+                colorCache.ice[i] = `rgb(${Math.floor(150 + 105 * val)}, ${Math.floor(200 + 55 * val)}, 255)`;
+            }
+        }
+        initColorCache();
+
+        // --- DOM BINDINGS ---
+        const bindSlider = (id, valId, updateFn, isFloat = true) => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                let val = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
+                document.getElementById(valId).innerText = isFloat ? (id === 'gammaSlider' ? val.toFixed(4) : val.toFixed(2)) : val;
+                updateFn(val);
+                if (isPaused) draw();
+            });
+        };
+
+        bindSlider('alphaSlider', 'alphaVal', v => alpha = v);
+        bindSlider('betaSlider', 'betaVal', v => beta = v);
+        bindSlider('gammaSlider', 'gammaVal', v => gamma = v);
+        bindSlider('speedSlider', 'speedVal', v => simSpeed = v, false);
+
+        function updateResSlider() {
+            let key = mode === 'euclidean' ? euclideanMode : mode;
+            let cfg = RES_CONFIG[key];
+            let slider = document.getElementById('resSlider');
+            slider.min = cfg.min;
+            slider.max = cfg.max;
+            slider.step = cfg.step;
+            slider.value = cfg.default;
+            currentRes = cfg.default;
+            document.getElementById('resLabel').innerText = cfg.label;
+            document.getElementById('resVal').innerText = cfg.default;
+        }
+
+        document.getElementById('resSlider').addEventListener('input', (e) => {
+            currentRes = parseInt(e.target.value);
+            document.getElementById('resVal').innerText = currentRes;
+            initGeometry();
+        });
+
+        document.getElementById('geometrySelect').addEventListener('change', (e) => {
+            mode = e.target.value;
+            document.getElementById('euclideanContainer').style.display = mode === 'euclidean' ? 'flex' : 'none';
+            document.getElementById('hintMode').innerText = mode === 'hyperbolic' ? 'Hyperbolic Disk' : (mode === 'spherical' ? 'Spherical World' : 'Euclidean Plane');
+            document.getElementById('hintDrag').innerText = mode === 'hyperbolic' ? 'Drag: Pan Möbius Space' : (mode === 'spherical' ? 'Drag: Rotate Globe' : 'Drag: Pan 2D Plane');
+            updateResSlider(); initGeometry();
+        });
+
+        document.getElementById('euclideanSelect').addEventListener('change', (e) => {
+            euclideanMode = e.target.value;
+            updateResSlider(); initGeometry();
+        });
+
+        function resizeCanvas() {
+            let rect = container.getBoundingClientRect();
+            dpr = Math.min(window.devicePixelRatio || 1, 2); 
+            canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+            if (isPaused || steps === 0) draw();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // ----------------------------------------------------
+        // 1. UNIVERSAL GRAPH GENERATORS
+        // ----------------------------------------------------
+        function initGeometry() {
+            polygons = [];
+            if (mode === 'hyperbolic') {
+                generateHyperbolic();
+                globalA = {x: 0, y: 0}; zoom = 1.0;
+            } else if (mode === 'spherical') {
+                generateSpherical();
+                rotX = 0; rotY = 0; zoom = 1.0;
+            } else if (mode === 'euclidean') {
+                panX = 0; panY = 0;
+                if (euclideanMode === 'hex') generateEuclideanHex();
+                else if (euclideanMode === 'octsq') generateEuclideanOctSq();
+                else if (euclideanMode === 'penrose') generateEuclideanPenrose();
+                autoZoomEuclidean();
+            }
+
+            N = polygons.length;
+            document.getElementById('polyCount').innerText = N;
+            u = new Float32Array(N); next_u = new Float32Array(N); state = new Uint8Array(N);
+            resetCA();
+        }
+
+        function autoZoomEuclidean() {
+            let maxDist = 0;
+            for (let p of polygons) {
+                for (let v of p.vertices) {
+                    let d = Math.max(Math.abs(v.x), Math.abs(v.y));
+                    if (d > maxDist) maxDist = d;
+                }
+            }
+            zoom = maxDist > 0 ? 0.95 / maxDist : 1.0;
+        }
+
+        function buildNeighborsFromEdges(polys) {
+            let polyEdges = new Map();
+            for (let i = 0; i < polys.length; i++) {
+                let p = polys[i];
+                p.neighbors = [];
+                for (let j = 0; j < p.vertices.length; j++) {
+                    let v1 = p.vertices[j], v2 = p.vertices[(j+1)%p.vertices.length];
+                    let mx = (v1.x + v2.x)/2, my = (v1.y + v2.y)/2;
+                    let key = Math.round(mx * 10000) + "," + Math.round(my * 10000);
+                    if (!polyEdges.has(key)) polyEdges.set(key, []);
+                    polyEdges.get(key).push(i);
+                }
+            }
+            for (let arr of polyEdges.values()) {
+                if (arr.length === 2) {
+                    let p1 = arr[0], p2 = arr[1];
+                    polys[p1].neighbors.push(p2);
+                    polys[p2].neighbors.push(p1);
+                } else if (arr.length > 2) { 
+                    for (let i=0; i<arr.length; i++) {
+                        for(let j=i+1; j<arr.length; j++) {
+                            polys[arr[i]].neighbors.push(arr[j]);
+                            polys[arr[j]].neighbors.push(arr[i]);
+                        }
+                    }
+                }
+            }
+        }
+
+        function generateHyperbolic() {
+            const MAX_POLYS = currentRes, cot_pi_5 = 1.3763819204711736;
+            const r_center = Math.sqrt((cot_pi_5 - 1) / (cot_pi_5 + 1));
+            polygons.push({
+                center: {x: 0, y: 0}, neighbors: [],
+                vertices: Array.from({length: 5}, (_, i) => {
+                    let a = i * 2 * Math.PI / 5; return {x: r_center * Math.cos(a), y: r_center * Math.sin(a)};
+                })
+            });
+            let queue = [0], head = 0;
+            
+            let spatialGrid = new Map();
+            let getGridKey = (x, y) => Math.round(x * 1000) + "," + Math.round(y * 1000);
+            spatialGrid.set(getGridKey(0, 0), [0]);
+
+            while (head < queue.length && polygons.length < MAX_POLYS) {
+                let p_idx = queue[head++], P = polygons[p_idx];
+                for (let j = 0; j < 5; j++) {
+                    let A = P.vertices[j], B = P.vertices[(j + 1) % 5];
+                    let E1 = 1 + A.x*A.x + A.y*A.y, E2 = 1 + B.x*B.x + B.y*B.y;
+                    let D = 2 * (A.x*B.y - A.y*B.x);
+                    let cx = 0, cy = 0, R2 = 0, isLine = Math.abs(D) < 1e-10;
+                    if (!isLine) {
+                        cx = (E1*B.y - E2*A.y) / D; cy = (A.x*E2 - B.x*E1) / D;
+                        R2 = Math.max(0, cx*cx + cy*cy - 1);
+                    }
+                    let invert = (pt) => {
+                        if (isLine) {
+                            let dx = B.x - A.x, dy = B.y - A.y, len = Math.sqrt(dx*dx + dy*dy);
+                            let nx = -dy/len, ny = dx/len, dist = (pt.x - A.x)*nx + (pt.y - A.y)*ny;
+                            return {x: pt.x - 2*dist*nx, y: pt.y - 2*dist*ny};
+                        } else {
+                            let dx = pt.x - cx, dy = pt.y - cy, f = R2 / (dx*dx + dy*dy);
+                            return {x: cx + dx*f, y: cy + dy*f};
+                        }
+                    }
+                    let c_new = invert(P.center), found = -1;
+                    
+                    let gkX = Math.round(c_new.x * 1000), gkY = Math.round(c_new.y * 1000);
+                    
+                    for (let ox = -1; ox <= 1; ox++) {
+                        for (let oy = -1; oy <= 1; oy++) {
+                            let key = (gkX + ox) + "," + (gkY + oy);
+                            let candidates = spatialGrid.get(key) || [];
+                            for (let k of candidates) {
+                                let dx = polygons[k].center.x - c_new.x, dy = polygons[k].center.y - c_new.y;
+                                if (dx*dx + dy*dy < 1e-9) { found = k; break; }
+                            }
+                            if (found !== -1) break;
+                        }
+                        if (found !== -1) break;
+                    }
+
+                    if (found !== -1) {
+                        if (!P.neighbors.includes(found)) { P.neighbors.push(found); polygons[found].neighbors.push(p_idx); }
+                    } else if (polygons.length < MAX_POLYS) {
+                        let new_idx = polygons.length;
+                        polygons.push({ center: c_new, vertices: P.vertices.map(invert), neighbors: [p_idx] });
+                        P.neighbors.push(new_idx); queue.push(new_idx);
+                        
+                        let new_gk = getGridKey(c_new.x, c_new.y);
+                        if (!spatialGrid.has(new_gk)) spatialGrid.set(new_gk, []);
+                        spatialGrid.get(new_gk).push(new_idx);
+                    }
+                }
+            }
+        }
+
+        function generateSpherical() {
+            let t = (1.0 + Math.sqrt(5.0)) / 2.0;
+            let vertices = [
+                [-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t],
+                [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]
+            ].map(v => { let l = Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2); return {x: v[0]/l, y: v[1]/l, z: v[2]/l, neighbors: new Set()}; });
+
+            let faces = [
+                [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+                [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+            ];
+
+            let cache = {}, getMid = (v1, v2) => {
+                let k = v1 < v2 ? `${v1}_${v2}` : `${v2}_${v1}`;
+                if(cache[k] !== undefined) return cache[k];
+                let x = (vertices[v1].x + vertices[v2].x)/2, y = (vertices[v1].y + vertices[v2].y)/2, z = (vertices[v1].z + vertices[v2].z)/2;
+                let l = Math.sqrt(x*x + y*y + z*z), idx = vertices.length;
+                vertices.push({x: x/l, y: y/l, z: z/l, neighbors: new Set()});
+                cache[k] = idx; return idx;
+            };
+
+            for (let i = 0; i < currentRes; i++) {
+                let nextFaces = []; cache = {};
+                for (let f of faces) {
+                    let a = getMid(f[0], f[1]), b = getMid(f[1], f[2]), c = getMid(f[2], f[0]);
+                    nextFaces.push([f[0], a, c], [f[1], b, a], [f[2], c, b], [a, b, c]);
+                }
+                faces = nextFaces;
+            }
+
+            for (let f of faces) {
+                vertices[f[0]].neighbors.add(f[1]); vertices[f[0]].neighbors.add(f[2]);
+                vertices[f[1]].neighbors.add(f[0]); vertices[f[1]].neighbors.add(f[2]);
+                vertices[f[2]].neighbors.add(f[0]); vertices[f[2]].neighbors.add(f[1]);
+            }
+
+            let vertexFaces = Array.from({length: vertices.length}, () => []);
+            faces.forEach(f => {
+                let c = {
+                    x: (vertices[f[0]].x + vertices[f[1]].x + vertices[f[2]].x)/3,
+                    y: (vertices[f[0]].y + vertices[f[1]].y + vertices[f[2]].y)/3,
+                    z: (vertices[f[0]].z + vertices[f[1]].z + vertices[f[2]].z)/3
+                };
+                let l = Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z); c.x/=l; c.y/=l; c.z/=l;
+                vertexFaces[f[0]].push(c); vertexFaces[f[1]].push(c); vertexFaces[f[2]].push(c);
+            });
+
+            polygons = vertices.map((v, i) => {
+                let up = Math.abs(v.y)>0.99 ? {x:1, y:0, z:0} : {x:0, y:1, z:0};
+                let rx = up.y*v.z - up.z*v.y, ry = up.z*v.x - up.x*v.z, rz = up.x*v.y - up.y*v.x;
+                let l = Math.sqrt(rx*rx + ry*ry + rz*rz); rx/=l; ry/=l; rz/=l;
+                let ux = v.y*rz - v.z*ry, uy = v.z*rx - v.x*rz, uz = v.x*ry - v.y*rx;
+                let sortedPoly = vertexFaces[i].sort((a,b) => {
+                    return Math.atan2(a.x*ux + a.y*uy + a.z*uz, a.x*rx + a.y*ry + a.z*rz) - Math.atan2(b.x*ux + b.y*uy + b.z*uz, b.x*rx + b.y*ry + b.z*rz);
+                });
+                return { center: v, vertices: sortedPoly, neighbors: Array.from(v.neighbors) };
+            });
+        }
+
+        function generateEuclideanHex() {
+            let L = currentRes;
+            for (let q = -L; q <= L; q++) {
+                for (let r = -L; r <= L; r++) {
+                    if (Math.abs(q + r) <= L) {
+                        let cx = Math.sqrt(3) * (q + r/2), cy = 1.5 * r;
+                        let vertices = Array.from({length: 6}, (_, k) => {
+                            let a = -Math.PI/2 + k * Math.PI/3;
+                            return {x: cx + Math.cos(a), y: cy + Math.sin(a)};
+                        });
+                        polygons.push({center: {x: cx, y: cy}, vertices: vertices, neighbors: []});
+                    }
+                }
+            }
+            buildNeighborsFromEdges(polygons);
+        }
+
+        function generateEuclideanOctSq() {
+            let L = currentRes, h = Math.SQRT2 - 1;
+            for (let i = -L; i <= L; i++) {
+                for (let j = -L; j <= L; j++) {
+                    if (i*i + j*j <= L*L) {
+                        let cx = 2*i, cy = 2*j;
+                        let vOct = [
+                            {x: cx+1, y: cy+h}, {x: cx+h, y: cy+1}, {x: cx-h, y: cy+1}, {x: cx-1, y: cy+h},
+                            {x: cx-1, y: cy-h}, {x: cx-h, y: cy-1}, {x: cx+h, y: cy-1}, {x: cx+1, y: cy-h}
+                        ];
+                        polygons.push({center: {x: cx, y: cy}, vertices: vOct, neighbors: []});
+                        
+                        if (i*i + j*j <= (L-1)*(L-1)) {
+                            let sx = 2*i + 1, sy = 2*j + 1;
+                            let vSq = [
+                                {x: sx+1-h, y: sy}, {x: sx, y: sy+1-h}, {x: sx-(1-h), y: sy}, {x: sx, y: sy-(1-h)}
+                            ];
+                            polygons.push({center: {x: sx, y: sy}, vertices: vSq, neighbors: []});
+                        }
+                    }
+                }
+            }
+            buildNeighborsFromEdges(polygons);
+        }
+
+        function generateEuclideanPenrose() {
+            const phi = (1 + Math.sqrt(5)) / 2;
+            let triangles = [];
+            
+            for (let i = 0; i < 10; i++) {
+                let a1 = i * Math.PI / 5, a2 = (i + 1) * Math.PI / 5;
+                let A = {x: 0, y: 0}, B = {x: Math.cos(a1), y: Math.sin(a1)}, C = {x: Math.cos(a2), y: Math.sin(a2)};
+                triangles.push({type: 'A', a: A, b: (i%2===0)?B:C, c: (i%2===0)?C:B});
+            }
+
+            for (let step = 0; step < currentRes; step++) {
+                let next = [];
+                for (let t of triangles) {
+                    if (t.type === 'A') {
+                        let P = {x: t.a.x + (t.b.x - t.a.x)/phi, y: t.a.y + (t.b.y - t.a.y)/phi};
+                        next.push({type: 'A', a: t.c, b: P, c: t.b});
+                        next.push({type: 'O', a: P, b: t.c, c: t.a});
+                    } else {
+                        let P = {x: t.b.x + (t.c.x - t.b.x)/phi, y: t.b.y + (t.c.y - t.b.y)/phi};
+                        next.push({type: 'A', a: t.b, b: P, c: t.a});
+                        next.push({type: 'O', a: P, b: t.a, c: t.c});
+                    }
+                }
+                triangles = next;
+            }
+
+            for (let t of triangles) {
+                let cx = (t.a.x + t.b.x + t.c.x) / 3;
+                let cy = (t.a.y + t.b.y + t.c.y) / 3;
+                polygons.push({
+                    center: {x: cx, y: cy},
+                    vertices: [t.a, t.b, t.c],
+                    neighbors: []
+                });
+            }
+            buildNeighborsFromEdges(polygons);
+        }
+
+        // ----------------------------------------------------
+        // 2. UNIVERSAL REITER CELLULAR AUTOMATON
+        // ----------------------------------------------------
+        function resetCA() {
+            for(let i = 0; i < N; i++) { u[i] = beta; state[i] = VAPOR; }
+            
+            let centerIdx = 0, minDist = Infinity;
+            for (let i = 0; i < N; i++) {
+                let d = polygons[i].center.x**2 + polygons[i].center.y**2;
+                if (d < minDist) { minDist = d; centerIdx = i; }
+            }
+
+            u[centerIdx] = 1.0; state[centerIdx] = ICE;
+            for(let j of polygons[centerIdx].neighbors) state[j] = RECEPTIVE;
+            
+            steps = 0; document.getElementById('stepCount').innerText = steps;
+            if (isPaused) draw();
+        }
+
+        function caStep() {
+            // Phase 1: Set base values. Receptive and Ice cells accumulate gamma. 
+            // Vapor cells prepare to diffuse, retaining (1 - alpha).
+            for(let i = 0; i < N; i++) {
+                if (state[i] === ICE || state[i] === RECEPTIVE) {
+                    next_u[i] = u[i] + gamma;
+                } else {
+                    next_u[i] = u[i] * (1 - alpha);
+                }
+            }
+            
+            // Phase 2: Diffusion gradient. Only non-receptive (Vapor) cells diffuse out.
+            // Receptive cells act as perfect sinks, driving the Mullins-Sekerka instability.
+            for(let i = 0; i < N; i++) {
+                if (state[i] === VAPOR) {
+                    let w = Math.max(1, polygons[i].vertices.length, polygons[i].neighbors.length);
+                    let amt = (u[i] * alpha) / w;
+                    let retained = w - polygons[i].neighbors.length; 
+                    
+                    for(let j of polygons[i].neighbors) {
+                        next_u[j] += amt;
+                    }
+                    // Handle missing neighbors gracefully to prevent vapor destruction on irregular grids
+                    next_u[i] += amt * retained;
+                }
+            }
+            
+            // Phase 3: Ambient Bath Condition. Hold grid edges exactly at beta.
+            for(let i = 0; i < N; i++) {
+                if ((mode === 'hyperbolic' || mode === 'euclidean') && polygons[i].neighbors.length < polygons[i].vertices.length) {
+                    next_u[i] = beta;
+                }
+            }
+            
+            // Phase 4: State assignments and propagation.
+            for(let i = 0; i < N; i++) {
+                u[i] = next_u[i];
+                if(state[i] === RECEPTIVE && u[i] >= 1.0) {
+                    state[i] = ICE;
+                    // Newly adjacent vapor cells become the advancing receptive boundary
+                    for(let j of polygons[i].neighbors) { 
+                        if(state[j] === VAPOR) state[j] = RECEPTIVE; 
+                    }
+                }
+            }
+            steps++;
+        }
+
+        // ----------------------------------------------------
+        // 3. NAVIGATION CONTROLS
+        // ----------------------------------------------------
+        let isDragging = false, lastX, lastY;
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            let rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left; lastY = e.clientY - rect.top;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let rect = canvas.getBoundingClientRect();
+            let curX = e.clientX - rect.left, curY = e.clientY - rect.top;
+            
+            let dx = (curX - lastX) * dpr, dy = (curY - lastY) * dpr; 
+            lastX = curX; lastY = curY;
+
+            if (mode === 'hyperbolic') {
+                let factor = 1.0 / ((Math.min(canvas.width, canvas.height) / 2) * zoom);
+                let numX = globalA.x + dx*factor, numY = globalA.y + dy*factor;
+                let denX = 1 + globalA.x*(dx*factor) + globalA.y*(dy*factor), denY = globalA.x*(dy*factor) - globalA.y*(dx*factor);
+                let mag = denX*denX + denY*denY;
+                globalA = { x: (numX*denX + numY*denY)/mag, y: (numY*denX - numX*denY)/mag };
+                let gMag = Math.sqrt(globalA.x**2 + globalA.y**2);
+                if (gMag > 0.99) { globalA.x = (globalA.x/gMag)*0.99; globalA.y = (globalA.y/gMag)*0.99; }
+            } else if (mode === 'spherical') {
+                rotX -= dy * 0.005; rotY -= dx * 0.005;
+            } else {
+                let baseScale = (Math.min(canvas.width, canvas.height) / 2) - (10 * dpr);
+                panX += dx / (baseScale * zoom); panY += dy / (baseScale * zoom);
+            }
+            if (isPaused) draw();
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mouseleave', () => isDragging = false);
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            zoom *= (e.deltaY < 0) ? 1.15 : (1 / 1.15);
+            zoom = Math.max(0.001, Math.min(zoom, 100));
+            if (isPaused) draw();
+        }, { passive: false });
+
+        const btnPause = document.getElementById('btnPause');
+        function setPauseState(state) {
+            isPaused = state; btnPause.innerText = isPaused ? "Resume" : "Pause";
+            if(isPaused) btnPause.classList.add('pause-state'); else btnPause.classList.remove('pause-state');
+        }
+        btnPause.addEventListener('click', () => setPauseState(!isPaused));
+        document.getElementById('btnStep').addEventListener('click', () => { if (!isPaused) setPauseState(true); caStep(); draw(); });
+        document.getElementById('btnReset').addEventListener('click', resetCA);
+
+        // ----------------------------------------------------
+        // 4. RENDERING ENGINE
+        // ----------------------------------------------------
+        function getColor(i) {
+            if (state[i] === ICE) {
+                // Ice accumulates gamma gracefully, mapped to a rich visual gradient.
+                let val = Math.max(0, Math.min(1.0, u[i] - 1.0));
+                return colorCache.ice[Math.floor(val * 255)];
+            } else if (state[i] === RECEPTIVE) {
+                // Receptive aura visualizes the boundary accumulation zone
+                let val = Math.max(0, Math.min(1.0, u[i]));
+                return colorCache.receptive[Math.floor(val * 255)];
+            } else {
+                // Diminishing vapor level reveals the Mullins-Sekerka depletion zone
+                let val = beta > 0 ? Math.max(0, Math.min(1.0, u[i] / beta)) : 0;
+                return colorCache.vapor[Math.floor(val * 255)];
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let cx = canvas.width / 2, cy = canvas.height / 2;
+            let s = ((Math.min(canvas.width, canvas.height) / 2) - (10 * dpr)) * zoom;
+
+            ctx.lineJoin = 'round'; 
+            ctx.lineWidth = Math.min(1.5, Math.max(0.2, s / 200)) * dpr;
+
+            if (mode === 'hyperbolic' || mode === 'spherical') {
+                ctx.beginPath();
+                ctx.arc(cx, cy, s, 0, Math.PI * 2);
+                ctx.fillStyle = '#090b14';
+                ctx.fill();
+            }
+
+            if (mode === 'hyperbolic') {
+                function applyMoebius(pt, a) {
+                    let numX = pt.x + a.x, numY = pt.y + a.y;
+                    let denX = 1 + pt.x*a.x + pt.y*a.y, denY = pt.y*a.x - pt.x*a.y;
+                    let mag = denX*denX + denY*denY;
+                    return { x: (numX*denX + numY*denY)/mag, y: (numY*denX - numX*denY)/mag };
+                }
+                for(let i = 0; i < N; i++) {
+                    ctx.fillStyle = ctx.strokeStyle = getColor(i); ctx.beginPath();
+                    let m0 = applyMoebius(polygons[i].vertices[0], globalA);
+                    ctx.moveTo(cx + m0.x*s, cy + m0.y*s);
+                    for(let j=1; j<5; j++) {
+                        let m = applyMoebius(polygons[i].vertices[j], globalA); ctx.lineTo(cx + m.x*s, cy + m.y*s);
+                    }
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+            } else if (mode === 'spherical') {
+                let sx = Math.sin(rotX), cx_r = Math.cos(rotX), sy = Math.sin(rotY), cy_r = Math.cos(rotY);
+                let project = (p) => {
+                    let x1 = p.x*cy_r - p.z*sy, z1 = p.x*sy + p.z*cy_r;
+                    return {x: x1, y: p.y*cx_r - z1*sx, z: p.y*sx + z1*cx_r};
+                };
+                let renderList = [];
+                for(let i=0; i<N; i++) {
+                    let pC = project(polygons[i].center);
+                    if (pC.z > -0.1) renderList.push({i: i, z: pC.z, v: polygons[i].vertices.map(project)});
+                }
+                renderList.sort((a,b) => a.z - b.z);
+                for(let item of renderList) {
+                    ctx.fillStyle = ctx.strokeStyle = getColor(item.i); ctx.beginPath();
+                    ctx.moveTo(cx + item.v[0].x*s, cy + item.v[0].y*s);
+                    for(let j=1; j<item.v.length; j++) ctx.lineTo(cx + item.v[j].x*s, cy + item.v[j].y*s);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+            } else {
+                for(let i = 0; i < N; i++) {
+                    ctx.fillStyle = ctx.strokeStyle = getColor(i); ctx.beginPath();
+                    ctx.moveTo(cx + (polygons[i].vertices[0].x + panX)*s, cy + (polygons[i].vertices[0].y + panY)*s);
+                    for(let j=1; j<polygons[i].vertices.length; j++) {
+                        ctx.lineTo(cx + (polygons[i].vertices[j].x + panX)*s, cy + (polygons[i].vertices[j].y + panY)*s);
+                    }
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+            }
+            document.getElementById('stepCount').innerText = steps;
+        }
+
+        function loop() {
+            if (!isPaused) { for(let k=0; k<simSpeed; k++) caStep(); draw(); }
+            requestAnimationFrame(loop);
+        }
+
+        updateResSlider(); 
+        resizeCanvas(); 
+        initGeometry(); 
+        setPauseState(true); 
+        loop();    
+    </script>
+</body>
+</html>

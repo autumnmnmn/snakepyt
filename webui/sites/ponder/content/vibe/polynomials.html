@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Geometries &amp; Eigenvalues</title>
+    <style>
+        body {
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; background-color: #e0ddd3;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            width: 95vmin; height: 95vmin; background-color: #f0ece1;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); border-radius: 4px;
+        }
+        
+        #ui-container {
+            position: absolute; bottom: 20px; right: 20px;
+            background: rgba(22, 24, 26, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 20px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; gap: 14px;
+            z-index: 10; width: 340px; color: #eee;
+            border: 1px solid rgba(255,255,255,0.08);
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        .control-group {
+            display: flex; flex-direction: column; gap: 8px;
+            padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .control-group:last-child { border-bottom: none; padding-bottom: 0; }
+        .group-title { font-size: 11px; text-transform: uppercase; color: #8a939e; letter-spacing: 1px; margin-bottom: 2px; }
+
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .row label { font-size: 13px; width: 85px; }
+        
+        select, input[type="range"] {
+            flex-grow: 1; accent-color: #8c96a0; cursor: pointer;
+            background: #2a2e33; color: white; border: 1px solid #3b4046;
+            padding: 4px 6px; border-radius: 4px; font-size: 12px;
+        }
+        input[type="range"] { padding: 0; border: none; }
+
+        .val-display { font-family: monospace; width: 42px; text-align: right; color: #aeb5bc; font-size: 12px; }
+        
+        .reset-btn {
+            background: transparent; border: none; color: #8a939e; cursor: pointer;
+            font-size: 14px; padding: 2px; margin: 0; width: 24px; text-align: center;
+            transition: color 0.1s, transform 0.1s; border-radius: 4px;
+        }
+        .reset-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .reset-btn:active { transform: rotate(-45deg); }
+
+        .btn-main {
+            margin-top: 5px; padding: 12px; font-size: 13px; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 1px; color: #fff;
+            background-color: #3b4046; border: 1px solid #535960;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-main:hover { background-color: #4f555c; }
+        #error { display: none; position: absolute; color: #b00; background: #fff; padding: 20px; border-radius: 8px; z-index: 20; }
+    </style>
+</head>
+<body>
+
+    <div id="error">WebGPU is not supported or not enabled in your browser.</div>
+    <canvas id="glcanvas" width="2400" height="2400"></canvas>
+
+    <div id="ui-container">
+        <div class="control-group">
+            <div class="group-title">Engine Configuration</div>
+            <div class="row">
+                <label>Base Space</label>
+                <select id="sel-space"><option value="0" selected="selected">Torus (S¹ × S¹)</option><option value="1">Cylinder (S¹ × ℝ)</option><option value="2">Plane (ℝ × ℝ)</option><option value="3">Spirals</option><option value="4">Hyperbola × Circle</option></select>
+            </div>
+            <div class="row">
+                <label>Samples</label>
+                <select id="sel-res">
+                    <option value="512">Draft (1.5M points)</option>
+                    <option value="1024" selected="selected">Fine (6.2M points)</option>
+                    <option value="1536">Ultra (14.1M points)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group" id="group-u">
+            <div class="group-title" id="title-u">t₁ Angle</div>
+            <div class="row">
+                <label id="lbl-u-min">U Min</label>
+                <input type="range" id="u-min" step="0.01" min="-25" max="25" data-default="0" value="0">
+                <span class="val-display" id="val-u-min">0.00</span>
+                <button class="reset-btn" data-target="u-min">↺</button>
+            </div>
+            <div class="row">
+                <label id="lbl-u-max">U Max</label>
+                <input type="range" id="u-max" step="0.01" min="-25" max="25" data-default="6.28" value="6.28">
+                <span class="val-display" id="val-u-max">6.28</span>
+                <button class="reset-btn" data-target="u-max">↺</button>
+            </div>
+        </div>
+
+        <div class="control-group" id="group-v">
+            <div class="group-title" id="title-v">t₂ Angle</div>
+            <div class="row">
+                <label id="lbl-v-min">V Min</label>
+                <input type="range" id="v-min" step="0.01" min="-25" max="25" data-default="0" value="0">
+                <span class="val-display" id="val-v-min">0.00</span>
+                <button class="reset-btn" data-target="v-min">↺</button>
+            </div>
+            <div class="row">
+                <label id="lbl-v-max">V Max</label>
+                <input type="range" id="v-max" step="0.01" min="-25" max="25" data-default="6.28" value="6.28">
+                <span class="val-display" id="val-v-max">6.28</span>
+                <button class="reset-btn" data-target="v-max">↺</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="group-title">Visuals</div>
+            <div class="row">
+                <label>Exposure</label>
+                <input type="range" id="exposure" min="0.1" max="5.0" step="0.05" value="1.0" data-default="1.0">
+                <span class="val-display" id="val-exposure">1.00</span>
+                <button class="reset-btn" data-target="exposure">↺</button>
+            </div>
+            <div class="row">
+                <label>Zoom</label>
+                <input type="range" id="zoom" min="0.01" max="1.5" step="0.01" value="0.28" data-default="0.28">
+                <span class="val-display" id="val-zoom">0.28</span>
+                <button class="reset-btn" data-target="zoom">↺</button>
+            </div>
+        </div>
+
+        <button class="btn-main" id="btn-random">Randomize Matrix</button>
+    </div>
+
+    <script>
+        const SPACES = [
+            { id: 0, name: 'Torus (S¹ × S¹)', titleU: 't₁ Angle', titleV: 't₂ Angle', min: -25, max: 25, defU: [0, 6.28], defV: [0, 6.28] },
+            { id: 1, name: 'Cylinder (S¹ × ℝ)', titleU: 't₁ Angle', titleV: 't₂ Line', min: -25, max: 25, defU: [0, 6.28], defV: [-2, 2] },
+            { id: 2, name: 'Plane (ℝ × ℝ)', titleU: 't₁ Line', titleV: 't₂ Line', min: -10, max: 10, defU: [-2, 2], defV: [-2, 2] },
+            { id: 3, name: 'Spirals', titleU: 't₁ Spiral', titleV: 't₂ Spiral', min: -40, max: 40, defU: [0, 12.56], defV: [0, 12.56] },
+            { id: 4, name: 'Hyperbola × Circle', titleU: 't₁ Hyperbola', titleV: 't₂ Circle', min: -10, max: 10, defU: [-1.5, 1.5], defV: [0, 6.28] }
+        ];
+
+        async function init() {
+            if (!navigator.gpu) { document.getElementById('error').style.display = 'block'; return; }
+
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+            const canvas = document.getElementById('glcanvas');
+            const context = canvas.getContext('webgpu');
+
+            context.configure({
+                device,
+                format: navigator.gpu.getPreferredCanvasFormat(),
+                alphaMode: 'premultiplied',
+            });
+
+            // Allocate buffer for maximum allowed resolution (1536x1536) to prevent recreation
+            // 1536 * 1536 * 6 roots * 8 bytes = 113.2 MB
+            const MAX_RES = 1536; 
+            const maxPoints = MAX_RES * MAX_RES * 6;
+            const pointsBuffer = device.createBuffer({
+                size: maxPoints * 8, 
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
+            });
+
+            // 240 bytes (aligned uniform structure)
+            const uniformBuffer = device.createBuffer({
+                size: 240,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            });
+
+            let currentCoeffs = new Float32Array(48);
+
+            // ---------------------------------------------------------
+            // SHADER: COMMON UNIFORMS
+            // ---------------------------------------------------------
+            const commonWgsl = `
+                struct CoeffParams { base_t1: vec4<f32>, t2_t1t2: vec4<f32> }
+                struct Uniforms {
+                    bounds: vec4<f32>,       // x: u_min, y: u_max, z: v_min, w: v_max
+                    res_and_type: vec4<u32>, // x: width, y: height, z: type
+                    settings: vec4<f32>,     // x: exposure, y: zoom
+                    coeffs: array<CoeffParams, 6>,
+                }
+            `;
+
+            // ---------------------------------------------------------
+            // COMPUTE SHADER
+            // ---------------------------------------------------------
+            const computeShader = `
+                ${commonWgsl}
+                struct Complex { r: f32, i: f32 }
+                fn c_add(a: Complex, b: Complex) -> Complex { return Complex(a.r + b.r, a.i + b.i); }
+                fn c_sub(a: Complex, b: Complex) -> Complex { return Complex(a.r - b.r, a.i - b.i); }
+                fn c_mul(a: Complex, b: Complex) -> Complex { return Complex(a.r * b.r - a.i * b.i, a.r * b.i + a.i * b.r); }
+                fn c_div(a: Complex, b: Complex) -> Complex {
+                    let den = b.r * b.r + b.i * b.i;
+                    return Complex((a.r * b.r + a.i * b.i) / den, (a.i * b.r - a.r * b.i) / den);
+                }
+
+                @group(0) @binding(0) var<storage, read_write> points: array<vec2<f32>>;
+                @group(0) @binding(1) var<uniform> uniforms: Uniforms;
+
+                fn get_coeff(idx: u32, t1: Complex, t2: Complex, t1t2: Complex) -> Complex {
+                    let p = uniforms.coeffs[idx];
+                    var c = Complex(p.base_t1.x, p.base_t1.y);
+                    c = c_add(c, c_mul(Complex(p.base_t1.z, p.base_t1.w), t1));
+                    c = c_add(c, c_mul(Complex(p.t2_t1t2.x, p.t2_t1t2.y), t2));
+                    c = c_add(c, c_mul(Complex(p.t2_t1t2.z, p.t2_t1t2.w), t1t2));
+                    return c;
+                }
+
+                fn P(z: Complex, t1: Complex, t2: Complex) -> Complex {
+                    let t1t2 = c_mul(t1, t2);
+                    let c0 = get_coeff(0u, t1, t2, t1t2); let c1 = get_coeff(1u, t1, t2, t1t2);
+                    let c2 = get_coeff(2u, t1, t2, t1t2); let c3 = get_coeff(3u, t1, t2, t1t2);
+                    let c4 = get_coeff(4u, t1, t2, t1t2); let c5 = get_coeff(5u, t1, t2, t1t2);
+
+                    let z2 = c_mul(z, z); let z3 = c_mul(z2, z); let z4 = c_mul(z3, z);
+                    let z5 = c_mul(z4, z); let z6 = c_mul(z5, z);
+
+                    var res = z6;
+                    res = c_add(res, c_mul(c5, z5)); res = c_add(res, c_mul(c4, z4));
+                    res = c_add(res, c_mul(c3, z3)); res = c_add(res, c_mul(c2, z2));
+                    res = c_add(res, c_mul(c1, z));  res = c_add(res, c0);
+                    return res;
+                }
+
+                @compute @workgroup_size(16, 16)
+                fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+                    let width = uniforms.res_and_type.x;
+                    let height = uniforms.res_and_type.y;
+                    if (global_id.x >= width || global_id.y >= height) { return; }
+
+                    let b = uniforms.bounds;
+                    let u = mix(b.x, b.y, f32(global_id.x) / f32(width));
+                    let v = mix(b.z, b.w, f32(global_id.y) / f32(height));
+
+                    let stype = uniforms.res_and_type.z;
+                    var t1: Complex; var t2: Complex;
+                    
+                    if (stype == 0u) {      // Torus
+                        t1 = Complex(cos(u), sin(u)); t2 = Complex(cos(v), sin(v));
+                    } else if (stype == 1u) { // Cylinder
+                        t1 = Complex(cos(u), sin(u)); t2 = Complex(v, 0.0);
+                    } else if (stype == 2u) { // Plane
+                        t1 = Complex(u, 0.0); t2 = Complex(v, 0.0);
+                    } else if (stype == 3u) { // Spirals
+                        t1 = Complex(u * cos(u), u * sin(u)); t2 = Complex(v * cos(v), v * sin(v));
+                    } else {                  // Hyperbola x Circle
+                        t1 = Complex(cosh(u), sinh(u)); t2 = Complex(cos(v), sin(v));
+                    }
+
+                    var z: array<Complex, 6>;
+                    z[0] = Complex(0.4, 0.9);  z[1] = Complex(-0.5, 0.8);
+                    z[2] = Complex(-0.9, -0.2); z[3] = Complex(-0.1, -0.9);
+                    z[4] = Complex(0.8, -0.5);  z[5] = Complex(0.1, 0.2);
+
+                    for (var iter = 0; iter < 40; iter++) {
+                        var next_z: array<Complex, 6>;
+                        for (var i = 0u; i < 6u; i++) {
+                            let p_val = P(z[i], t1, t2);
+                            var denom = Complex(1.0, 0.0);
+                            for (var j = 0u; j < 6u; j++) {
+                                if (i != j) {
+                                    var diff = c_sub(z[i], z[j]);
+                                    if (diff.r == 0.0 && diff.i == 0.0) { diff.r = 0.00001; }
+                                    denom = c_mul(denom, diff);
+                                }
+                            }
+                            next_z[i] = c_sub(z[i], c_div(p_val, denom));
+                        }
+                        z = next_z;
+                    }
+
+                    let base_idx = (global_id.y * width + global_id.x) * 6u;
+                    for (var i = 0u; i < 6u; i++) {
+                        points[base_idx + i] = vec2<f32>(z[i].r, z[i].i);
+                    }
+                }
+            `;
+
+            const computePipeline = device.createComputePipeline({ layout: 'auto', compute: { module: device.createShaderModule({ code: computeShader }), entryPoint: 'main' } });
+            const computeBindGroup = device.createBindGroup({
+                layout: computePipeline.getBindGroupLayout(0),
+                entries: [ { binding: 0, resource: { buffer: pointsBuffer } }, { binding: 1, resource: { buffer: uniformBuffer } } ],
+            });
+
+            // ---------------------------------------------------------
+            // RENDER SHADER
+            // ---------------------------------------------------------
+            const renderShader = `
+                ${commonWgsl}
+                struct VertexInput { @location(0) pos: vec2<f32>, @builtin(vertex_index) vertex_index: u32 }
+                struct VertexOutput { @builtin(position) position: vec4<f32>, @location(0) color: vec4<f32> }
+
+                @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
+                fn hash(n: u32) -> f32 {
+                    var x = n; x = (x << 10u) ^ x; x = (x >> 1u) ^ x;
+                    x = x * 1103515245u; x = x ^ (x >> 16u);
+                    return f32(x & 0x7FFFFFFFu) / f32(0x7FFFFFFF);
+                }
+
+                @vertex
+                fn vs_main(input: VertexInput) -> VertexOutput {
+                    var out: VertexOutput;
+                    let zoom = uniforms.settings.y;
+                    out.position = vec4<f32>(input.pos.x * zoom, input.pos.y * zoom, 0.0, 1.0);
+                    
+                    let exposure = uniforms.settings.x;
+                    let r = hash(input.vertex_index);
+                    
+                    var alpha = 0.015 * exposure;
+                    var darkness = 0.1;
+
+                    if (r > 0.99) { 
+                        alpha = 0.25 * exposure; 
+                        darkness = 0.0; 
+                    } else if (r > 0.95) { 
+                        alpha = 0.08 * exposure; 
+                        darkness = 0.05;
+                    }
+
+                    out.color = vec4<f32>(darkness, darkness + 0.02, darkness + 0.05, alpha);
+                    return out;
+                }
+
+                @fragment
+                fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> { return input.color; }
+            `;
+
+            const renderPipeline = device.createRenderPipeline({
+                layout: 'auto',
+                vertex: {
+                    module: device.createShaderModule({ code: renderShader }), entryPoint: 'vs_main',
+                    buffers: [{ arrayStride: 8, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x2' }] }],
+                },
+                fragment: {
+                    module: device.createShaderModule({ code: renderShader }), entryPoint: 'fs_main',
+                    targets: [{
+                        format: navigator.gpu.getPreferredCanvasFormat(),
+                        blend: {
+                            color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+                            alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' }
+                        }
+                    }],
+                },
+                primitive: { topology: 'point-list' },
+            });
+
+            const renderBindGroup = device.createBindGroup({
+                layout: renderPipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: uniformBuffer } }]
+            });
+
+            // ---------------------------------------------------------
+            // JS LOGIC & UI
+            // ---------------------------------------------------------
+            const selSpace = document.getElementById('sel-space');
+            SPACES.forEach(sp => {
+                const opt = document.createElement('option');
+                opt.value = sp.id; opt.innerText = sp.name;
+                selSpace.appendChild(opt);
+            });
+
+            function populateSliderConfig(spaceId) {
+                const sp = SPACES.find(s => s.id == spaceId);
+                document.getElementById('title-u').innerText = sp.titleU;
+                document.getElementById('title-v').innerText = sp.titleV;
+                
+                ['u-min', 'u-max'].forEach((id, i) => {
+                    const el = document.getElementById(id);
+                    el.min = sp.min; el.max = sp.max; 
+                    el.value = sp.defU[i]; el.dataset.default = sp.defU[i];
+                    document.getElementById(`val-${id}`).innerText = sp.defU[i].toFixed(2);
+                });
+                ['v-min', 'v-max'].forEach((id, i) => {
+                    const el = document.getElementById(id);
+                    el.min = sp.min; el.max = sp.max; 
+                    el.value = sp.defV[i]; el.dataset.default = sp.defV[i];
+                    document.getElementById(`val-${id}`).innerText = sp.defV[i].toFixed(2);
+                });
+            }
+
+            function getSmallInteger() {
+                if (Math.random() < 0.5) return 0; 
+                return Math.floor(Math.random() * 5) - 2; 
+            }
+
+            function setUniforms(randomizeMatrix = false) {
+                const bufferData = new ArrayBuffer(240);
+                const dataF32 = new Float32Array(bufferData);
+                const dataU32 = new Uint32Array(bufferData);
+
+                // 1. Bounds
+                dataF32[0] = parseFloat(document.getElementById('u-min').value);
+                dataF32[1] = parseFloat(document.getElementById('u-max').value);
+                dataF32[2] = parseFloat(document.getElementById('v-min').value);
+                dataF32[3] = parseFloat(document.getElementById('v-max').value);
+
+                // 2. Res and Type
+                const res = parseInt(document.getElementById('sel-res').value);
+                dataU32[4] = res; dataU32[5] = res;
+                dataU32[6] = parseInt(document.getElementById('sel-space').value);
+                dataU32[7] = 0; // padding
+
+                // 3. Settings
+                dataF32[8] = parseFloat(document.getElementById('exposure').value);
+                dataF32[9] = parseFloat(document.getElementById('zoom').value);
+
+                // 4. Matrix Coefficients
+                if (!randomizeMatrix && currentCoeffs.every(v => v === 0)) {
+                    // Safe initial symmetric state
+                    currentCoeffs[4*8+2]=1; currentCoeffs[4*8+4]=1; 
+                    currentCoeffs[2*8+0]=-2; currentCoeffs[2*8+6]=1; 
+                    currentCoeffs[1*8+2]=-1; currentCoeffs[1*8+4]=-1; 
+                    currentCoeffs[0*8+0]=1;  
+                } else if (randomizeMatrix) {
+                    currentCoeffs.fill(0);
+                    for (let c = 0; c < 6; c++) {
+                        currentCoeffs[c*8+0] = getSmallInteger(); currentCoeffs[c*8+2] = getSmallInteger(); 
+                        currentCoeffs[c*8+4] = getSmallInteger(); currentCoeffs[c*8+6] = getSmallInteger(); 
+                    }
+                    if (currentCoeffs[0]===0 && currentCoeffs[2]===0 && currentCoeffs[4]===0) currentCoeffs[0]=1; 
+                }
+
+                dataF32.set(currentCoeffs, 12);
+                device.queue.writeBuffer(uniformBuffer, 0, bufferData);
+            }
+
+            function computeAndRender() {
+                const commandEncoder = device.createCommandEncoder();
+                const res = parseInt(document.getElementById('sel-res').value);
+                
+                const computePass = commandEncoder.beginComputePass();
+                computePass.setPipeline(computePipeline);
+                computePass.setBindGroup(0, computeBindGroup);
+                computePass.dispatchWorkgroups(Math.ceil(res / 16), Math.ceil(res / 16));
+                computePass.end();
+
+                const renderPass = commandEncoder.beginRenderPass({
+                    colorAttachments: [{
+                        view: context.getCurrentTexture().createView(),
+                        clearValue: { r: 0.94, g: 0.92, b: 0.88, a: 1.0 },
+                        loadOp: 'clear', storeOp: 'store',
+                    }],
+                });
+                renderPass.setPipeline(renderPipeline);
+                renderPass.setBindGroup(0, renderBindGroup);
+                renderPass.setVertexBuffer(0, pointsBuffer);
+                renderPass.draw(res * res * 6); 
+                renderPass.end();
+
+                device.queue.submit([commandEncoder.finish()]);
+            }
+
+            let renderPending = false;
+            function requestRender() {
+                if (!renderPending) {
+                    renderPending = true;
+                    requestAnimationFrame(() => { setUniforms(false); computeAndRender(); renderPending = false; });
+                }
+            }
+
+            // Event Listeners
+            document.querySelectorAll('input[type="range"]').forEach(el => {
+                el.addEventListener('input', e => {
+                    document.getElementById(`val-${e.target.id}`).innerText = parseFloat(e.target.value).toFixed(2);
+                    requestRender();
+                });
+            });
+
+            document.querySelectorAll('.reset-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const id = e.target.dataset.target;
+                    const el = document.getElementById(id);
+                    el.value = el.dataset.default;
+                    document.getElementById(`val-${id}`).innerText = parseFloat(el.value).toFixed(2);
+                    requestRender();
+                });
+            });
+
+            selSpace.addEventListener('change', e => { populateSliderConfig(e.target.value); requestRender(); });
+            document.getElementById('sel-res').addEventListener('change', requestRender);
+
+            const btnRand = document.getElementById('btn-random');
+            btnRand.addEventListener('click', () => {
+                btnRand.innerText = 'Computing...';
+                setTimeout(() => {
+                    setUniforms(true); computeAndRender();
+                    btnRand.innerText = 'Randomize Matrix';
+                }, 10);
+            });
+
+            // Kickoff
+            populateSliderConfig(0);
+            setUniforms(false);
+            computeAndRender();
+        }
+
+        init();
+    </script>
+
+</body></html>

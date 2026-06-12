@@ -71,7 +71,7 @@ export async function loadShader(shaderName, substitutions = {}) {
                 const composite_subvars = wgsl.compositeTypes[type].map((member, index) => ({
                     varName: `${parsed[1]}_${member.name}`,
                     type: member.type,
-                    uiName: `${getUiName(parsed[1])}.${member.name}`,
+                    uiName: `${getUiName(parsed[1])} ${member.name}`,
                     bytes: wgsl.sizes[member.type],
                     aligns: [wgsl.aligns[member.type]].concat(
                         index === 0 ? wgsl.aligns[type] : []

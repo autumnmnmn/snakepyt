@@ -160,3 +160,23 @@ input:focus {
     }
 }
 
+@supports (scrollbar-width: auto) {
+    * {
+        scrollbar-color: var(--main-solid) var(--main-background);
+        scrollbar-width: thin;
+    }
+}
+
+@supports selector(::-webkit-scrollbar) {
+    *::-webkit-scrollbar-thumb {
+        background: var(--main-solid);
+    }
+    *::-webkit-scrollbar-track {
+        background: var(--main-background);
+    }
+    *::-webkit-scrollbar {
+        max-width: var(--scrollbar-width-legacy);
+        max-height: var(--scrollbar-width-legacy);
+    }
+}
+

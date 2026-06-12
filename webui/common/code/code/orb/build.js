@@ -3,6 +3,7 @@ const TEXT = "builtin_text";
 const BREAK = "builtin_break";
 
 const inlineElements = ["b", "i", "span", "sub", "sup", "a"];
+const inlineModules = ["math/inline"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
@@ -101,7 +102,10 @@ export async function build(nodes, source, inline=false, namespace=null) {
             continue;
         }
 
-        if (segment.childNodes.length > 0) {
+        const modNameStr = tag.substring(1);
+        const isInlineModule = inlineModules.includes(modNameStr);
+
+        if (!isInlineModule && segment.childNodes.length > 0) {
             segment.$contextMenu = { items: [], override: true };
             domNodes.push(segment);
             segment = document.createElement(inline ? "span" : "p");
@@ -142,7 +146,17 @@ export async function build(nodes, source, inline=false, namespace=null) {
         const modContent = JSON.stringify(source.substring(node.content.start, node.content.end));
         const modArgs = JSON.stringify(bracketArgs);
         script.innerText = `$replace(document.currentScript, ${modName}, ...${modArgs}, ${modContent});`;
-        domNodes.push(script);
+
+        if (isInlineModule) {
+            if (pendingSpace) {
+                segment.appendChild(document.createTextNode(" "));
+            }
+            pendingSpace = false;
+            segment.appendChild(script);
+            inlineEnded = true;
+        } else {
+            domNodes.push(script);
+        }
     }
 
     if (segment.childNodes.length > 0) {

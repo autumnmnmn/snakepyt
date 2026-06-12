@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>40x40 Grid</title>
+        <title>Checkbox Game</title>
         <style>
           body { font-family: sans-serif; }
           #grid {
@@ -24,22 +24,40 @@
         </style>
     </head>
     <body>
-
-        <div>clear the red box :)</div>
+        <div>unchecking a box checks the boxes immediately below it and to its right</div>
+        <div>if either of those neighbors is already checked, you can't uncheck the box until they're cleared out</div>
+        <div>your goal is to uncheck all the checkboxes in the red box :)</div>
+        <div id="mode">Mode: Normal</div>
         <div>Moves: <span id="moves">0</span></div>
         <button id="reset">Reset</button>
+        <span>
+        <span>Change difficulty:</span>
+        <button id="mode_easy">Easy</button>
+        <button id="mode_norm">Normal</button>
+        <button id="mode_hard">Hard</button>
+        </span>
+        <span id="hint"></span>
 
         <div id="grid"></div>
 
         <script>
             const SIZE = 40;
-            const RED_LIMIT = 4;
+            let RED_LIMIT = 4;
 
             const gridEl = document.getElementById("grid");
             const movesEl = document.getElementById("moves");
+            const hintEl = document.getElementById("hint");
 
             let state;
             let moves;
+            let resets = 0;
+
+            const modeLabel = { 3: "Easy", 4: "Normal", 5: "Hard (Warning: Hard mode is *really* hard)" };
+
+            function modeSwitch(n) {
+              RED_LIMIT = n;
+              document.getElementById("mode").innerText = `Mode: ${modeLabel[RED_LIMIT]}`;
+            }
 
             function initState() {
               state = Array.from({ length: SIZE }, () =>
@@ -48,6 +66,7 @@
               state[0][0] = true;
               moves = 0;
               movesEl.textContent = moves;
+              hintEl.textContent = "";
             }
 
             function canUncheck(i, j) {
@@ -95,6 +114,16 @@
                     moves++;
                     movesEl.textContent = moves;
 
+                    if (moves > 4 && RED_LIMIT == 5 && resets > 25) {
+                      hintEl.textContent = `(maybe try normal mode?)`;
+                    }
+                    if (moves > 4 && RED_LIMIT == 4 && resets > 25) {
+                      hintEl.textContent = `(... maybe try easy mode?)`;
+                    }
+                    if (moves > 20 && resets > 30) {
+                      hintEl.textContent = `(hint: it is mathematically impossible to win on this difficulty)`;
+                    }
+
                     render();
                   });
 
@@ -107,6 +136,28 @@
             document.getElementById("reset").addEventListener("click", () => {
               initState();
               render();
+              resets += 1;
+            });
+
+            document.getElementById("mode_hard").addEventListener("click", () => {
+              modeSwitch(5);
+              initState();
+              render();
+              resets = 0;
+            });
+
+            document.getElementById("mode_norm").addEventListener("click", () => {
+              modeSwitch(4);
+              initState();
+              render();
+              resets = 0;
+            });
+
+            document.getElementById("mode_easy").addEventListener("click", () => {
+              modeSwitch(3);
+              initState();
+              render();
+              resets = 0;
             });
 
             initState();

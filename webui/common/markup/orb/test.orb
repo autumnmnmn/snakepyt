@@ -1,6 +1,8 @@
 
 [style=height: 100%; overflow-y:scroll] {
 
+foo $math/inline { auto x_n } bar
+
 [style=width:2000px;height:550px;] {
     $math/plot { logistic_3d }
 }

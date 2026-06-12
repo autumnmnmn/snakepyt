@@ -113,11 +113,9 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var color: vec4<f32> = vec4<f32>(r, g, b, 1.0);
 
-    let isnan = hacky_isnan(val);
 
     color = select(color, vec4<f32>(uniforms.nan_color, 1.0), isnan);
     */
-
 
     textureStore(output_texture, vec2<i32>(i32(px), i32(py)), vec4f(val, 0.0, 0.0, 0.0));
 }
