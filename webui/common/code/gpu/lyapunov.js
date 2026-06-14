@@ -23,6 +23,7 @@ import { cartesian as c } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
 
 export async function main() {
+    let canRender = false;
 
     const renderStack = $div("full");
     let topmost = renderStack;
@@ -213,7 +214,6 @@ export async function main() {
 
     const sampler = $gpu.device.createSampler({ magFilter: "nearest", minFilter: "nearest" });
 
-    let canRender = false;
 
     async function offscreenRender(scalingFactor) {
         const dims = v2.of(width * scalingFactor, height * scalingFactor);

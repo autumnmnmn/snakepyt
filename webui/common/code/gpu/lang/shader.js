@@ -9,6 +9,20 @@ const constants = {
     tau: $tau
 }
 
+/// hack by gemini -- at the very least deserves its own file
+const _colorCanvas = document.createElement("canvas");
+_colorCanvas.width = 1; _colorCanvas.height = 1;
+const _colorCtx = _colorCanvas.getContext("2d", { willReadFrequently: true });
+
+function cssToNormalizedRgb(cssString) {
+    _colorCtx.clearRect(0, 0, 1, 1);
+    _colorCtx.fillStyle = cssString;
+    _colorCtx.fillRect(0, 0, 1, 1);
+    const data = _colorCtx.getImageData(0, 0, 1, 1).data;
+    return [data[0] / 255, data[1] / 255, data[2] / 255];
+}
+/// end hack
+
 function getUiName(varName) {
     return greek[varName] || varName.replace(/_/g, ' ');
 };
@@ -165,13 +179,46 @@ export async function loadShader(shaderName, substitutions = {}) {
             }
         });
 
+        const processedComposites = new Set();
+
+        /// gemini's implementation, not yet reviewed
         const buildColor = (composite, afterChangeCallback) => {
-            // TODO unpack like [v_r, v_g, v_b] = composite;
+            // 1. Deduplication: Only build the control once per composite parent
+            if (processedComposites.has(composite.parentName)) return null;
+            processedComposites.add(composite.parentName);
+
+            const compVars = composites[composite.parentName];
+
+            // 2. Map WGSL floats (0.0-1.0) to color.js sRGB standard (0-255)
+            // Fallback to 0 if undefined.
+            const initialRgbVals = compVars.map(cv => (cv.value || 0) * 255);
+
             return {
-                type: "color",
-                // TODO
+                type: "colorb",
+                label: getUiName(composite.parentName),
+                name: composite.parentName,
+                hidden: composite.hidden,
+                value: {
+                    space: "rgb",
+                    vals: initialRgbVals.slice(0, 3)
+                },
+                onUpdate: (payload, set, panelState) => {
+                    // 3. Convert whichever space the UI is currently in back to 0.0-1.0 RGB
+                    const [r, g, b] = cssToNormalizedRgb(payload.css);
+
+                    // Map back to the wgsl composite sub-vars
+                    if (compVars.length > 0) compVars[0].value = r;
+                    if (compVars.length > 1) compVars[1].value = g;
+                    if (compVars.length > 2) compVars[2].value = b;
+
+                    // Note: If you use vec4f for colors, alpha is compVars[3].
+                    // You'd need to extend color.js to support an alpha slider to pipe that here.
+
+                    afterChangeCallback();
+                }
             };
         };
+        /// end of unreviewed gemini section
 
         const buildControl = (v, afterChangeCallback) => {
             v.hidden = v.dependsOn !== undefined && !varMap[v.dependsOn].value;
@@ -181,16 +228,16 @@ export async function loadShader(shaderName, substitutions = {}) {
             }
 
             if (getTag(v, "color")) {
-                // TODO
-                // build a color control for composites[v.parentName] but only if no such control has been
-                // built yet
+                return buildColor(v, afterChangeCallback);
             }
 
             return buildNumber(v, afterChangeCallback);
         };
 
         const getControlSettings = (afterChangeCallback) =>
-            vars.filter(v => v.showControl).map(v => buildControl(v, afterChangeCallback));
+            vars.filter(v => v.showControl)
+                .map(v => buildControl(v, afterChangeCallback))
+                .filter(v => v);
 
         let bufferSize = 0;
         const bufferAlign = Math.max(...vars.flatMap(v => v.aligns));

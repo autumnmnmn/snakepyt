@@ -68,6 +68,7 @@ export async function main(name, controls) {
 
     const controlState = {};
 
+
     for (const control of controls) {
         const name = control.name ?? control.label;
         controlState[name] = await createControl(container, control, controlState);
