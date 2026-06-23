@@ -1,5 +1,3 @@
-// color.js
-"use strict";
 
 $css(`
 .color {
@@ -75,8 +73,9 @@ $css(`
 .color .area-container {
     position: relative;
     width: 100%;
-    height: 180px;
-    cursor: crosshair;
+    aspect-ratio: 1 / 1;
+    /*height: 180px;
+    */cursor: crosshair;
     touch-action: none;
     overflow: hidden;
 }
@@ -166,6 +165,20 @@ $css(`
 
 const displayValue = (value) => Math.round(value * 100) / 100;
 
+// Reusable 1x1 canvas to let the browser natively convert CSS strings to RGB
+const _colorCanvas = document.createElement("canvas");
+_colorCanvas.width = 1; _colorCanvas.height = 1;
+const _colorCtx = _colorCanvas.getContext("2d", { willReadFrequently: true });
+
+function cssToRgb(cssString) {
+    _colorCtx.clearRect(0, 0, 1, 1);
+    _colorCtx.fillStyle = cssString;
+    _colorCtx.fillRect(0, 0, 1, 1);
+    console.log(cssString);
+    console.log(_colorCtx.getImageData(0, 0, 1, 1));
+    return _colorCtx.getImageData(0, 0, 1, 1).data; // [r, g, b, a]
+}
+
 // TODO decouple *css* from *display string*
 
 const SPACES = {
@@ -177,7 +190,32 @@ const SPACES = {
             { name: "Hue", min: 0, max: 360, step: 1, format: v => Math.round(v) }
         ],
         defaultVals: [0.7, 0.2, 180],
-        toCss: v => `oklch(${displayValue(v[0])} ${displayValue(v[1])} ${displayValue(v[2])})`
+        toCss: v => `oklch(${displayValue(v[0])} ${displayValue(v[1])} ${displayValue(v[2])})`,
+        fromRgb: (r, g, b) => {
+            // sRGB -> Linear
+            const toLin = c => {
+                c /= 255;
+                return c > 0.04045 ? Math.pow((c + 0.055) / 1.055, 2.4) : c / 12.92;
+            };
+            let lr = toLin(r), lg = toLin(g), lb = toLin(b);
+            
+            // Linear -> LMS
+            let l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+            let m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+            let s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+
+            // LMS -> Oklab
+            let L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+            let a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+            let b_ = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+
+            // Oklab -> Oklch
+            let C = Math.hypot(a, b_);
+            let H = Math.atan2(b_, a) * (180 / Math.PI);
+            if (H < 0) H += 360;
+
+            return [L, C, isNaN(H) ? 0 : H];
+        }
     },
     hsl: {
         name: "HSL",
@@ -187,7 +225,24 @@ const SPACES = {
             { name: "Lightness", min: 0, max: 100, step: 1, format: v => `${Math.round(v)}%` }
         ],
         defaultVals: [180, 80, 60],
-        toCss: v => `hsl(${displayValue(v[0])} ${displayValue(v[1])}% ${displayValue(v[2])}%)`
+        toCss: v => `hsl(${displayValue(v[0])} ${displayValue(v[1])}% ${displayValue(v[2])}%)`,
+        fromRgb: (r, g, b) => {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) h = s = 0;
+            else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h *= 60;
+            }
+            return [h, s * 100, l * 100];
+        }
     },
     rgb: {
         name: "sRGB",
@@ -197,14 +252,16 @@ const SPACES = {
             { name: "Blue", min: 0, max: 255, step: 1, format: v => Math.round(v) }
         ],
         defaultVals: [100, 150, 200],
-        toCss: v => `rgb(${displayValue(v[0])} ${displayValue(v[1])} ${displayValue(v[2])})`
+        toCss: v => `rgb(${displayValue(v[0])} ${displayValue(v[1])} ${displayValue(v[2])})`,
+        fromRgb: (r, g, b) => [r, g, b]
     }
 };
 
 const defaults = {
     label: "color",
-    value: { space: "oklch", vals: [0.7, 0.2, 180] },
-    onUpdate: null
+    value: { space: "oklch", vals: () => [0.7, 0.2, 180] },
+    onUpdate: null,
+    register: null
 };
 
 export async function main(spec, panelState) {
@@ -214,7 +271,9 @@ export async function main(spec, panelState) {
 
     // -- State --
     let activeSpaceId = spec.value.space || "oklch";
-    let vals = [...(spec.value.vals || SPACES[activeSpaceId].defaultVals)];
+    let vals = spec.value.vals; //[...(spec.value.vals || SPACES[activeSpaceId].defaultVals)];
+    let sliderVals = [...vals().map(v => v || 0.0)];
+    console.log(sliderVals);
     let axisXIndex = 2; // e.g. Hue
     let axisYIndex = 1; // e.g. Chroma
     let cssWidth = 300;
@@ -301,7 +360,8 @@ export async function main(spec, panelState) {
     }
 
     function makeColor(overrideX, overrideY) {
-        let temp = [...vals];
+        let temp = [...sliderVals].map(v => v || 0.0);
+
         if (overrideX !== undefined) temp[axisXIndex] = overrideX;
         if (overrideY !== undefined) temp[axisYIndex] = overrideY;
         return SPACES[activeSpaceId].toCss(temp);
@@ -314,7 +374,7 @@ export async function main(spec, panelState) {
         
         let stops = [];
         for(let i=0; i<=numStops; i++) {
-            let temp = [...vals];
+            let temp = [...sliderVals];
             temp[channelIndex] = ch.min + (i/numStops) * (ch.max - ch.min);
             stops.push(space.toCss(temp));
         }
@@ -351,28 +411,28 @@ export async function main(spec, panelState) {
 
     function updateUI(triggerCallback = true) {
         const space = SPACES[activeSpaceId];
-        const cssStr = space.toCss(vals);
+        const cssStr = space.toCss(sliderVals);
         
         swatch.style.backgroundColor = cssStr;
         output.innerText = cssStr;
 
         sliderGroups.forEach((sg, i) => {
             const ch = space.channels[i];
-            sg.input.value = vals[i];
-            sg.valSpan.innerText = ch.format(vals[i]);
+            sg.input.value = sliderVals[i];
+            sg.valSpan.innerText = ch.format(sliderVals[i]);
             sg.input.style.background = getSliderGradient(i);
         });
 
         const chX = space.channels[axisXIndex];
         const chY = space.channels[axisYIndex];
-        const normX = (vals[axisXIndex] - chX.min) / (chX.max - chX.min);
-        const normY = (vals[axisYIndex] - chY.min) / (chY.max - chY.min);
+        const normX = (sliderVals[axisXIndex] - chX.min) / (chX.max - chX.min);
+        const normY = (sliderVals[axisYIndex] - chY.min) / (chY.max - chY.min);
 
         cursor.style.left = `${normX * 100}%`;
         cursor.style.top = `${(1 - normY) * 100}%`;
 
         if (triggerCallback) {
-            const payload = { space: activeSpaceId, vals: [...vals], css: cssStr };
+            const payload = { space: activeSpaceId, vals: [...sliderVals], css: cssStr };
             spec.onUpdate?.(payload, set, panelState);
         }
     }
@@ -395,8 +455,13 @@ export async function main(spec, panelState) {
     // -- Event Listeners --
 
     spaceSelect.addEventListener("change", e => {
+        const [r, g, b] = vals().map(v => (v || 0.0) * 255);
+        console.log([r,g,b]);
+        
         activeSpaceId = e.target.value;
-        vals = [...SPACES[activeSpaceId].defaultVals];
+        sliderVals = SPACES[activeSpaceId].fromRgb(r, g, b);
+        console.log(sliderVals);
+
         axisXIndex = 2;
         axisYIndex = 1;
         initSpace();
@@ -419,7 +484,7 @@ export async function main(spec, panelState) {
 
     sliderGroups.forEach(sg => {
         sg.input.addEventListener("input", e => {
-            vals[sg.index] = parseFloat(e.target.value);
+            sliderVals[sg.index] = parseFloat(e.target.value);
             if (sg.index !== axisXIndex && sg.index !== axisYIndex) renderArea();
             updateUI();
         });
@@ -439,8 +504,8 @@ export async function main(spec, panelState) {
         const chX = SPACES[activeSpaceId].channels[axisXIndex];
         const chY = SPACES[activeSpaceId].channels[axisYIndex];
 
-        vals[axisXIndex] = chX.min + (normX * (chX.max - chX.min));
-        vals[axisYIndex] = chY.min + (normY * (chY.max - chY.min));
+        sliderVals[axisXIndex] = chX.min + (normX * (chX.max - chX.min));
+        sliderVals[axisYIndex] = chY.min + (normY * (chY.max - chY.min));
         
         updateUI();
     }
@@ -465,7 +530,7 @@ export async function main(spec, panelState) {
     const set = (payload) => {
         if (payload.space && SPACES[payload.space]) {
             activeSpaceId = payload.space;
-            vals = [...payload.vals];
+            sliderVals = [...payload.vals];
             spaceSelect.value = activeSpaceId;
             initSpace(); // Rebuilds DOM bindings then triggers UI
         }
@@ -476,5 +541,9 @@ export async function main(spec, panelState) {
 
     initSpace();
 
-    return { dom: [control], set, show, hide };
+    const bundle = { dom: [control], set, show, hide };
+
+    spec.register?.(bundle);
+
+    return bundle;
 }

@@ -108,7 +108,8 @@ const defaults = {
     limitField: false,
     step: 0.01,
     value: 0,
-    onUpdate: null
+    onUpdate: null,
+    register: null
 };
 
 export async function main(spec, panelState) {
@@ -196,6 +197,14 @@ export async function main(spec, panelState) {
         control.removeAttribute("hidden");
     }
 
-    return { dom, set, show, hide };
+    const bundle = { dom, set, show, hide };
+
+    // TODO
+    // without a deregistration method, this is a leak that fucks w/ the gc
+    // specifically if some registrar ever has a ton of duplicate controls spun up & discarded
+    // in practice this probably doesn't happen to a degree that matters
+    spec.register?.(bundle);
+
+    return bundle;
 }
 

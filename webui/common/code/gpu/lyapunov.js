@@ -140,10 +140,14 @@ export async function main() {
 
     observers.theme = new MutationObserver(() => {
         style = getComputedStyle(colorDetector);
-        backgroundColor = parseRgb(style.backgroundColor);
-        blitParams.nan_color_x = backgroundColor.r;
-        blitParams.nan_color_y = backgroundColor.g;
-        blitParams.nan_color_z = backgroundColor.b;
+        const newBackgroundColor = parseRgb(style.backgroundColor);
+        if (newBackgroundColor !== backgroundColor) {
+            backgroundColor = newBackgroundColor;
+            blitParams.nan_color_x = backgroundColor.r;
+            blitParams.nan_color_y = backgroundColor.g;
+            blitParams.nan_color_z = backgroundColor.b;
+            console.log(blitParams);
+        }
 
         render();
     });
@@ -297,12 +301,6 @@ export async function main() {
         canvas.height = height;
 
         const uniforms = compShader.bufferDefinitions["0,0"];
-
-        style = getComputedStyle(colorDetector);
-        backgroundColor = parseRgb(style.backgroundColor);
-        blitParams.nan_color_x = backgroundColor.r;
-        blitParams.nan_color_y = backgroundColor.g;
-        blitParams.nan_color_z = backgroundColor.b;
 
         params.width = width;
         params.height = height;

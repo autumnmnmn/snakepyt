@@ -7,6 +7,7 @@ struct Uniforms /* buffer 0 0 */ {
     zoom: f32,
     x_0: f32, // 0 to 1 = 0.5
     iterations: u32, // hard 0 to 500 = 100
+    skip: u32, // hard 0 to 500 = 50
     seq_mask: u32, // hard 0 to hard 4294967295 = 5
     seq_len: u32, // hard 1 to hard 32 = 2
     seq_offset: u32, // hard 0 to hard 31 = 0
@@ -77,8 +78,8 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
                 x_next = x_next + (uniforms.discont_alpha - 1.0) * (r - 2.0) / 4.0;
             }
             var term = log(abs(r * (1.0 - 2.0 * x[offset])));
-            if (iter > 10) {
-                lyapunov[offset] = c_avg(lyapunov[offset], term, iter);
+            if (iter > uniforms.skip) {
+                lyapunov[offset] = c_avg(lyapunov[offset], term, iter - uniforms.skip);
             }
             x[offset] = x_next;
         }

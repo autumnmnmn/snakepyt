@@ -120,7 +120,7 @@ const allModifiers = new Set(["inline", "auto"])
 export const staticModule = true;
 
 export async function main(expression, inline=false) {
-    console.log(inline);
+    //console.log(inline);
 
     const lines = expression.trim().split("\n");
     const dom = [];

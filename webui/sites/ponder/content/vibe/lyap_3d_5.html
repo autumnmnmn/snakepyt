@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyapunov Point Cloud</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            pointer-events: none;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+        h1 { margin: 0 0 5px 0; font-size: 24px; }
+        p { margin: 0; font-size: 14px; color: #ccc; }
+    </style>
+    <!-- Three.js + OrbitControls + dat.gui -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+</head>
+<body>
+
+<div id="ui-layer">
+    <h1>Lyapunov Point Cloud</h1>
+    <p>Millions of points cached seamlessly via GPGPU textures.</p>
+</div>
+
+<!-- ================= COMPUTE SHADERS ================= -->
+<script type="x-shader/x-vertex" id="computeVertexShader">
+    void main() {
+        gl_Position = vec4(position, 1.0);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="computeFragmentShader">
+    precision highp float;
+
+    uniform float u_zoom;
+    uniform vec2 u_center;
+    uniform int u_iterations;
+    uniform int u_skip;
+    uniform int u_seq_mask;
+    uniform int u_seq_len;
+    uniform float u_x0;
+    uniform int u_offset;
+    uniform float u_resolution;
+
+    out vec4 fragColor;
+
+    void main() {
+        vec2 uv = gl_FragCoord.xy / u_resolution;
+        vec2 r_vals = u_center + (uv - 0.5) * u_zoom;
+
+        float x = u_x0;
+        float lyapunov = 0.0;
+        int valid_iters = 0;
+
+        for (int iter = 0; iter < u_iterations; iter++) {
+            int seq_idx = (iter + u_offset) % u_seq_len;
+            int bit = (u_seq_mask >> seq_idx) & 1;
+            float r = (bit == 1) ? r_vals.y : r_vals.x;
+
+            float x_next = r * x * (1.0 - x);
+            float deriv = r * (1.0 - 2.0 * x);
+
+            if (iter > u_skip) {
+                lyapunov += log(abs(deriv) + 1e-8);
+                valid_iters++;
+            }
+            x = x_next;
+        }
+
+        if (valid_iters > 0) {
+            lyapunov /= float(valid_iters);
+        }
+
+        fragColor = vec4(lyapunov, 0.0, 0.0, 1.0); // Output computed value to cache texture
+    }
+</script>
+
+
+<!-- ================= DISPLAY SHADERS ================= -->
+<script type="x-shader/x-vertex" id="displayVertexShader">
+    uniform sampler2D u_dataTexture;
+    uniform float u_zScale;
+    uniform float u_zScaleNeg;
+    uniform float u_pointSize;
+
+    out float v_lyapunov;
+
+    void main() {
+        // Read the precomputed lyapunov exponent instead of re-evaluating 500 loops
+        vec4 data = texture(u_dataTexture, uv);
+        float lyapunov = data.x;
+        v_lyapunov = lyapunov;
+
+        // Displace the vertex Z coordinate based on the exponent
+        float z = 0.0;
+        if (lyapunov >= 0.0) {
+            z = lyapunov * u_zScale;
+        } else {
+            z = lyapunov * u_zScaleNeg;
+        }
+
+        vec3 newPos = vec3(position.x, position.y, position.z + z);
+
+        vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        
+        // Perspective point sizing
+        gl_PointSize = u_pointSize * (15.0 / -mvPosition.z);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="displayFragmentShader">
+    precision highp float;
+
+    uniform int u_offset;
+    uniform float u_opacity;
+    
+    // Filtering uniforms
+    uniform bool u_showPositive;
+    uniform bool u_showNegative;
+    uniform bool u_isolate;
+    uniform float u_isolateValue;
+    uniform float u_isolateEpsilon;
+
+    in float v_lyapunov;
+    
+    out vec4 fragColor;
+
+    void main() {
+        // Apply filters (discard immediately to save fragment processing)
+        if (!u_showPositive && v_lyapunov >= 0.0) discard;
+        if (!u_showNegative && v_lyapunov < 0.0) discard;
+        if (u_isolate && abs(v_lyapunov - u_isolateValue) > u_isolateEpsilon) discard;
+
+        // Shape the point into a soft circle instead of a harsh square
+        vec2 ptC = gl_PointCoord - vec2(0.5);
+        float dist = length(ptC);
+        
+        // Using discard here helps immensely with proper depth occlusion
+        if(dist > 0.5) discard;
+
+        int off = u_offset % 6;
+        vec3 color;
+
+        // Colors per sequence offset
+        if (off == 0) color = vec3(1.0, 0.0, 0.0);       // Red
+        else if (off == 1) color = vec3(0.0, 1.0, 0.0);  // Green
+        else if (off == 2) color = vec3(0.0, 0.0, 1.0);  // Blue
+        else if (off == 3) color = vec3(1.0, 1.0, 0.0);  // Yellow
+        else if (off == 4) color = vec3(1.0, 0.0, 1.0);  // Magenta
+        else color = vec3(0.0, 1.0, 1.0);                // Cyan
+
+        float alpha = u_opacity;
+
+        fragColor = vec4(color, alpha);
+    }
+</script>
+
+<script>
+    let scene, camera, renderer, controls, pointGroup;
+    let baseGeometry;
+    let computeScene, computeCamera, computeMesh, computeMaterial;
+    let renderTargets = [];
+    
+    // Dynamic GUI variables
+    let visibilityFolder;
+    const visibilityParams = {};
+
+    // Default configuration
+    const params = {
+        sequence: 'AB',
+        iterations: 150,
+        skip: 100,
+        x0: 0.5,
+        zoom: 1.2,
+        centerX: 3.4,
+        centerY: 3.4,
+        zScale: 1.0,
+        zScaleNeg: 1.0,
+        resolution: 512,
+        pointSize: 0.05,
+        opacity: 0.6,
+        additiveBlending: true, // Toggles occlusion vs additive
+        
+        // New Filtering Params
+        showPositive: true,
+        showNegative: true,
+        isolate: false,
+        isolateValue: 0.0,
+        isolateEpsilon: 0.1
+    };
+
+    init();
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.04);
+
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(6, 4, 7);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 0, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false; 
+        controls.autoRotateSpeed = 0.5;
+
+        initCompute();
+
+        const gridHelper = new THREE.GridHelper(8, 16, 0x333333, 0x111111);
+        gridHelper.position.y = -3.0; 
+        scene.add(gridHelper);
+
+        pointGroup = new THREE.Group();
+        scene.add(pointGroup);
+
+        buildGeometry();
+        doCompute();
+        rebuildPoints();
+        setupGUI();
+
+        window.addEventListener('resize', onWindowResize);
+        animate();
+    }
+
+    function initCompute() {
+        // Fullscreen setup for pure offscreen shader calculations
+        computeScene = new THREE.Scene();
+        computeCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        
+        computeMaterial = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('computeVertexShader').textContent,
+            fragmentShader: document.getElementById('computeFragmentShader').textContent,
+            glslVersion: THREE.GLSL3,
+            uniforms: {
+                u_zoom: { value: params.zoom },
+                u_center: { value: new THREE.Vector2(params.centerX, params.centerY) },
+                u_iterations: { value: params.iterations },
+                u_skip: { value: params.skip },
+                u_seq_mask: { value: 0 },
+                u_seq_len: { value: 1 },
+                u_x0: { value: params.x0 },
+                u_offset: { value: 0 },
+                u_resolution: { value: params.resolution }
+            }
+        });
+
+        computeMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), computeMaterial);
+        computeScene.add(computeMesh);
+    }
+
+    function getRenderTarget(resolution) {
+        return new THREE.WebGLRenderTarget(resolution, resolution, {
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType, // Store exponent safely
+            depthBuffer: false,
+            stencilBuffer: false,
+            generateMipmaps: false
+        });
+    }
+
+    function buildGeometry() {
+        if (baseGeometry) baseGeometry.dispose();
+        
+        const N = params.resolution;
+        baseGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(N * N * 3);
+        const uvs = new Float32Array(N * N * 2);
+        
+        for (let y = 0; y < N; y++) {
+            for (let x = 0; x < N; x++) {
+                const idx = y * N + x;
+                const uvx = (x + 0.5) / N;
+                const uvy = (y + 0.5) / N;
+                
+                uvs[idx * 2] = uvx;
+                uvs[idx * 2 + 1] = uvy;
+                
+                // Align vertex exactly with GPGPU texture coordinates
+                positions[idx * 3] = (uvx - 0.5) * 8.0;
+                positions[idx * 3 + 1] = (uvy - 0.5) * 8.0;
+                positions[idx * 3 + 2] = 0.0;
+            }
+        }
+        
+        baseGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        baseGeometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    }
+
+    function parseSequence(seq) {
+        let mask = 0;
+        const len = seq.length;
+        for (let i = 0; i < len; i++) {
+            if (seq[i].toUpperCase() === 'B') {
+                mask |= (1 << i);
+            }
+        }
+        return { mask, len };
+    }
+
+    // Single trigger function that bakes the calculations whenever modified
+    function doCompute() {
+        const { mask, len } = parseSequence(params.sequence);
+        if (len === 0) return false;
+
+        let targetsChanged = false;
+
+        // Dispose mismatched resolution targets
+        for (let i = renderTargets.length - 1; i >= 0; i--) {
+            if (renderTargets[i].width !== params.resolution) {
+                renderTargets[i].dispose();
+                renderTargets.splice(i, 1);
+                targetsChanged = true;
+            }
+        }
+
+        // Accommodate sequence length bounds
+        while (renderTargets.length < len) {
+            renderTargets.push(getRenderTarget(params.resolution));
+            targetsChanged = true;
+        }
+        
+        while (renderTargets.length > len) {
+            const rt = renderTargets.pop();
+            rt.dispose();
+            targetsChanged = true;
+        }
+
+        // Apply Compute Layout Uniforms
+        computeMaterial.uniforms.u_zoom.value = params.zoom;
+        computeMaterial.uniforms.u_center.value.set(params.centerX, params.centerY);
+        computeMaterial.uniforms.u_iterations.value = params.iterations;
+        computeMaterial.uniforms.u_skip.value = params.skip;
+        computeMaterial.uniforms.u_seq_mask.value = mask;
+        computeMaterial.uniforms.u_seq_len.value = len;
+        computeMaterial.uniforms.u_x0.value = params.x0;
+        computeMaterial.uniforms.u_resolution.value = params.resolution;
+
+        // Render pass for each shift in the loop parameter
+        for (let i = 0; i < len; i++) {
+            computeMaterial.uniforms.u_offset.value = i;
+            renderer.setRenderTarget(renderTargets[i]);
+            renderer.render(computeScene, computeCamera);
+        }
+        renderer.setRenderTarget(null);
+
+        return targetsChanged;
+    }
+
+    function rebuildPoints() {
+        while (pointGroup.children.length > 0) {
+            const child = pointGroup.children[0];
+            child.material.dispose();
+            pointGroup.remove(child);
+        }
+
+        const len = renderTargets.length;
+        if (len === 0) return;
+
+        const colorNames = ['Red', 'Green', 'Blue', 'Yellow', 'Magenta', 'Cyan'];
+
+        for (let offset = 0; offset < len; offset++) {
+            const material = new THREE.ShaderMaterial({
+                vertexShader: document.getElementById('displayVertexShader').textContent,
+                fragmentShader: document.getElementById('displayFragmentShader').textContent,
+                glslVersion: THREE.GLSL3, 
+                transparent: true,
+                // Occlusion vs Glowing blending mechanics
+                depthWrite: !params.additiveBlending, 
+                blending: params.additiveBlending ? THREE.AdditiveBlending : THREE.NormalBlending, 
+                uniforms: {
+                    u_dataTexture: { value: renderTargets[offset].texture },
+                    u_zScale: { value: params.zScale },
+                    u_zScaleNeg: { value: params.zScaleNeg },
+                    u_pointSize: { value: params.pointSize },
+                    u_opacity: { value: params.opacity },
+                    u_offset: { value: offset },
+                    
+                    u_showPositive: { value: params.showPositive },
+                    u_showNegative: { value: params.showNegative },
+                    u_isolate: { value: params.isolate },
+                    u_isolateValue: { value: params.isolateValue },
+                    u_isolateEpsilon: { value: params.isolateEpsilon }
+                }
+            });
+
+            const points = new THREE.Points(baseGeometry, material);
+            points.rotation.x = -Math.PI / 2;
+            points.position.y = offset * 0.005; 
+            points.frustumCulled = false; // Displaced entirely via vertex logic limits generic culling
+            
+            // Respect visibility toggles
+            const key = `Offset ${offset} (${colorNames[offset % 6]})`;
+            points.visible = visibilityParams[key] !== false;
+
+            pointGroup.add(points);
+        }
+    }
+
+    function onComputeParamsChange() {
+        const targetsChanged = doCompute();
+        if (targetsChanged) {
+            rebuildPoints(); // Only swap out display points if textures changed sizes 
+        }
+    }
+
+    function onDisplayParamsChange() {
+        pointGroup.children.forEach(points => {
+            points.material.uniforms.u_zScale.value = params.zScale;
+            points.material.uniforms.u_zScaleNeg.value = params.zScaleNeg;
+            points.material.uniforms.u_pointSize.value = params.pointSize;
+            points.material.uniforms.u_opacity.value = params.opacity;
+            
+            points.material.uniforms.u_showPositive.value = params.showPositive;
+            points.material.uniforms.u_showNegative.value = params.showNegative;
+            points.material.uniforms.u_isolate.value = params.isolate;
+            points.material.uniforms.u_isolateValue.value = params.isolateValue;
+            points.material.uniforms.u_isolateEpsilon.value = params.isolateEpsilon;
+        });
+    }
+
+    function updateVisibilityGUI() {
+        if (!visibilityFolder) return;
+        
+        // Clear out existing dynamic toggles safely
+        for (let i = visibilityFolder.__controllers.length - 1; i >= 0; i--) {
+            visibilityFolder.remove(visibilityFolder.__controllers[i]);
+        }
+
+        const len = params.sequence.length;
+        const colorNames = ['Red', 'Green', 'Blue', 'Yellow', 'Magenta', 'Cyan'];
+        
+        for (let i = 0; i < len; i++) {
+            const colorName = colorNames[i % 6];
+            const key = `Offset ${i} (${colorName})`;
+            
+            // Initialize if not explicitly false already
+            if (visibilityParams[key] === undefined) {
+                visibilityParams[key] = true;
+            }
+            
+            visibilityFolder.add(visibilityParams, key).onChange(val => {
+                if (pointGroup.children[i]) {
+                    pointGroup.children[i].visible = val;
+                }
+            });
+        }
+        
+        // Automatically sync logic incase values were remembered
+        for (let i = 0; i < pointGroup.children.length; i++) {
+            const colorName = colorNames[i % 6];
+            const key = `Offset ${i} (${colorName})`;
+            pointGroup.children[i].visible = visibilityParams[key] !== false;
+        }
+    }
+
+    function setupGUI() {
+        const gui = new dat.GUI({ width: 320 });
+
+        gui.add(params, 'sequence').name('Sequence').onFinishChange(val => {
+            params.sequence = val.toUpperCase().replace(/[^AB]/g, '');
+            if(params.sequence === '') params.sequence = 'A';
+            gui.updateDisplay();
+            onComputeParamsChange();
+            updateVisibilityGUI(); // Rebuild the visibility toggles when offsets change!
+        });
+
+        gui.add(params, 'iterations', 20, 4000).step(1).onChange(onComputeParamsChange);
+        gui.add(params, 'skip', 0, 4000).step(1).onChange(onComputeParamsChange);
+        gui.add(params, 'x0', 0.0, 1.0).onChange(onComputeParamsChange);
+
+        const viewFolder = gui.addFolder('Camera & Parameter Mapping');
+        viewFolder.add(params, 'zoom', 0.1, 8.0).onChange(onComputeParamsChange);
+        viewFolder.add(params, 'centerX', 0.0, 4.0).onChange(onComputeParamsChange);
+        viewFolder.add(params, 'centerY', 0.0, 4.0).onChange(onComputeParamsChange);
+        viewFolder.add(params, 'zScale', 0.01, 20.0).onChange(onDisplayParamsChange);
+        viewFolder.add(params, 'zScaleNeg', 0.01, 20.0).onChange(onDisplayParamsChange);
+        viewFolder.open();
+
+        const pFolder = gui.addFolder('Point Cloud Settings');
+        pFolder.add(params, 'pointSize', 0.05, 15.0).name('Point Size').onChange(onDisplayParamsChange);
+        pFolder.add(params, 'opacity', 0.01, 1.0).name('Opacity').onChange(onDisplayParamsChange);
+        
+        // Our new optional occlusion/blending trigger
+        pFolder.add(params, 'additiveBlending').name('Additive Blend').onChange(val => {
+            pointGroup.children.forEach(points => {
+                points.material.blending = val ? THREE.AdditiveBlending : THREE.NormalBlending;
+                points.material.depthWrite = !val; // Allow them to write depths and properly occlude each other
+                points.material.needsUpdate = true;
+            });
+        });
+
+        pFolder.add(params, 'resolution', [512, 1024, 2048, 4096]).name('Grid Density').onChange(val => {
+            params.resolution = parseInt(val);
+            buildGeometry();
+            onComputeParamsChange();
+        });
+        pFolder.open();
+
+        const fFolder = gui.addFolder('Filters');
+        fFolder.add(params, 'showPositive').name('Show Positive').onChange(onDisplayParamsChange);
+        fFolder.add(params, 'showNegative').name('Show Negative').onChange(onDisplayParamsChange);
+        fFolder.add(params, 'isolate').name('Isolate Value').onChange(onDisplayParamsChange);
+        fFolder.add(params, 'isolateValue', -5.0, 5.0).step(0.01).name('Target Value').onChange(onDisplayParamsChange);
+        fFolder.add(params, 'isolateEpsilon', 0.0, 1.0).step(0.01).name('Epsilon').onChange(onDisplayParamsChange);
+        fFolder.open();
+
+        visibilityFolder = gui.addFolder('Color / Offset Visibility');
+        updateVisibilityGUI();
+        visibilityFolder.open();
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>

@@ -210,7 +210,7 @@ function renderToken(token) {
     return span;
 }
 
-export async function main(target, text="") {
+export async function main(text="") {
     const container = document.createElement("div");
     container.className = "highlight-container";
 
@@ -265,7 +265,7 @@ export async function main(target, text="") {
     function exit() {
         const target = container.parentNode;
         container.remove();
-        $mod("layout/nothing", target);
+        $apply("layout/nothing", target);
     }
 
     container.$contextMenu = {
@@ -277,9 +277,8 @@ export async function main(target, text="") {
     // Initial highlight
     updateHighlight();
 
-    target.appendChild(container);
-
     return {
+        dom: [container],
         replace: true
     };
 }

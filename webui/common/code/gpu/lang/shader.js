@@ -38,16 +38,30 @@ function processNumeric(value) {
 function valueProxy(varMap) {
     return new Proxy(varMap, {
         get: (_, key) => varMap[key]?.value,
-        set: (_, key, value) => { varMap[key].value = value; return true; }
+        set: (_, key, value) => {
+            const v = varMap[key];
+            v.value = value;
+            for (const registration of v.registrations.filter(r => r.set)) {
+                registration.set(value);
+                if (v.isComposite) {
+                    console.log(v);
+                    console.log(value);
+                }
+            }
+            return true;
+        }
     })
 }
 
 // TODO: make this more debuggable lol
 // var_name: type, // hard? min to hard? max = default $various $optional $tags
 // [0: full match, 1: varname, 2: type, 3: comment, 4: hardmin, 5: min, 6: hardmax, 7: max, 8: default value, 9: tags]
-const VAR_RE = /^\s*(\w+)\s*:\s*(\w+),?\s*(?:(\/\/)\s*(?:(?:(hard)\s+)?([\w.+-]+)\s+to\s+(?:(hard)\s+)?([\w.+-]+)(?:\s*=\s*([\w.+-,]+))?)?)?\s*((?:\$(?:\w+)(?:\([^\)]*\))?\s*?)*)\s*$/;
+//const VAR_RE = /^\s*(\w+)\s*:\s*(\w+),?\s*(?:(\/\/)\s*(?:(?:(hard)\s+)?([\w.+-]+)\s+to\s+(?:(hard)\s+)?([\w.+-]+)(?:\s*=\s*([\w.+-,]+))?)?)?\s*((?:\$(?:\w+)(?:\([^\)]*\))?\s*?)*)\s*$/;
+const VAR_RE = /^\s*(\w+)\s*:\s*(\w+),?\s*(?:(\/\/)\s*(?:(?:(hard)\s+)?([\w.+-]+)\s+to\s+(?:(hard)\s+)?([\w.+-]+)(?:\s*=\s*([\w.+-,]+))?)?)?\s*((?:\$(?:\w+)(?:\((?:[^\)]|\(.*\))*\))?\s*?)*)\s*$/;
 
-const TAG_RE = /\$(\w+)(?:\(([^)]*)\))?/g;
+//const TAG_RE = /\$(\w+)(?:\(([^)]*)\))?/g;
+const TAG_RE = /\$(\w+)(?:\(((?:[^()]+|\([^()]*\))*)\))?/g;
+
 
 export async function loadShader(shaderName, substitutions = {}) {
     const response = await fetch(`/code/shaders/${shaderName}.wgsl`);
@@ -82,10 +96,11 @@ export async function loadShader(shaderName, substitutions = {}) {
 
             if (type in wgsl.compositeTypes) {
                 const vals = parsed[8] ? parsed[8].split(',') : undefined;
+                const uiName = getUiName(parsed[1]);
                 const composite_subvars = wgsl.compositeTypes[type].map((member, index) => ({
                     varName: `${parsed[1]}_${member.name}`,
                     type: member.type,
-                    uiName: `${getUiName(parsed[1])} ${member.name}`,
+                    uiName: `${uiName} ${member.name}`,
                     bytes: wgsl.sizes[member.type],
                     aligns: [wgsl.aligns[member.type]].concat(
                         index === 0 ? wgsl.aligns[type] : []
@@ -96,12 +111,22 @@ export async function loadShader(shaderName, substitutions = {}) {
                     hardMax: parsed[6] !== undefined,
                     max: processNumeric(parsed[7]),
                     value: processNumeric(vals ? vals[index] : undefined),
+                    registrations: [],
                     tags: tags,
                     dependents: [],
                     isComposite: true,
                     parentName: parsed[1]
                 }));
-                composites[parsed[1]] = composite_subvars;
+                composites[parsed[1]] = {
+                    varName: parsed[1],
+                    type: type,
+                    uiName: uiName,
+                    // bytes: sum
+                    showControl: parsed[3] !== undefined,
+                    // value TODO
+                    tags: tags,
+                    subVars: composite_subvars
+                };
                 return composite_subvars;
             }
 
@@ -119,6 +144,7 @@ export async function loadShader(shaderName, substitutions = {}) {
                 hardMax: parsed[6] !== undefined,
                 max: processNumeric(parsed[7]),
                 value: processNumeric(parsed[8]),
+                registrations: [],
                 tags: tags,
                 dependents: [],
                 isComposite: false
@@ -139,6 +165,8 @@ export async function loadShader(shaderName, substitutions = {}) {
                 varMap[dependsOn].dependents.push(v.varName);
             }
         });
+
+        console.log(varMap);
 
 
         const buildNumber = (v, afterChangeCallback) => ({
@@ -161,6 +189,7 @@ export async function loadShader(shaderName, substitutions = {}) {
                 }
                 afterChangeCallback();
             },
+            register: (registration) => v.registrations.push(registration),
             hidden: v.hidden
         });
 
@@ -176,7 +205,8 @@ export async function loadShader(shaderName, substitutions = {}) {
                     checked ? panelState[depName]?.show?.() : panelState[depName]?.hide?.();
                 }
                 afterChangeCallback();
-            }
+            },
+            register: (registration) => v.registrations.push(registration)
         });
 
         const processedComposites = new Set();
@@ -187,20 +217,20 @@ export async function loadShader(shaderName, substitutions = {}) {
             if (processedComposites.has(composite.parentName)) return null;
             processedComposites.add(composite.parentName);
 
-            const compVars = composites[composite.parentName];
+            const compVars = composites[composite.parentName].subVars;
 
             // 2. Map WGSL floats (0.0-1.0) to color.js sRGB standard (0-255)
             // Fallback to 0 if undefined.
             const initialRgbVals = compVars.map(cv => (cv.value || 0) * 255);
 
             return {
-                type: "colorb",
+                type: "color_picker",
                 label: getUiName(composite.parentName),
                 name: composite.parentName,
                 hidden: composite.hidden,
                 value: {
                     space: "rgb",
-                    vals: initialRgbVals.slice(0, 3)
+                    vals: () => compVars.map(cv => cv.value) //initialRgbVals.slice(0, 3)
                 },
                 onUpdate: (payload, set, panelState) => {
                     // 3. Convert whichever space the UI is currently in back to 0.0-1.0 RGB
@@ -215,7 +245,8 @@ export async function loadShader(shaderName, substitutions = {}) {
                     // You'd need to extend color.js to support an alpha slider to pipe that here.
 
                     afterChangeCallback();
-                }
+                },
+                register: (registration) => composite.registrations.push(registration),
             };
         };
         /// end of unreviewed gemini section

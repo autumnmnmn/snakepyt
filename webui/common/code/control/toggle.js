@@ -80,7 +80,8 @@ const defaults = {
     label: "toggle",
     value: false,
     states: ["off", "on"],
-    onUpdate: () => {}
+    onUpdate: null,
+    register: null
 };
 
 export async function main(spec, panelState) {
@@ -101,7 +102,7 @@ export async function main(spec, panelState) {
     checkbox.checked = spec.value;
     checkbox.setAttribute("aria-label", spec.label);
     checkbox.addEventListener("change", () => {
-        spec.onUpdate(checkbox.checked, panelState);
+        spec.onUpdate?.(checkbox.checked, panelState);
         status.innerText = checkbox.checked ? spec.states[1] : spec.states[0];
     });
 
@@ -131,5 +132,11 @@ export async function main(spec, panelState) {
         )
     ];
 
-    return { dom };
+    const set = () => {/*TODO*/};
+
+    const bundle = { set, dom };
+
+    spec.register?.(bundle);
+
+    return bundle;
 }
