@@ -29,26 +29,22 @@ $css(`
     border-color: var(--main-solid);
 }
 
-.color .preview {
-    align-items: center;
-    gap: 1rem;
+.color .colorbox {
+    --value: #FF00FF;
+    display: inline;
+    background-color: var(--value);
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    padding-bottom: 0.25rem;
+    border-radius: 0.25rem;
 }
 
-.color .swatch {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    border: 1px solid var(--main-solid);
-    background-color: transparent; /* Updated dynamically */
-    transition: background 0.05s linear;
-    display: inline-block;
-}
-
-.color .output {
+.color .colorbox .value {
     display: inline;
     font-family: monospace;
-    color: var(--main-solid);
-    font-size: 0.9em;
+    font-size: 0.8rem;
+    color: contrast-color(var(--value));
+    border-color: contrast-color(var(--value));
 }
 
 .color .axis-controls {
@@ -273,7 +269,7 @@ export async function main(spec, panelState) {
     let activeSpaceId = spec.value.space || "oklch";
     let vals = spec.value.vals; //[...(spec.value.vals || SPACES[activeSpaceId].defaultVals)];
     let sliderVals = [...vals().map(v => v || 0.0)];
-    console.log(sliderVals);
+    //console.log(sliderVals);
     let axisXIndex = 2; // e.g. Hue
     let axisYIndex = 1; // e.g. Chroma
     let cssWidth = 300;
@@ -284,11 +280,11 @@ export async function main(spec, panelState) {
     const titleLabel = $element("label");
     titleLabel.innerText = spec.label;
     const spaceSelect = $element("select");
-    header.$with(titleLabel, spaceSelect);
 
-    const swatch = $div("swatch");
-    const output = $div("output");
-    const preview = $div("preview").$with(swatch, output);
+    const value = $element("input");
+    const colorbox = $div("colorbox");
+    value.className = "value";
+    header.$with(titleLabel, colorbox.$with(value));
 
     const axisX = $element("select");
     const axisY = $element("select");
@@ -319,7 +315,7 @@ export async function main(spec, panelState) {
     });
     slidersContainer.$with(...sliderGroups.map(s => s.group));
 
-    control.$with(header, preview, axisControls, areaContainer, slidersContainer);
+    control.$with(header, spaceSelect, axisControls, areaContainer, slidersContainer);
 
     // -- Logic --
     for (const [id, config] of Object.entries(SPACES)) {
@@ -413,8 +409,8 @@ export async function main(spec, panelState) {
         const space = SPACES[activeSpaceId];
         const cssStr = space.toCss(sliderVals);
         
-        swatch.style.backgroundColor = cssStr;
-        output.innerText = cssStr;
+        colorbox.style.setProperty("--value", cssStr);
+        value.value = cssStr;
 
         sliderGroups.forEach((sg, i) => {
             const ch = space.channels[i];

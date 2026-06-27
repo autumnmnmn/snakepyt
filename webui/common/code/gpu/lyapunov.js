@@ -18,7 +18,7 @@ $css(`
 import { greek } from "/code/math/math.js";
 
 import "/code/math/constants.js";
-import { v2 } from "/code/math/vector.js";
+import { Vec2 as v2 } from "/code/math/vector.js";
 import { cartesian as c } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
 
@@ -146,10 +146,9 @@ export async function main() {
             blitParams.nan_color_x = backgroundColor.r;
             blitParams.nan_color_y = backgroundColor.g;
             blitParams.nan_color_z = backgroundColor.b;
-            console.log(blitParams);
         }
 
-        render();
+        if (canRender) render();
     });
     observers.theme.observe(document.documentElement, {
         subtree: true,
@@ -349,6 +348,7 @@ export async function main() {
 
         if (!canRender) {
             console.warn("Cannot render; aborting render.");
+            console.trace();
             return;
         }
 

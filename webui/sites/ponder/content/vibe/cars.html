@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Vector BML Traffic Model</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --panel: #1e1e1e;
+      --panel-light: #2a2a2a;
+      --text: #ffffff;
+    }
+    
+    body {
+      background-color: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      margin: 0; padding: 30px 20px;
+    }
+
+    h1 { margin: 0 0 5px 0; font-weight: 600; letter-spacing: 1px; }
+    p { color: #aaaaaa; margin-bottom: 20px; font-size: 14px; text-align: center; max-width: 800px; }
+
+    .main-container {
+      display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+      max-width: 1400px; width: 100%;
+    }
+
+    .panel {
+      background: var(--panel); padding: 20px; border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex;
+      flex-direction: column; gap: 15px;
+    }
+
+    /* Core Controls */
+    .controls-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+    
+    button {
+      background: #333; color: white; border: 1px solid #444;
+      padding: 8px 15px; border-radius: 4px; cursor: pointer;
+      font-size: 13px; font-weight: bold; transition: all 0.2s;
+    }
+    button:hover { background: #4a4a4a; transform: translateY(-1px); }
+    button.active { background: #27ae60; border-color: #2ecc71; }
+    button.danger:hover { background: #e74c3c; border-color: #c0392b; }
+
+    /* Fixed width flex logic stops the jitter on changing span text length */
+    .slider-container { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .slider-container > label { display: inline-flex; justify-content: space-between; width: 100px; }
+    .val-text { text-align: right; width: 35px; display: inline-block; }
+    
+    input[type=range] { accent-color: #888; cursor: pointer; width: 100px; }
+    select, input[type=text] {
+      background: #333; color: white; border: 1px solid #444;
+      padding: 6px 10px; border-radius: 4px; font-size: 13px;
+    }
+    select { cursor: pointer; }
+
+    /* Car Types List */
+    .car-types-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    .car-types-header h3 { margin: 0; font-size: 16px; }
+    
+    .car-list { display: flex; flex-direction: column; gap: 10px; }
+    .car-item {
+      display: flex; align-items: center; gap: 8px; background: var(--panel-light);
+      padding: 10px; border-radius: 6px; border: 1px solid #444; flex-wrap: wrap;
+    }
+    
+    .car-item input[type=color] {
+      width: 28px; height: 28px; padding: 0; border: none; border-radius: 4px; cursor: pointer; background: none;
+    }
+    .car-item input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+    .car-item input[type=color]::-webkit-color-swatch { border: 1px solid #555; border-radius: 4px; }
+    
+    .car-item label { font-size: 12px; color: #ccc; display: flex; align-items: center; gap: 4px; }
+    .car-item input[type=number], .car-item input[type=text] {
+      background: #222; color: white; border: 1px solid #555;
+      padding: 4px; border-radius: 4px; font-family: monospace; text-align: center;
+    }
+    .car-item input[type=number] { width: 40px; }
+    .car-item input[type=text] { width: 70px; text-transform: uppercase; }
+
+    /* Canvas & Stats */
+    .canvas-container { 
+      display: flex; flex-direction: column; align-items: center; 
+      flex: 2; min-width: 320px;
+    }
+    
+    /* New wrapper ensures 1:1 true size without arbitrary CSS compression */
+    .canvas-wrapper {
+      width: 100%; max-height: 80vh; overflow: auto;
+      display: flex; justify-content: center; align-items: center;
+      background: #0f0f12; border-radius: 6px; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    canvas {
+      background: #18181c; box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+      image-rendering: -moz-crisp-edges; image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges; image-rendering: pixelated;
+      border: 2px solid #333; border-radius: 4px;
+    }
+
+    .stats {
+      margin-top: 15px; font-family: 'Courier New', Courier, monospace;
+      color: #999; font-size: 14px; background: var(--panel);
+      padding: 10px 20px; border-radius: 6px; display: flex; gap: 20px;
+    }
+    .stat-val { color: #fff; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>Custom Vector BML</h1>
+  <p>Design your own traffic jam. Edit bounds rules per class or globally using mappings like <code>C,D,A,B</code> (Torus), <code>-C,-D,-A,-B</code> (Klein/Projective). Use <code>X</code> to block or <code>-X</code> to delete cars moving off-grid.</p>
+
+  <div class="main-container">
+    
+    <!-- Controls Sidebar -->
+    <div class="panel" style="flex: 1; min-width: 380px; max-width: 500px;">
+      
+      <div class="controls-row" style="justify-content: space-between;">
+        <button id="toggleBtn">Start</button>
+        <button id="resetBtn">Reset Grid</button>
+      </div>
+
+      <div class="controls-row">
+        <div class="slider-container">
+          <label>Size:</label>
+          <select id="sizeSelect">
+            <option value="128">128</option>
+            <option value="256">256</option>
+            <option value="512" selected>512</option>
+            <option value="1024">1024</option>
+            <option value="2048">2048 (Heavy)</option>
+          </select>
+        </div>
+        <div class="slider-container">
+          <label>Speed: <span class="val-text"><span id="speedVal">1</span>x</span></label>
+          <input type="range" id="speedSlider" min="1" max="50" value="1">
+        </div>
+      </div>
+      
+      <div class="controls-row">
+        <div class="slider-container">
+          <label style="width:110px;">Global Bounds:</label>
+          <input type="text" id="globalBounds" value="C,D,A,B" style="width: 100px; text-transform: uppercase;" title="Faces A(Top), B(Right), C(Bottom), D(Left). Comma separated rules.">
+        </div>
+      </div>
+
+      <!-- Dynamic Car Types -->
+      <div class="car-types-header">
+        <h3>Car Types (Phases)</h3>
+        <button id="addCarBtn">+ Add Class</button>
+      </div>
+      <div id="carList" class="car-list">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Simulation Canvas -->
+    <div class="canvas-container">
+      <div class="canvas-wrapper">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="stats">
+        <div>Steps: <span id="stepCount" class="stat-val">0</span></div>
+        <div>Mobility: <span id="mobilityVal" class="stat-val">0.0%</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // System State
+    let size, mask;
+    let grid, nextGrid, imgData;
+    let isRunning = false;
+    let animationId = null;
+    let steps = 0;
+    let totalCars = 0;
+    let lastMobility = 0;
+    let nextCarId = 3; 
+
+    // Dynamic Car Types Array
+    let carTypes = [
+      { id: 1, color: '#ff3c3c', dx: 1, dy: 1, density: 15, bounds: '' },   // Red: Down-Right
+      { id: 2, color: '#3cc8ff', dx: -1, dy: 1, density: 15, bounds: '' }   // Blue: Down-Left
+    ];
+
+    // High-speed lookup table for colors (maps car ID to RGB)
+    const colorTable = new Uint8Array(256 * 3); 
+
+    // DOM Elements
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const carListEl = document.getElementById('carList');
+
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+    }
+
+    function updateColorTable() {
+      // Background (Empty = ID 0)
+      colorTable[0] = 24; colorTable[1] = 24; colorTable[2] = 28;
+      for (const car of carTypes) {
+        const rgb = hexToRgb(car.color);
+        colorTable[car.id * 3] = rgb[0];
+        colorTable[car.id * 3 + 1] = rgb[1];
+        colorTable[car.id * 3 + 2] = rgb[2];
+      }
+    }
+
+    function renderCarUI() {
+      carListEl.innerHTML = '';
+      carTypes.forEach((car, index) => {
+        const div = document.createElement('div');
+        div.className = 'car-item';
+        div.innerHTML = `
+          <input type="color" value="${car.color}" data-idx="${index}" class="car-color" title="Color">
+          <label title="Velocity X">dx: <input type="number" value="${car.dx}" data-idx="${index}" class="car-dx"></label>
+          <label title="Velocity Y">dy: <input type="number" value="${car.dy}" data-idx="${index}" class="car-dy"></label>
+          <label title="Grid Percentage %">den: <input type="number" value="${car.density}" data-idx="${index}" class="car-density" min="0" max="100"></label>
+          <label title="Leave empty to use Global Bounds">bnd: <input type="text" value="${car.bounds}" data-idx="${index}" class="car-bounds" placeholder="Global"></label>
+          <button class="danger car-rm" data-idx="${index}" title="Remove Class">X</button>
+        `;
+        carListEl.appendChild(div);
+      });
+
+      document.querySelectorAll('.car-color').forEach(el => 
+        el.addEventListener('input', (e) => { carTypes[e.target.dataset.idx].color = e.target.value; updateColorTable(); drawGrid(); })
+      );
+      document.querySelectorAll('.car-dx').forEach(el => 
+        el.addEventListener('change', (e) => { carTypes[e.target.dataset.idx].dx = parseInt(e.target.value) || 0; })
+      );
+      document.querySelectorAll('.car-dy').forEach(el => 
+        el.addEventListener('change', (e) => { carTypes[e.target.dataset.idx].dy = parseInt(e.target.value) || 0; })
+      );
+      document.querySelectorAll('.car-density').forEach(el => 
+        el.addEventListener('change', (e) => { carTypes[e.target.dataset.idx].density = parseFloat(e.target.value) || 0; initGrid(); })
+      );
+      document.querySelectorAll('.car-bounds').forEach(el => 
+        el.addEventListener('change', (e) => { carTypes[e.target.dataset.idx].bounds = e.target.value.trim(); })
+      );
+      document.querySelectorAll('.car-rm').forEach(el => 
+        el.addEventListener('click', (e) => {
+          carTypes.splice(e.target.dataset.idx, 1);
+          renderCarUI(); updateColorTable(); initGrid();
+        })
+      );
+    }
+
+    function setupBuffers() {
+      size = parseInt(document.getElementById('sizeSelect').value);
+      mask = size - 1; 
+      
+      canvas.width = size;
+      canvas.height = size;
+      
+      grid = new Uint8Array(size * size);
+      nextGrid = new Uint8Array(size * size);
+      imgData = new ImageData(size, size);
+      
+      for(let i = 3; i < imgData.data.length; i += 4) { imgData.data[i] = 255; }
+    }
+
+    function initGrid() {
+      setupBuffers();
+      updateColorTable();
+      totalCars = 0;
+      steps = 0;
+      lastMobility = 0;
+
+      if (carTypes.length > 0) {
+        for (let i = 0; i < size * size; i++) {
+          const r = Math.random() * 100;
+          let cum = 0;
+          for (let c = 0; c < carTypes.length; c++) {
+            cum += carTypes[c].density;
+            if (r < cum) {
+              grid[i] = carTypes[c].id;
+              totalCars++;
+              break;
+            }
+          }
+        }
+      } else {
+        grid.fill(0);
+      }
+
+      drawGrid();
+      updateStats();
+    }
+
+    // Resolves arbitrary edge mappings like a Klein Bottle
+    function get_mapping(rule, k, s) {
+      if (rule === 'X') return { status: 'block' };
+      if (rule === '-X') return { status: 'delete' };
+      let rev = rule.startsWith('-');
+      let target = rev ? rule.charAt(1) : rule.charAt(0);
+      let k_m = rev ? s - 1 - k : k;
+      
+      if (target === 'A') return { x: k_m, y: 0, status: 'ok' };
+      if (target === 'B') return { x: s - 1, y: k_m, status: 'ok' };
+      if (target === 'C') return { x: k_m, y: s - 1, status: 'ok' };
+      if (target === 'D') return { x: 0, y: k_m, status: 'ok' };
+      return { status: 'block' }; // Fallback protection
+    }
+
+    // Moves particle step by step simulating full boundary interaction
+    function move_particle(x, y, dx, dy, rulesArr, s) {
+      let nx = x, ny = y;
+      let status = 'ok';
+      
+      // Resolve X plane
+      let step_x = dx > 0 ? 1 : -1;
+      let rem_x = Math.abs(dx);
+      while(rem_x > 0 && status === 'ok') {
+        nx += step_x;
+        if (nx < 0) {
+          let res = get_mapping(rulesArr[3], ny, s); // Hit D
+          status = res.status; nx = res.x; ny = res.y;
+        } else if (nx >= s) {
+          let res = get_mapping(rulesArr[1], ny, s); // Hit B
+          status = res.status; nx = res.x; ny = res.y;
+        }
+        rem_x--;
+      }
+      
+      // Resolve Y plane
+      let step_y = dy > 0 ? 1 : -1;
+      let rem_y = Math.abs(dy);
+      while(rem_y > 0 && status === 'ok') {
+        ny += step_y;
+        if (ny < 0) {
+          let res = get_mapping(rulesArr[0], nx, s); // Hit A
+          status = res.status; nx = res.x; ny = res.y;
+        } else if (ny >= s) {
+          let res = get_mapping(rulesArr[2], nx, s); // Hit C
+          status = res.status; nx = res.x; ny = res.y;
+        }
+        rem_y--;
+      }
+      return { x: nx, y: ny, status };
+    }
+
+    function step() {
+      if (carTypes.length === 0) return;
+      let movedCars = 0;
+      let gRulesStr = document.getElementById('globalBounds').value || 'C,D,A,B';
+
+      for (let t = 0; t < carTypes.length; t++) {
+        const car = carTypes[t];
+        const id = car.id;
+        const dx = car.dx;
+        const dy = car.dy;
+        
+        let rulesStr = (car.bounds || gRulesStr).toUpperCase().replace(/\s+/g, '');
+        let isTorus = (rulesStr === 'C,D,A,B');
+        let rulesArr = rulesStr.split(',');
+        if (rulesArr.length !== 4) rulesArr = ['C','D','A','B'];
+
+        nextGrid.set(grid); 
+        
+        for (let y = 0; y < size; y++) {
+          let rowOffset = y * size;
+          for (let x = 0; x < size; x++) {
+            let idx = rowOffset + x;
+            if (grid[idx] === id) {
+              
+              // Extreme Optimization for standard Torus model (C,D,A,B)
+              if (isTorus && (Math.abs(dx) <= size) && (Math.abs(dy) <= size)) {
+                let nx = (x + dx) & mask;
+                let ny = (y + dy) & mask;
+                let nIdx = ny * size + nx;
+                
+                // Assure both initial state and mid-phase target are unoccupied
+                if (grid[nIdx] === 0 && nextGrid[nIdx] === 0) {
+                  nextGrid[idx] = 0;
+                  nextGrid[nIdx] = id;
+                  movedCars++;
+                }
+              } else {
+                // Slower Custom Boundary Topology resolver
+                let target = move_particle(x, y, dx, dy, rulesArr, size);
+                
+                if (target.status === 'ok') {
+                  let nIdx = target.y * size + target.x;
+                  if (grid[nIdx] === 0 && nextGrid[nIdx] === 0) {
+                    nextGrid[idx] = 0;
+                    nextGrid[nIdx] = id;
+                    movedCars++;
+                  }
+                } else if (target.status === 'delete') {
+                  nextGrid[idx] = 0;
+                  movedCars++;
+                  totalCars--;
+                }
+                // 'block' leaves the cell at [idx] intact.
+              }
+            }
+          }
+        }
+        grid.set(nextGrid);
+      }
+
+      steps++;
+      lastMobility = totalCars > 0 ? (movedCars / totalCars) * 100 : 0;
+    }
+
+    function drawGrid() {
+      const data = imgData.data;
+      for (let i = 0; i < size * size; i++) {
+        const val = grid[i];
+        const imgIdx = i * 4;
+        const colIdx = val * 3;
+        
+        data[imgIdx]   = colorTable[colIdx];
+        data[imgIdx+1] = colorTable[colIdx+1];
+        data[imgIdx+2] = colorTable[colIdx+2];
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function updateStats() {
+      document.getElementById('stepCount').innerText = steps;
+      const mobEl = document.getElementById('mobilityVal');
+      if (lastMobility === 0 && steps > 0 && totalCars > 0 && carTypes.length > 0) {
+        mobEl.innerText = "0.0% (JAMMED)";
+        mobEl.style.color = "#ff3c3c";
+      } else {
+        mobEl.innerText = lastMobility.toFixed(1) + "%";
+        mobEl.style.color = "#fff";
+      }
+    }
+
+    function loop() {
+      if (!isRunning) return;
+      const speed = parseInt(document.getElementById('speedSlider').value);
+      for(let s = 0; s < speed; s++) step();
+      
+      drawGrid();
+      updateStats();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    // Connect Base Listeners
+    document.getElementById('toggleBtn').addEventListener('click', (e) => {
+      isRunning = !isRunning;
+      e.target.innerText = isRunning ? "Pause" : "Start";
+      e.target.classList.toggle('active', isRunning);
+      if (isRunning) loop();
+      else cancelAnimationFrame(animationId);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      initGrid();
+      if (!isRunning) drawGrid(); 
+    });
+
+    document.getElementById('addCarBtn').addEventListener('click', () => {
+      if(nextCarId > 250) { alert("Too many car types!"); return; }
+      const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+      carTypes.push({ id: nextCarId++, color: randomColor, dx: 0, dy: 1, density: 10, bounds: '' });
+      renderCarUI(); updateColorTable(); initGrid();
+    });
+
+    document.getElementById('sizeSelect').addEventListener('change', initGrid);
+    document.getElementById('speedSlider').addEventListener('input', (e) => {
+      document.getElementById('speedVal').innerText = e.target.value;
+    });
+
+    // Boot Up
+    renderCarUI();
+    initGrid();
+  </script>
+</body>
+</html>

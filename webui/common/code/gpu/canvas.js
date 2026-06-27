@@ -1,7 +1,7 @@
 
 import "/code/gpu/webgpu.js";
-import { v2 } from "/code/math/vector.js";
-import { cartesian as c } from "/code/math/complex.js";
+import { Vec2 as v2 } from "/code/math/vector.js";
+import { Complex, cartesian as cart } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
 
 const defaults = { };
@@ -23,17 +23,17 @@ function add2dNavigationListeners(canvas, params, afterNavigate) {
         const pMouse = v2.fromMouse(e, canvas);
 
         const dims = v2.of(canvas.width, canvas.height);
-        const center = c.of(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
+        const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
         const scale = 1.0 / params.zoom;
         const angle = $tau * params.rotation;
 
-        const cMouse = c.fromPixel(pMouse, dims, center, scale);
+        const cMouse = Complex.fromPixel(pMouse, dims, center, scale);
 
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        const delta = v2.sub(pMouse, lastMouse);
+        const delta = pMouse.sub(lastMouse);
 
         const cos_a = Math.cos(angle);
         const sin_a = Math.sin(angle);
@@ -75,10 +75,10 @@ function add2dNavigationListeners(canvas, params, afterNavigate) {
         const pMouse = v2.fromMouse(e, canvas);
 
         const dims = v2.of(canvas.width, canvas.height);
-        const center = c.of(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
+        const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
         const scale = 1.0 / params.zoom;
         const rotation = params.rotation;
-        const cMouse = c.fromPixel(pMouse, dims, center, rotation, scale);
+        const cMouse = Complex.fromPixel(pMouse, dims, center, rotation, scale);
 
         const isTrackpad = e.deltaX > 0; // sloppy heuristic but whatever
         const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;

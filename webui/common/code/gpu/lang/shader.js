@@ -43,7 +43,7 @@ function valueProxy(varMap) {
             v.value = value;
             for (const registration of v.registrations.filter(r => r.set)) {
                 registration.set(value);
-                if (v.isComposite) {
+                if (v.isCompositeSubvar) {
                     console.log(v);
                     console.log(value);
                 }
@@ -56,10 +56,8 @@ function valueProxy(varMap) {
 // TODO: make this more debuggable lol
 // var_name: type, // hard? min to hard? max = default $various $optional $tags
 // [0: full match, 1: varname, 2: type, 3: comment, 4: hardmin, 5: min, 6: hardmax, 7: max, 8: default value, 9: tags]
-//const VAR_RE = /^\s*(\w+)\s*:\s*(\w+),?\s*(?:(\/\/)\s*(?:(?:(hard)\s+)?([\w.+-]+)\s+to\s+(?:(hard)\s+)?([\w.+-]+)(?:\s*=\s*([\w.+-,]+))?)?)?\s*((?:\$(?:\w+)(?:\([^\)]*\))?\s*?)*)\s*$/;
 const VAR_RE = /^\s*(\w+)\s*:\s*(\w+),?\s*(?:(\/\/)\s*(?:(?:(hard)\s+)?([\w.+-]+)\s+to\s+(?:(hard)\s+)?([\w.+-]+)(?:\s*=\s*([\w.+-,]+))?)?)?\s*((?:\$(?:\w+)(?:\((?:[^\)]|\(.*\))*\))?\s*?)*)\s*$/;
 
-//const TAG_RE = /\$(\w+)(?:\(([^)]*)\))?/g;
 const TAG_RE = /\$(\w+)(?:\(((?:[^()]+|\([^()]*\))*)\))?/g;
 
 
@@ -114,18 +112,21 @@ export async function loadShader(shaderName, substitutions = {}) {
                     registrations: [],
                     tags: tags,
                     dependents: [],
-                    isComposite: true,
+                    isCompositeSubvar: true,
                     parentName: parsed[1]
                 }));
                 composites[parsed[1]] = {
                     varName: parsed[1],
                     type: type,
                     uiName: uiName,
-                    // bytes: sum
+                    bytes: 0,
+                    aligns: composite_subvars.flatMap(v => v.aligns),
                     showControl: parsed[3] !== undefined,
-                    // value TODO
                     tags: tags,
-                    subVars: composite_subvars
+                    subVars: composite_subvars,
+                    registrations: [],
+                    dependents: [],
+                    isCompositeSubvar: false
                 };
                 return composite_subvars;
             }
@@ -147,14 +148,18 @@ export async function loadShader(shaderName, substitutions = {}) {
                 registrations: [],
                 tags: tags,
                 dependents: [],
-                isComposite: false
+                isCompositeSubvar: false
             };
         });
+
+        for (const key in composites) {
+            vars.push(composites[key]);
+        }
 
         const getTag = (v, tag) => v.tags.find(([name]) => name === tag);
         const getDependsOn = v => getTag(v, "depend")?.[1];
 
-        const varMap = {};
+        const varMap = { };
         vars.forEach(v => {
             varMap[v.varName] = v;
         });
@@ -165,9 +170,6 @@ export async function loadShader(shaderName, substitutions = {}) {
                 varMap[dependsOn].dependents.push(v.varName);
             }
         });
-
-        console.log(varMap);
-
 
         const buildNumber = (v, afterChangeCallback) => ({
             type: "number",
@@ -214,10 +216,10 @@ export async function loadShader(shaderName, substitutions = {}) {
         /// gemini's implementation, not yet reviewed
         const buildColor = (composite, afterChangeCallback) => {
             // 1. Deduplication: Only build the control once per composite parent
-            if (processedComposites.has(composite.parentName)) return null;
-            processedComposites.add(composite.parentName);
+            if (processedComposites.has(composite)) return null;
+            processedComposites.add(composite);
 
-            const compVars = composites[composite.parentName].subVars;
+            const compVars = composite.subVars;
 
             // 2. Map WGSL floats (0.0-1.0) to color.js sRGB standard (0-255)
             // Fallback to 0 if undefined.
@@ -225,7 +227,7 @@ export async function loadShader(shaderName, substitutions = {}) {
 
             return {
                 type: "color_picker",
-                label: getUiName(composite.parentName),
+                label: getUiName(composite.varName),
                 name: composite.parentName,
                 hidden: composite.hidden,
                 value: {
@@ -259,8 +261,12 @@ export async function loadShader(shaderName, substitutions = {}) {
             }
 
             if (getTag(v, "color")) {
+                if (v.isCompositeSubvar) return null;
+
                 return buildColor(v, afterChangeCallback);
             }
+
+            if (v.subVars) return;
 
             return buildNumber(v, afterChangeCallback);
         };
@@ -295,6 +301,8 @@ export async function loadShader(shaderName, substitutions = {}) {
         const updateBuffers = () => {
             var position = 0;
             vars.forEach(v => {
+                if (v.bytes === 0) return;
+
                 const align = Math.max(...v.aligns);
                 if (position % align !== 0) {
                     position = position + (align - position % align);

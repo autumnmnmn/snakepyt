@@ -10,6 +10,7 @@ const linspace = (start, end, n) =>
 
 const line = (p1, p2, _class) => {
     const element = $svgElement("line");
+    if (Number.isNaN(p1.x)) {console.trace()}
     element.setAttribute("x1", p1.x);
     element.setAttribute("x2", p2.x);
     element.setAttribute("y1", p1.y);
@@ -18,7 +19,7 @@ const line = (p1, p2, _class) => {
     return element;
 };
 
-import { v2, v3, m33 as mat } from '/code/math/vector.js';
+import { Vec2 as v2, Vec3 as v3, Mat3x3 as mat } from '/code/math/vector.js';
 import '/code/math/constants.js';
 
 function partition_region(width, height) {
@@ -32,7 +33,7 @@ function partition_region(width, height) {
     const origin_x = 0;//(width - rect_width) / 2;
     const origin_y = 0;//(height - rect_height) / 2;
 
-    const box = (x, y, w, h) => ({ min: { x, y }, max: { x: x + w, y: y + h } });
+    const box = (x, y, w, h) => ({ min: v2.of( x, y ), max: v2.of( x + w, y + h ) });
 
     if (use_wide) {
         const small_a = box(origin_x,           origin_y,         scale,     scale);
@@ -109,12 +110,12 @@ export async function main(svg) {
 
         const partitions = partition_region(width, height);
 
-        let rot_y = mat.rot_y((0.25-view_angle) * $tau);
-        let rot_x = mat.rot_x(view_height * $tau);
+        let rot_y = mat.rotY((0.25-view_angle) * $tau);
+        let rot_x = mat.rotX(view_height * $tau);
 
-        const transform_3d = mat.matmul(rot_x, rot_y);
+        const transform_3d = rot_x.matmul(rot_y);
         const transform_xy = mat.ident;
-        const transform_xz = mat.rot_x(-$tau / 4);
+        const transform_xz = mat.rotX(-$tau / 4);
 
         const corners = [
             v3.of(bounds_min.x, bounds_min.y, bounds_min.z),
@@ -127,9 +128,9 @@ export async function main(svg) {
             v3.of(bounds_max.x, bounds_max.y, bounds_max.z),
         ];
 
-        const corners_3d = corners.map(c => v3.matmul(transform_3d, c));
-        const corners_xy = corners.map(c => v3.matmul(transform_xy, c));
-        const corners_xz = corners.map(c => v3.matmul(transform_xz, c));
+        const corners_3d = corners.map(c => transform_3d.apply(c));
+        const corners_xy = corners.map(c => transform_xy.apply(c));
+        const corners_xz = corners.map(c => transform_xz.apply(c));
 
         const extrema = (() => {
             const bounds = (corners) => ({
@@ -161,27 +162,27 @@ export async function main(svg) {
         };
 
         const place_3d = (point) => {
-            const transformed = v3.matmul(transform_3d, point);
-            return {
-                x: x(transformed.x, partitions.big, extrema.xyz),
-                y: y(transformed.y, partitions.big, extrema.xyz)
-            };
+            const transformed = transform_3d.apply(point);
+            return v2.of(
+                x(transformed.x, partitions.big, extrema.xyz),
+                y(transformed.y, partitions.big, extrema.xyz)
+            );
         };
 
         const place_xy = (point) => {
-            const transformed = v3.matmul(transform_xy, point);
-            return {
-                x: x(transformed.x, partitions.small_a, extrema.xy),
-                y: y(transformed.y, partitions.small_a, extrema.xy)
-            };
+            const transformed = transform_xy.apply(point);
+            return v2.of(
+                x(transformed.x, partitions.small_a, extrema.xy),
+                y(transformed.y, partitions.small_a, extrema.xy)
+            );
         };
 
         const place_xz = (point) => {
-            const transformed = v3.matmul(transform_xz, point);
-            return {
-                x: x(transformed.x, partitions.small_b, extrema.xz),
-                y: y(transformed.y, partitions.small_b, extrema.xz)
-            };
+            const transformed = transform_xz.apply(point);
+            return v2.of(
+                x(transformed.x, partitions.small_b, extrema.xz),
+                y(transformed.y, partitions.small_b, extrema.xz)
+            );
         };
 
         return {
@@ -207,50 +208,45 @@ export async function main(svg) {
         const { place, grid_group } = layout;
 
         const x_axis = line(
-            place({ x: bounds_min.x - overhang.x, y: 0, z: 0 }),
-            place({ x: bounds_max.x + overhang.x, y: 0, z: 0 }),
+            place(v3.of(bounds_min.x - overhang.x, 0, 0)),
+            place(v3.of(bounds_max.x + overhang.x, 0, 0)),
             "axis"
         );
-
         const y_axis = line(
-            place({ y: bounds_min.y - overhang.y, x: 0, z: 0 }),
-            place({ y: bounds_max.y + overhang.y, x: 0, z: 0 }),
+            place(v3.of(0, bounds_min.y - overhang.y, 0)),
+            place(v3.of(0, bounds_max.y + overhang.y, 0)),
             "axis"
         );
-
         const z_axis = line(
-            place({ z: bounds_min.z - overhang.z, x: 0, y: 0 }),
-            place({ z: bounds_max.z + overhang.z, x: 0, y: 0 }),
+            place(v3.of(0, 0, bounds_min.z - overhang.z)),
+            place(v3.of(0, 0, bounds_max.z + overhang.z)),
             "axis 3d"
         );
-
         const x_guides_xy = x_ticks.map(x_val =>
             line(
-                place({ x: x_val, y: bounds_min.y - overhang.y / 2, z: 0 }),
-                place({ x: x_val, y: bounds_max.y + overhang.y / 2, z: 0 }),
+                place(v3.of(x_val, bounds_min.y - overhang.y / 2, 0)),
+                place(v3.of(x_val, bounds_max.y + overhang.y / 2, 0)),
                 "guide"
             )
         );
-
         const y_guides_xy = y_ticks.map(y_val =>
             line(
-                place({ y: y_val, x: bounds_min.x - overhang.x / 2, z: 0 }),
-                place({ y: y_val, x: bounds_max.x + overhang.x / 2, z: 0 }),
+                place(v3.of(bounds_min.x - overhang.x / 2, y_val, 0)),
+                place(v3.of(bounds_max.x + overhang.x / 2, y_val, 0)),
                 "guide"
             )
         );
-
         const x_guides_xz = x_ticks.map(x_val =>
             line(
-                place({ x: x_val, y: 0, z: bounds_min.z - overhang.z / 2 }),
-                place({ x: x_val, y: 0, z: bounds_max.z + overhang.z / 2 }),
+                place(v3.of(x_val, 0, bounds_min.z - overhang.z / 2)),
+                place(v3.of(x_val, 0, bounds_max.z + overhang.z / 2)),
                 "guide 3d"
             )
         );
         const z_guides_xz = z_ticks.map(z_val =>
             line(
-                place({ z: z_val, x: bounds_min.x - overhang.x / 2, y: 0 }),
-                place({ z: z_val, x: bounds_max.x + overhang.x / 2, y: 0 }),
+                place(v3.of(bounds_min.x - overhang.x / 2, 0, z_val)),
+                place(v3.of(bounds_max.x + overhang.x / 2, 0, z_val)),
                 "guide 3d"
             )
         );
@@ -268,7 +264,7 @@ export async function main(svg) {
         const { place, data_group } = layout;
 
         const path = $svgElement("path");
-        const p = (x_val, i) => place({ x: x_val, y: zero_y ? 0 : clamp(y_data[i]), z: zero_z ? 0 : clamp(z_data[i]) });
+        const p = (x_val, i) => place(v3.of(x_val, zero_y ? 0 : clamp(y_data[i]), zero_z ? 0 : clamp(z_data[i])));
         const sliced = endpoints ? init_x_data : init_x_data.slice(1, -1);
         const offset = endpoints ? 0 : 1;
         const d = sliced

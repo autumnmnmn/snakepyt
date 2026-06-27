@@ -18,8 +18,8 @@ $css(`
 import { greek } from "/code/math/math.js";
 
 import "/code/math/constants.js";
-import { v2 } from "/code/math/vector.js";
-import { cartesian as c } from "/code/math/complex.js";
+import { Vec2 as v2 } from "/code/math/vector.js";
+import { Complex, cartesian as cart } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
 
 export async function main() {
@@ -28,15 +28,15 @@ export async function main() {
     const observers = {};
 
     function computeTrajectory(cParam, maxIters, escapeThreshold) {
-        let z = c.of(0,0);
-        const trajectory = [c.copy(z)];
+        let z = cart(0,0);
+        const trajectory = [z.copy];
 
         for (let i = 0; i < maxIters; i++) {
-            if (c.magSq(z) > escapeThreshold * escapeThreshold) {
+            if (z.magSq > escapeThreshold * escapeThreshold) {
                 break;
             }
-            z = c.add(c.mul(z,z), cParam);
-            trajectory.push(c.copy(z));
+            z = z.mul(z).add(cParam);
+            trajectory.push(z.copy);
         }
 
         return trajectory;
@@ -375,12 +375,12 @@ export async function main() {
         const pMouse = v2.fromMouse(e, canvas);
 
         const dims = v2.of(width, height);
-        const center = c.of(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
+        const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
         const scale = 1.0 / params.zoom;
         const angle = $tau * params.rotation;
         const rotation = params.rotation;
 
-        const cMouse = c.fromPixel(pMouse, dims, center, rotation, scale);
+        const cMouse = Complex.fromPixel(pMouse, dims, center, rotation, scale);
 
         const trajectory = computeTrajectory(
             cMouse,
@@ -404,7 +404,7 @@ export async function main() {
 
             let pathData = "";
             for (let i = 0; i < trajectory.length; i++) {
-                const pixel = c.toPixel(trajectory[i], dims, center, rotation, scale);
+                const pixel = trajectory[i].toPixel(dims, center, rotation, scale);
 
                 // Skip points outside visible area
                 if (pixel.x < -10 || pixel.x > width + 10 ||
