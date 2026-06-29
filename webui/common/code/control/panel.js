@@ -2,16 +2,16 @@
 $css(`
 
 .control-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 0.5rem;
-    background: var(--main-background);
     font-family: var(--main-font);
     color: var(--main-solid);
     overflow-y: scroll;
     height: 100%;
-    width: 100%;
+    width: fit-content;
 }
 
 .control-panel > * {

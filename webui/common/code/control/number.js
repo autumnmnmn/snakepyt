@@ -19,7 +19,6 @@ $css(`
 }
 
 .number input[type=number] {
-    background: var(--main-background);
     color: var(--main-solid);
     font-family: var(--main-font);
     transition: border-color 0.2s ease;
@@ -164,7 +163,7 @@ export async function main(spec, panelState) {
 
     const reset_button = $element("button");
     reset_button.innerText = "⟳";
-    reset_button.label = "reset";
+    reset_button.title = `reset ${spec.name}`;
     reset_button.addEventListener("click", () => {
         set(spec.value);
         spec.onUpdate?.(spec.value, set, panelState);
@@ -185,8 +184,8 @@ export async function main(spec, panelState) {
 
     const dom = [control.$with(
         label, label_eq.$with(copyable_value), field,
-        /*play_button,*/ reset_button,
-        slider
+        slider,
+        reset_button
     )];
 
     const hide = () => {

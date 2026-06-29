@@ -223,7 +223,6 @@ export async function loadShader(shaderName, substitutions = {}) {
 
             // 2. Map WGSL floats (0.0-1.0) to color.js sRGB standard (0-255)
             // Fallback to 0 if undefined.
-            const initialRgbVals = compVars.map(cv => (cv.value || 0) * 255);
 
             return {
                 type: "color_picker",
@@ -232,9 +231,9 @@ export async function loadShader(shaderName, substitutions = {}) {
                 hidden: composite.hidden,
                 value: {
                     space: "rgb",
-                    vals: () => compVars.map(cv => cv.value) //initialRgbVals.slice(0, 3)
+                    vals: () => compVars.map(cv => (cv.value || 0) * 255) //initialRgbVals.slice(0, 3)
                 },
-                onUpdate: (payload, set, panelState) => {
+                onUpdate: (payload, set, panelState, doCallback = true) => {
                     // 3. Convert whichever space the UI is currently in back to 0.0-1.0 RGB
                     const [r, g, b] = cssToNormalizedRgb(payload.css);
 
@@ -246,7 +245,7 @@ export async function loadShader(shaderName, substitutions = {}) {
                     // Note: If you use vec4f for colors, alpha is compVars[3].
                     // You'd need to extend color.js to support an alpha slider to pipe that here.
 
-                    afterChangeCallback();
+                    if (doCallback) afterChangeCallback();
                 },
                 register: (registration) => composite.registrations.push(registration),
             };

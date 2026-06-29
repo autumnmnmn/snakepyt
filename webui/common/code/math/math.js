@@ -1,4 +1,25 @@
 
+$css(`
+    .math-inline {
+        display: inline-block;
+    }
+
+    .math-inline math {
+        display: inline-block;
+    }
+
+    .math-block {
+        display: block;
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .math-block math {
+        display: block;
+    }
+`);
+
 function makeLeaf(tag, content) {
     return () => {
         const element = $mathElement(tag);
@@ -123,7 +144,7 @@ export async function main(expression, inline=false) {
     //console.log(inline);
 
     const lines = expression.trim().split("\n");
-    const dom = [];
+    const mathContent = [];
 
     const idents = {};
     const texts = {};
@@ -308,12 +329,16 @@ export async function main(expression, inline=false) {
 
 
 
-        dom.push(make(root));
-        if (index < contentLines.length - 1) {
-            dom.push($element("br"));
-        }
+        mathContent.push(make(root));
+        //if (index < contentLines.length - 1) {
+        //    mathContent.push($element("br"));
+        //}
     }
 
-    return { dom };
+    const container = $element(isInline ? "span" : "div");
+
+    container.className = isInline ? "math-inline" : "math-block";
+
+    return { dom: [container.$with(...mathContent)] };
 }
 

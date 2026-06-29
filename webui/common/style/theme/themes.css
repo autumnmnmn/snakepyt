@@ -1,6 +1,7 @@
 
 *[data-theme=whiteboard] {
     --main-background: #F0EAF0;
+    --faded-background: #F0EAF0A0;
     --main-solid: #112233;
     --main-transparent: #112233DD;
     --main-faded: #11223344;
@@ -45,6 +46,7 @@
 
 *[data-theme=blackboard] {
     --main-background: #112233;
+    --faded-background: #112233A0;
     --main-solid: #EEDDEE;
     --main-transparent: #EEDDEEDD;
     --main-faded: #EEDDEE44;

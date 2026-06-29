@@ -194,7 +194,7 @@ const SPACES = {
                 return c > 0.04045 ? Math.pow((c + 0.055) / 1.055, 2.4) : c / 12.92;
             };
             let lr = toLin(r), lg = toLin(g), lb = toLin(b);
-            
+
             // Linear -> LMS
             let l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
             let m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
@@ -305,11 +305,11 @@ export async function main(spec, panelState) {
         const nameSpan = $element("span");
         const valSpan = $element("span");
         valSpan.className = "val";
-        
+
         const label = $element("label").$with(nameSpan, valSpan);
         const input = $element("input");
         input.type = "range";
-        
+
         group.$with(label, input);
         return { group, nameSpan, valSpan, input, index: i };
     });
@@ -326,9 +326,9 @@ export async function main(spec, panelState) {
         spaceSelect.appendChild(opt);
     }
 
-    function initSpace() {
+    function initSpace(triggerCallback = true) {
         const space = SPACES[activeSpaceId];
-        
+
         axisX.innerHTML = "";
         axisY.innerHTML = "";
         space.channels.forEach((ch, i) => {
@@ -352,7 +352,7 @@ export async function main(spec, panelState) {
         });
 
         renderArea();
-        updateUI();
+        updateUI(triggerCallback);
     }
 
     function makeColor(overrideX, overrideY) {
@@ -366,8 +366,8 @@ export async function main(spec, panelState) {
     function getSliderGradient(channelIndex) {
         const space = SPACES[activeSpaceId];
         const ch = space.channels[channelIndex];
-        const numStops = ch.max > 100 ? 10 : 2; 
-        
+        const numStops = ch.max > 100 ? 10 : 2;
+
         let stops = [];
         for(let i=0; i<=numStops; i++) {
             let temp = [...sliderVals];
@@ -384,15 +384,15 @@ export async function main(spec, panelState) {
         const chX = space.channels[axisXIndex];
         const chY = space.channels[axisYIndex];
 
-        const rowHeight = 2; 
-        const stops = 10;    
+        const rowHeight = 2;
+        const stops = 10;
 
         ctx.clearRect(0, 0, cssWidth, cssHeight);
 
         for (let y = 0; y < cssHeight; y += rowHeight) {
             const normY = 1 - (y / (cssHeight - 1));
             const valY = chY.min + (normY * (chY.max - chY.min));
-            
+
             const grad = ctx.createLinearGradient(0, 0, cssWidth, 0);
             for (let j = 0; j <= stops; j++) {
                 const normX = j / stops;
@@ -401,14 +401,14 @@ export async function main(spec, panelState) {
             }
 
             ctx.fillStyle = grad;
-            ctx.fillRect(0, y, cssWidth, rowHeight + 0.5); 
+            ctx.fillRect(0, y, cssWidth, rowHeight + 0.5);
         }
     }
 
     function updateUI(triggerCallback = true) {
         const space = SPACES[activeSpaceId];
         const cssStr = space.toCss(sliderVals);
-        
+
         colorbox.style.setProperty("--value", cssStr);
         value.value = cssStr;
 
@@ -427,10 +427,8 @@ export async function main(spec, panelState) {
         cursor.style.left = `${normX * 100}%`;
         cursor.style.top = `${(1 - normY) * 100}%`;
 
-        if (triggerCallback) {
-            const payload = { space: activeSpaceId, vals: [...sliderVals], css: cssStr };
-            spec.onUpdate?.(payload, set, panelState);
-        }
+        const payload = { space: activeSpaceId, vals: [...sliderVals], css: cssStr };
+        spec.onUpdate?.(payload, set, panelState, triggerCallback);
     }
 
     function resizeCanvas() {
@@ -452,11 +450,9 @@ export async function main(spec, panelState) {
 
     spaceSelect.addEventListener("change", e => {
         const [r, g, b] = vals().map(v => (v || 0.0) * 255);
-        console.log([r,g,b]);
-        
+
         activeSpaceId = e.target.value;
         sliderVals = SPACES[activeSpaceId].fromRgb(r, g, b);
-        console.log(sliderVals);
 
         axisXIndex = 2;
         axisYIndex = 1;
@@ -489,20 +485,20 @@ export async function main(spec, panelState) {
     let isDragging = false;
     function handlePointer(e) {
         if (!isDragging) return;
-        
+
         const rect = areaContainer.getBoundingClientRect();
         let x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
         let y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
 
         const normX = x / rect.width;
         const normY = 1 - (y / rect.height);
-        
+
         const chX = SPACES[activeSpaceId].channels[axisXIndex];
         const chY = SPACES[activeSpaceId].channels[axisYIndex];
 
         sliderVals[axisXIndex] = chX.min + (normX * (chX.max - chX.min));
         sliderVals[axisYIndex] = chY.min + (normY * (chY.max - chY.min));
-        
+
         updateUI();
     }
 
@@ -521,21 +517,21 @@ export async function main(spec, panelState) {
     resizeObserver.observe(areaContainer);
 
     // -- Boot Options --
-    
+
     // Set allows external resets mapping via identical signature to the slider event
-    const set = (payload) => {
+    const set = (payload, doCallback = false) => {
         if (payload.space && SPACES[payload.space]) {
             activeSpaceId = payload.space;
             sliderVals = [...payload.vals];
             spaceSelect.value = activeSpaceId;
-            initSpace(); // Rebuilds DOM bindings then triggers UI
+            initSpace(doCallback); // Rebuilds DOM bindings then triggers UI
         }
     };
 
     const hide = () => control.setAttribute("hidden", "");
     const show = () => control.removeAttribute("hidden");
 
-    initSpace();
+    initSpace(false);
 
     const bundle = { dom: [control], set, show, hide };
 
@@ -543,3 +539,4 @@ export async function main(spec, panelState) {
 
     return bundle;
 }
+

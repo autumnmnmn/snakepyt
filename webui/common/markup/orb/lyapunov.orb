@@ -47,7 +47,7 @@ $css {
         }
     }
 
-    span.center {
+    .center {
         display: block;
         margin: auto;
         width: fit-content;
@@ -134,16 +134,15 @@ paper a[href=https://doi.org/10.1016/0097-8493(89)90019-8]{Lyapunov exponents of
 map with periodic forcing} (a[href=https://sci-hub.ru/10.1016/0097-8493(89)90019-8]{pirate link}).
 
 The fractal is a visualization of the behavior of the following iterative formula:
-span[class=center | style=padding-top:0.5rem]{
-    $math/math {
-        ident r x n A B R:ℝ S s m:M i
-        op ( ) + - = · in:∈ ll:{ rr:} %:mod
-        text given:"given a sequence of real numbers" where:~ let:~ and:~ values:~ then:"then"
-        in
-        given ll r_0 , r_1 , r_2 , ... r_n rr
-        let x_0 = 0.5,
-        then x_{n+1} = r_n · x_n · (1 - x_n)
-    }
+
+$math/math {
+    ident r x n A B R:ℝ S s m:M i
+    op ( ) + - = · in:∈ ll:{ rr:} %:mod
+    text given:"given a sequence of real numbers" where:~ let:~ and:~ values:~ then:"then"
+    in
+    given ll r_0 , r_1 , r_2 , ... r_n rr
+    let x_0 = 0.5,
+    then x_{n+1} = r_n · x_n · (1 - x_n)
 }
 
 This formula is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} (though in other settings the logistic map is usually taken to have a fixed r-value). We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
@@ -163,15 +162,14 @@ In the original paper, the sequence has only two distinct r-values, denoted A an
 The stability measure employed is the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{maximal Lyapunov exponent (MLE)}, and this is where the fractal gets its name (although, since Aleksandr Lyapunov never lived to see these fractals, they are sometimes called "Markus-Lyapunov fractals" instead). In the case of this discrete system, the idea is to take the average of the logarithm of the magnitude of the derivative. We then take a negative MLE to indicate stability or convergence, while a positive MLE indicates chaos. Often, these cases are colorized separately. The values are unbounded, so some normalization is required.
 
 Usually when one says "Lyapunov fractal", it is in reference to the system just described, based on the logistic map. However, Lyapunov exponents can be computed for many different systems, and similar visualizations of those systems can just as well be called Lyapunov fractals. Indeed, Markus himself would go on to expand on the idea in a 1990 publication, a[href=https://doi.org/10.1063/1.4822940]{Chaos in Maps with Continuous and Discontinuous Maxima}, in which he explored two interesting modifications to the system, one of which was to use a different, discontinuous map:
-span[class=center | style=padding-top:0.5rem]{
-    $math/math {
-        ident alpha:~ x r n
-        text if:~
-        op > leq:≤ + ( ) - = ·
-        in
-        x_{n+1} = r_n · x_n · (1 - x_n) if x_n > 0.5
-        x_{n+1} = r_n · x_n · (1 - x_n) + 0.25 (alpha - 1) (r_n - 2) if x_n leq 0.5
-    }
+
+$math/math {
+    ident alpha:~ x r n
+    text if:~
+    op > leq:≤ + ( ) - = ·
+    in
+    x_{n+1} = r_n · x_n · (1 - x_n) if x_n > 0.5
+    x_{n+1} = r_n · x_n · (1 - x_n) + 0.25 (alpha - 1) (r_n - 2) if x_n leq 0.5
 }
 
 Where α is a real parameter, typically just a little less than 1.

@@ -13,6 +13,13 @@ $css(`
         display: none;
         background-color: var(--main-background);
     }
+
+    .control-container {
+        position: relative;
+        width: fit-content;
+        height: 100%;
+        background-color: var(--faded-background);
+    }
 `);
 
 import { greek } from "/code/math/math.js";
@@ -26,7 +33,7 @@ export async function main() {
     let canRender = false;
 
     const renderStack = $div("full");
-    let topmost = renderStack;
+    //let topmost = renderStack;
     renderStack.dataset.name = "renderer";
     renderStack.style.position = "relative";
 
@@ -105,21 +112,18 @@ export async function main() {
 
     renderStack.appendChild(overlay);
 
-    function showControls() {
-        if (!topmost.isConnected) {
-            topmost = renderStack;
-        }
-        else if (topmost.querySelector(".control-panel")) return;
+    const control_container = $div("control-container").$with(...controls.dom);
+    control_container.style.display = "block";
 
-        return ["show controls", async () => {
-            const split = await $apply("layout/split",
-                renderStack.parentNode,
-                {
-                    content: [controls.dom, renderStack],
-                    percents: [20, 80]
-                }
-            );
-            topmost = split.topmost;
+    renderStack.appendChild(control_container);
+
+    function setControlDisplayState(state) {
+        const verb = state === "none" ? "hide" : "show";
+
+        if (control_container.style.display === state) return;
+
+        return [`${verb} controls`, async () => {
+            control_container.style.display = state;
         }];
     }
 
@@ -132,21 +136,38 @@ export async function main() {
         return { r, g, b, a };
     }
 
-    let style = getComputedStyle(colorDetector);
-    let backgroundColor = parseRgb(style.backgroundColor);
-    blitParams.nan_color_x = backgroundColor.r;
-    blitParams.nan_color_y = backgroundColor.g;
-    blitParams.nan_color_z = backgroundColor.b;
+    let backgroundColor = { r: 0, g: 0, b: 0, a: 0 };
+
+    const rgbaEq = (a, b) =>
+        a.r === b.r &&
+        a.g === b.g &&
+        a.b === b.b &&
+        a.a === b.a;
+
+    const hue_neg = Math.floor(Math.random() * 360);
+    const hue_pos = (hue_neg + 60) % 360;
+
+    blitParams.neg_color = { space: "hsl", vals: [hue_neg, 80, 50] };
+    blitParams.pos_color = { space: "hsl", vals: [hue_pos, 80, 50] };
+
+    const retheme = () => {
+        const style = getComputedStyle(colorDetector);
+        const newBackgroundColor = parseRgb(style.backgroundColor);
+        if (!rgbaEq(newBackgroundColor, backgroundColor)) {
+            backgroundColor = newBackgroundColor;
+            blitParams.nan_color = {
+                space: "rgb",
+                vals: [
+                    backgroundColor.r * 255,
+                    backgroundColor.g * 255,
+                    backgroundColor.b * 255
+                ]
+            };
+        }
+    };
 
     observers.theme = new MutationObserver(() => {
-        style = getComputedStyle(colorDetector);
-        const newBackgroundColor = parseRgb(style.backgroundColor);
-        if (newBackgroundColor !== backgroundColor) {
-            backgroundColor = newBackgroundColor;
-            blitParams.nan_color_x = backgroundColor.r;
-            blitParams.nan_color_y = backgroundColor.g;
-            blitParams.nan_color_z = backgroundColor.b;
-        }
+        retheme();
 
         if (canRender) render();
     });
@@ -162,10 +183,7 @@ export async function main() {
         if (document.fullscreenElement) {
             document.exitFullscreen();
         }
-        // relying on showControls' topmost check to have occurred before this can be called,
-        // which is true bc that happens while the context menu is built.
-        // this may not remain true if a hotkey is added for exiting w/o opening the menu
-        const target = topmost.parentNode;
+        const target = renderStack.parentNode;
         target.replaceChildren();
         $apply("layout/nothing", target);
     }
@@ -189,27 +207,13 @@ export async function main() {
                 document.exitFullscreen();
             }
             else {
-                (topmost.isConnected ? topmost : renderStack).requestFullscreen();
+                renderStack.requestFullscreen();
             }
         }
     });
 
-    const split = await $mod("layout/split",
-        {
-            content: [controls.dom, renderStack],
-            percents: [20, 80]
-        }
-    );
-    topmost = split.topmost;
-
     let width = canvas.clientWidth;
     let height = canvas.clientHeight;
-
-    style = getComputedStyle(colorDetector);
-    backgroundColor = parseRgb(style.backgroundColor);
-    blitParams.nan_color_x = backgroundColor.r;
-    blitParams.nan_color_y = backgroundColor.g;
-    blitParams.nan_color_z = backgroundColor.b;
 
     let outputTexture;
     let computeBindGroup;
@@ -295,6 +299,8 @@ export async function main() {
         overlay.setAttribute("viewBox", `0 0 ${width} ${height}`);
         overlay.setAttribute("width", width);
         overlay.setAttribute("height", height);
+
+        retheme();
 
         canvas.width = width;
         canvas.height = height;
@@ -391,18 +397,19 @@ export async function main() {
 
     renderStack.$contextMenu = {
         items: [
-            showControls,
+            () => setControlDisplayState("block"),
             ["save frame", saveFrame],
             ["save 4x", () => offscreenRender(2)],
             ["save 9x", () => offscreenRender(3)],
             ["save 16x", () => offscreenRender(4)],
+            () => setControlDisplayState("none"),
             ["exit", exitRenderer]
         ]
     };
 
     canvasModule.addNavigation("2d", params, render);
 
-    return { dom: [topmost], replace: true };
+    return { dom: [renderStack], replace: true };
 }
 
 
