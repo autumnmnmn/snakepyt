@@ -48,6 +48,19 @@ $css(`
     display: none;
 }
 
+@media (max-width: 768px) {
+    .control-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .control {
+        width: 45%;
+        max-width: 45%;
+    }
+}
+
 `);
 
 async function createControl(target, spec, state) {

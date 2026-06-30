@@ -1,6 +1,14 @@
 
 $css(`
-    .overlay {
+    .lyapunov-webgpu.topmost {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: row;
+    }
+
+    .lyapunov-webgpu .overlay {
         user-select: none;
         position: absolute;
         z-index: 1;
@@ -9,16 +17,33 @@ $css(`
         pointer-events: none;
     }
 
-    .color-detector {
+    .lyapunov-webgpu .color-detector {
         display: none;
         background-color: var(--main-background);
     }
 
-    .control-container {
+    .lyapunov-webgpu .control-container {
         position: relative;
         width: fit-content;
         height: 100%;
         background-color: var(--faded-background);
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+        .lyapunov-webgpu.topmost {
+            flex-direction: column-reverse;
+        }
+
+        .lyapunov-webgpu.topmost > * {
+            flex: 1 1 0;
+        }
+
+        .lyapunov-webgpu .control-container {
+            flex-shrink: revert;
+            width: 100%;
+            height: fit-content;
+        }
     }
 `);
 
@@ -31,6 +56,8 @@ import { splitDouble } from "/code/math/precision.js";
 
 export async function main() {
     let canRender = false;
+
+    const topmost = $div("lyapunov-webgpu topmost");
 
     const renderStack = $div("full");
     //let topmost = renderStack;
@@ -112,18 +139,16 @@ export async function main() {
 
     renderStack.appendChild(overlay);
 
-    const control_container = $div("control-container").$with(...controls.dom);
-    control_container.style.display = "block";
-
-    renderStack.appendChild(control_container);
+    const controlContainer = $div("control-container").$with(...controls.dom);
+    controlContainer.style.display = "block";
 
     function setControlDisplayState(state) {
         const verb = state === "none" ? "hide" : "show";
 
-        if (control_container.style.display === state) return;
+        if (controlContainer.style.display === state) return;
 
         return [`${verb} controls`, async () => {
-            control_container.style.display = state;
+            controlContainer.style.display = state;
         }];
     }
 
@@ -207,13 +232,15 @@ export async function main() {
                 document.exitFullscreen();
             }
             else {
-                renderStack.requestFullscreen();
+                topmost.requestFullscreen();
             }
         }
     });
 
-    let width = canvas.clientWidth;
-    let height = canvas.clientHeight;
+
+    const dpr = window.devicePixelRatio || 1;
+    let width = canvas.clientWidth * dpr;
+    let height = canvas.clientHeight * dpr;
 
     let outputTexture;
     let computeBindGroup;
@@ -293,8 +320,8 @@ export async function main() {
 
 
     function resize() {
-        width = canvas.clientWidth;
-        height = canvas.clientHeight;
+        width = canvas.clientWidth * dpr;
+        height = canvas.clientHeight * dpr;
 
         overlay.setAttribute("viewBox", `0 0 ${width} ${height}`);
         overlay.setAttribute("width", width);
@@ -409,7 +436,9 @@ export async function main() {
 
     canvasModule.addNavigation("2d", params, render);
 
-    return { dom: [renderStack], replace: true };
+    topmost.$with(controlContainer, renderStack);
+
+    return { dom: [topmost], replace: true };
 }
 
 

@@ -8,15 +8,35 @@ $css(`
         display: inline-block;
     }
 
+    @supports (display: inline math) {
+        .math-inline math {
+            display: inline math;
+        }
+    }
+
     .math-block {
-        display: block;
-        width: fit-content;
-        margin-left: auto;
-        margin-right: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-left: 0.75rem;
+        padding-top: 0.5rem;
+        border-left: 3px double var(--main-faded);
+        max-width: 100%;
+        overflow-x: auto;
     }
 
     .math-block math {
         display: block;
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    @supports (display: math) {
+        .math-block math {
+            display: math;
+            width: max-content;
+            max-width: max-content;
+        }
     }
 `);
 

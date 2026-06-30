@@ -6,6 +6,8 @@ import { splitDouble } from "/code/math/precision.js";
 
 const defaults = { };
 
+const dpr = window.devicePixelRatio || 1;
+
 function add2dNavigationListeners(canvas, params, afterNavigate) {
     let isDragging = false;
     let lastMouse = v2.of(0,0);
@@ -13,14 +15,14 @@ function add2dNavigationListeners(canvas, params, afterNavigate) {
     canvas.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
         isDragging = true;
-        lastMouse = v2.fromMouse(e, canvas);
+        lastMouse = v2.fromMouse(e, canvas).scale(dpr);
         canvas.style.cursor = "all-scroll";
     });
 
     canvas.addEventListener("pointermove", (e) => {
         if (!isDragging) return;
 
-        const pMouse = v2.fromMouse(e, canvas);
+        const pMouse = v2.fromMouse(e, canvas).scale(dpr);
 
         const dims = v2.of(canvas.width, canvas.height);
         const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
@@ -72,7 +74,7 @@ function add2dNavigationListeners(canvas, params, afterNavigate) {
     canvas.addEventListener("wheel", (e) => {
         e.preventDefault();
 
-        const pMouse = v2.fromMouse(e, canvas);
+        const pMouse = v2.fromMouse(e, canvas).scale(dpr);
 
         const dims = v2.of(canvas.width, canvas.height);
         const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
@@ -80,8 +82,8 @@ function add2dNavigationListeners(canvas, params, afterNavigate) {
         const rotation = params.rotation;
         const cMouse = Complex.fromPixel(pMouse, dims, center, rotation, scale);
 
-        const isTrackpad = e.deltaX > 0; // sloppy heuristic but whatever
-        const zoomFactorDiff = isTrackpad ? 0.01 : 0.1;
+        const isTrackpad = Math.abs(e.deltaY) < 50; // sloppy heuristic but whatever
+        const zoomFactorDiff = isTrackpad ? 0.025 : 0.1;
 
         // negative deltaY means zoom in
         const zoomFactor = e.deltaY > 0 ? 1.0 - zoomFactorDiff : 1.0 + zoomFactorDiff;
