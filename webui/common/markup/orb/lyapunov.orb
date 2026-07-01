@@ -103,6 +103,13 @@ h3[style=text-decoration:underline]{TODO}
 
 archival links to combat link rot
 
+wow: $math/math { inline
+ident x
+op +
+in
+x_2
+} an inline math expression
+
 first plots: widen the 2d plots maybe?
 
 generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases
@@ -137,11 +144,11 @@ The fractal is a visualization of the behavior of the following iterative formul
 
 $math/math {
     ident r x n A B R:ℝ S s m:M i
-    op ( ) + - = · in:∈ ll:{ rr:} %:mod
+    op ( ) + - = · in:∈ ll:{ rr:} %:mod , ...
     text given:"given a sequence of real numbers" where:~ let:~ and:~ values:~ then:"then"
     in
     given ll r_0 , r_1 , r_2 , ... r_n rr
-    let x_0 = 0.5,
+    let x_0 = 0.5 ,
     then x_{n+1} = r_n · x_n · (1 - x_n)
 }
 

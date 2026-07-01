@@ -2,18 +2,21 @@
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
 
-const inlineElements = ["b", "i", "span", "sub", "sup", "a"];
-const inlineModules = ["math/inline"];
+// elements that are themselves inline
+const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q"];
+// elements whose innards are meant to be inline
+const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
 
-// TODO deal w/ extraneous span generation
-// TODO elide spaces in cases like "( a[href=foo]{bar})",
-// maybe make such spaces unnecessary in the parser
+const DEBUG = true;
+
+const spaceAfter = /[\w,;.:]/;
 
 export async function build(nodes, source, inline=false, namespace=null) {
-    let segment = document.createElement(inline ? "span" : "p");
+    let segment = inline ? document.createDocumentFragment() : document.createElement("p");
+    if (DEBUG && !inline) { segment.dataset.provenance = "0" };
     let inlineEnded = false;
     let pendingSpace = false;
 
@@ -26,27 +29,27 @@ export async function build(nodes, source, inline=false, namespace=null) {
         const tag = node.tag.symbol;
 
         if (tag === TEXT) {
-            const span = document.createElement("span");
             const content = source.substring(node.content.start, node.content.end + 1);
-            span.textContent = content;
             if (inlineEnded && /[\w(]/.test(content[0])) {
                 segment.appendChild(document.createTextNode(" "));
             }
-            segment.appendChild(span);
+            segment.appendChild(document.createTextNode(content));
             inlineEnded = false;
-            pendingSpace = /[\w,;.]/.test(content.at(-1));
+            pendingSpace = spaceAfter.test(content.at(-1));
             continue;
         }
 
         if (tag === BREAK) {
             if (inline) {
                 const br = document.createElement("br");
+                if (DEBUG) { br.dataset.provenance = "2" };
                 segment.appendChild(br);
             } else {
                 if (segment.childNodes.length > 0) {
                     segment.$contextMenu = { override: true };
                     domNodes.push(segment);
                     segment = document.createElement("p");
+                    if (DEBUG) { segment.dataset.provenance = "3" };
                 }
             }
             continue;
@@ -63,11 +66,13 @@ export async function build(nodes, source, inline=false, namespace=null) {
 
         if (inlineElements.includes(tag)) {
             const tagElement = namespace === null ? document.createElement(tag) : document.createElementNS(namespace, tag);
-            if (pendingSpace) {
+            if (DEBUG) { tagElement.dataset.provenance = "4" }
+            if (pendingSpace || inlineEnded) {
                 segment.appendChild(document.createTextNode(" "));
             }
             pendingSpace = false;
-            const children = await build(node.content.nodes, source, true, namespace);
+            const inlineContents = inlineChildrenElements.includes(tag);
+            const children = await build(node.content.nodes, source, inlineContents, namespace);
             tagElement.append(...children);
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
@@ -80,22 +85,26 @@ export async function build(nodes, source, inline=false, namespace=null) {
 
         if (tag[0] !== "$") {
             if (segment.childNodes.length > 0) {
-                segment.$contextMenu = { items: [], override: true };
+                if (!inline) segment.$contextMenu = { items: [], override: true };
                 domNodes.push(segment);
-                segment = document.createElement(inline ? "span" : "p");
+                segment = inline ? document.createDocumentFragment() : document.createElement("p");
+                if (DEBUG && !inline) { segment.dataset.provenance = "5" }
             }
             try {
                 const tagElement = namespace === null ? document.createElement(tag) : document.createElementNS(namespace, tag);
+                if (DEBUG) { tagElement.dataset.provenance = "6" }
                 for (const arg of bracketArgs) {
                     const split = arg.split("=");
                     tagElement.setAttribute(split[0].trim(), split[1]);
                 }
-                const children = await build(node.content.nodes, source, false, namespace);
+                const inlineContents = inlineChildrenElements.includes(tag);
+                const children = await build(node.content.nodes, source, inlineContents, namespace);
                 tagElement.append(...children);
                 domNodes.push(tagElement);
             }
             catch {
                 const _sp = document.createElement("span");
+                if (DEBUG) { _sp.dataset.provenance = "7" }
                 _sp.innerText = ` [no tag "${tag}"] `;
                 segment.appendChild(_sp);
             }
@@ -103,16 +112,10 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         const modNameStr = tag.substring(1);
-        const isInlineModule = inlineModules.includes(modNameStr);
-
-        if (!isInlineModule && segment.childNodes.length > 0) {
-            segment.$contextMenu = { items: [], override: true };
-            domNodes.push(segment);
-            segment = document.createElement(inline ? "span" : "p");
-        }
 
         if (tag === "$") {
             const span = $element("span");
+            if (DEBUG) { span.dataset.provenance = "9" }
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
                 span.setAttribute(split[0].trim(), split[1]);
@@ -142,25 +145,23 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         const script = $element("script");
+        if (DEBUG) { script.dataset.provenance = "9" }
         const modName = JSON.stringify(tag.substring(1));
         const modContent = JSON.stringify(source.substring(node.content.start, node.content.end));
         const modArgs = JSON.stringify(bracketArgs);
         script.innerText = `$replace(document.currentScript, ${modName}, ...${modArgs}, ${modContent});`;
 
-        if (isInlineModule) {
-            if (pendingSpace) {
-                segment.appendChild(document.createTextNode(" "));
-            }
-            pendingSpace = false;
-            segment.appendChild(script);
-            inlineEnded = true;
-        } else {
-            domNodes.push(script);
+        if (pendingSpace || inlineEnded) {
+            segment.appendChild(document.createTextNode(" "));
+            console.log("here");
         }
+        pendingSpace = false;
+        segment.appendChild(script);
+        inlineEnded = true;
     }
 
     if (segment.childNodes.length > 0) {
-        segment.$contextMenu = { items: [], override: true };
+        if (!inline) segment.$contextMenu = { items: [], override: true };
         domNodes.push(segment);
     }
 

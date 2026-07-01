@@ -2,6 +2,7 @@
 $css(`
     .math-inline {
         display: inline-block;
+        vertical-align: bottom;
     }
 
     .math-inline math {
@@ -11,6 +12,7 @@ $css(`
     @supports (display: inline math) {
         .math-inline math {
             display: inline math;
+            padding-bottom: 0;
         }
     }
 
@@ -104,6 +106,7 @@ const commonOps = {
 
 const whitespace = /\s/;
 const numeric = /[\d.,]/;
+const hasNumber = /\d/;
 const alphabet = /[a-zA-Z]/;
 
 function tokenize(expression, declarations) {
@@ -113,7 +116,7 @@ function tokenize(expression, declarations) {
 
     function token(source) {
         let result;
-        if (numeric.test(source[0])) {
+        if (hasNumber.test(source)) {
             result = declarations["numeric"](source)
         } else {
             result = declarations[source];
@@ -159,6 +162,8 @@ function tokenize(expression, declarations) {
 const allModifiers = new Set(["inline", "auto"])
 
 export const staticModule = true;
+
+// TODO fix issue where "0.5," gets read as <mn>0.5,</mn> instead of <mn>0.5</mn><mo>,</mo>
 
 export async function main(expression, inline=false) {
     //console.log(inline);
@@ -359,6 +364,6 @@ export async function main(expression, inline=false) {
 
     container.className = isInline ? "math-inline" : "math-block";
 
-    return { dom: [container.$with(...mathContent)] };
+    return { dom: [container.$with(...mathContent)], inline: isInline };
 }
 

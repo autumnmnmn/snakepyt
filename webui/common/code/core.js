@@ -38,9 +38,29 @@ window.$apply = async function(moduleName, target, ...args) {
 
 window.$replace = async function(target, moduleName, ...args) {
     const result = await $mod(moduleName, ...args);
-    if (result?.dom) {
+    if (!result?.dom) {
+        return result;
+    }
+
+    const hoist = result.inline !== true;
+
+    if (hoist) {
+        const parent = target.parentElement;
+        const grandParent = parent.parentElement;
+
+        const fragment = document.createDocumentFragment();
+
+        fragment.append(...result.dom);
+
+        grandParent.insertBefore(fragment, parent.nextSibling);
+
+        target.remove();
+
+        if (!parent.hasChildNodes()) parent.remove();
+    } else {
         target.replaceWith(...result.dom);
     }
+
     return result;
 }
 
