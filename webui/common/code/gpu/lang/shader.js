@@ -2,6 +2,7 @@
 import "/code/gpu/webgpu.js";
 import * as wgsl from "/code/gpu/lang/wgsl.js";
 import { greek } from "/code/math/math.js";
+import { Color, LinearSRGB } from "/code/math/color.js"
 import "/code/math/constants.js";
 
 const constants = {
@@ -41,6 +42,7 @@ function valueProxy(varMap) {
         set: (_, key, value) => {
             const v = varMap[key];
             v.value = value;
+            v.propagateChange?.();
             for (const registration of v.registrations.filter(r => r.set)) {
                 registration.set(value);
                 if (v.isCompositeSubvar) {
@@ -150,10 +152,23 @@ export async function loadShader(shaderName, substitutions = {}) {
                 dependents: [],
                 isCompositeSubvar: false
             };
+
         });
 
         for (const key in composites) {
-            vars.push(composites[key]);
+            const composite = composites[key];
+            vars.push(composite);
+
+            if (composite.tags.some(tag => tag[0] === "color")) {
+                composite.propagateChange = () => {
+                    const srgb = composite.value.NonlinearSRGB;
+                    const compVars = composite.subVars;
+
+                    compVars[0].value = srgb.r;
+                    compVars[1].value = srgb.g;
+                    compVars[2].value = srgb.b;
+                }
+            }
         }
 
         const getTag = (v, tag) => v.tags.find(([name]) => name === tag);
@@ -214,44 +229,30 @@ export async function loadShader(shaderName, substitutions = {}) {
 
         const processedComposites = new Set();
 
-        /// gemini's implementation, not yet fully reviewed
         const buildColor = (composite, afterChangeCallback) => {
-            // 1. Deduplication: Only build the control once per composite parent
             if (processedComposites.has(composite)) return null;
             processedComposites.add(composite);
 
             const compVars = composite.subVars;
-
-            // 2. Map WGSL floats (0.0-1.0) to color.js sRGB standard (0-255)
-            // Fallback to 0 if undefined.
 
             return {
                 type: "color_picker",
                 label: getUiName(composite.varName),
                 name: composite.varName,
                 hidden: composite.hidden,
-                value: {
-                    space: "rgb",
-                    vals: () => compVars.map(cv => (cv.value || 0) * 255) //initialRgbVals.slice(0, 3)
-                },
-                onUpdate: (payload, set, panelState, doCallback = true) => {
-                    // 3. Convert whichever space the UI is currently in back to 0.0-1.0 RGB
-                    const [r, g, b] = cssToNormalizedRgb(payload.css);
+                value: composite.value ?? new Color(new LinearSRGB({ red: 1, green: 0, blue: 1})),
+                onUpdate: (color, set, panelState, doCallback = true) => {
+                    const srgb = color.NonlinearSRGB;
 
-                    // Map back to the wgsl composite sub-vars
-                    if (compVars.length > 0) compVars[0].value = r;
-                    if (compVars.length > 1) compVars[1].value = g;
-                    if (compVars.length > 2) compVars[2].value = b;
-
-                    // Note: If you use vec4f for colors, alpha is compVars[3].
-                    // You'd need to extend color.js to support an alpha slider to pipe that here.
+                    compVars[0].value = srgb.r;
+                    compVars[1].value = srgb.g;
+                    compVars[2].value = srgb.b;
 
                     if (doCallback) afterChangeCallback();
                 },
                 register: (registration) => composite.registrations.push(registration),
             };
         };
-        /// end of unreviewed gemini section
 
         const buildControl = (v, afterChangeCallback) => {
             v.hidden = v.dependsOn !== undefined && !varMap[v.dependsOn].value;

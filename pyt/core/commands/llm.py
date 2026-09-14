@@ -152,6 +152,9 @@ def test_debug_agent(session, args):
             top_p=1.0,
             min_p=0.001
         )
+        if "error" in response:
+            session.log(response["error"]["message"], mode="warning")
+            return
         call = response["choices"][0]["message"]["tool_calls"][0]["function"]
 
         args = AttrDict(json.loads(call["arguments"]))

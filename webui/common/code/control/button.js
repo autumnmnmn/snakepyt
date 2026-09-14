@@ -24,7 +24,6 @@ $css(`
     min-height: 1rem;
     line-height: 1rem;
     cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .button button:hover {

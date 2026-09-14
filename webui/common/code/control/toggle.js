@@ -82,7 +82,7 @@ const defaults = {
     states: ["off", "on"],
     onUpdate: null,
     register: null,
-    subcontrol: null
+    subcontrols: null
 };
 
 export async function main(spec, panelState) {

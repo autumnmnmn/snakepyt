@@ -474,15 +474,15 @@ class discard_command:
 class wait_for_command:
     """Block to allow a running command to accumulate output."""
     command_index: Optional[int] = toolprop(desc="Index (#) of the command. If omitted, waits on all running commands")
-    timeout: float = toolprop(desc="Seconds to wait (max 60)")
+    timeout: float = toolprop(desc="Seconds to wait (max 3600)")
 
     # This tool's whole job is to block; give run_with_timeout a sync window
     # longer than the handler's own 60s cap so it actually waits instead of
     # being detached and returned as "Launched long-running task".
-    sync_timeout = 70
+    sync_timeout = 5000
 
     def handler(agent, session, args):
-        timeout = min(args.timeout, 60.0)
+        timeout = min(args.timeout, 3600.0)
 
         index = args.get("command_index")
 

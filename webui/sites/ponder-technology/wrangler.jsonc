@@ -1,0 +1,23 @@
+{
+    "name": "ponder-technology",
+    "compatibility_date": "2026-02-02",
+    "assets": {
+        "directory": "content",
+        "binding": "SITE"
+    },
+    "routes": [
+        { "pattern": "ponder.technology", "custom_domain": true }
+    ],
+    "vars": {
+        "WEBUI_MAIN": "/main.html"
+    },
+    "build": {
+        // nop. workaround for wrangler failing to reliably watch for changes thru symlinks
+        "command": ":",
+        "watch_dir": [
+            "../ponder-technology/content",
+            "../../common"
+        ]
+    },
+    "main": "_worker.js"
+}

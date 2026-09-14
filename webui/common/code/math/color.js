@@ -27,7 +27,7 @@ function _nonlinearize(value) {
     }
 }
 
-class NonlinearSRGB {
+export class NonlinearSRGB {
     constructor({ red, green, blue }) {
         this.red = red;
         this.green = green;
@@ -47,7 +47,9 @@ class NonlinearSRGB {
     }
 }
 
-class LinearSRGB {
+export const DebugPurple = new NonlinearSRGB({ red: 1, green: 0, blue: 1 });
+
+export class LinearSRGB {
     constructor({ red, green, blue }) {
         this.red = red;
         this.green = green;
@@ -92,7 +94,7 @@ class LinearSRGB {
     }
 }
 
-class OkLab {
+export class OkLab {
     constructor({ lightness, green_red, blue_yellow }) {
         this.lightness = lightness;
         this.green_red = green_red; // negative=green, positive=red
@@ -128,7 +130,7 @@ class OkLab {
     }
 }
 
-class OkLch {
+export class OkLch {
     constructor({ lightness, chroma, hue }) {
         this.lightness = lightness;
         this.chroma = chroma;
@@ -148,7 +150,7 @@ class OkLch {
     }
 }
 
-class CIEXYZ { // CIE 1931 XYZ
+export class CIEXYZ { // CIE 1931 XYZ
     constructor({ x, y, z }) {
         this.x = x;
         this.y = y;
@@ -164,7 +166,7 @@ class CIEXYZ { // CIE 1931 XYZ
     }
 }
 
-class CssColor {
+export class CssColor {
     #cssString;
     #reader;
 
@@ -203,6 +205,8 @@ class CssColor {
 
     to_nonlinear_srgb() {
         const computed = getComputedStyle(this.#reader).backgroundColor;
+
+        if (!computed) return DebugPurple;
 
         const nums = computed.match(/[\d.]+/g);
 
@@ -309,7 +313,7 @@ function color_map(source, target) {
 
 // General-purpose convertible color
 // Access requires specifying desired color space
-class Color {
+export class Color {
     #source = null;
 
     #nonlinear_srgb = null;
@@ -361,6 +365,20 @@ class Color {
         this.#setSlot(type, result);
         return result;
     }
+
+    get NonlinearSRGB() { return this.get(NonlinearSRGB); }
+    get LinearSRGB()    { return this.get(LinearSRGB); }
+    get OkLab()         { return this.get(OkLab); }
+    get OkLch()         { return this.get(OkLch); }
+    get CIEXYZ()        { return this.get(CIEXYZ); }
+    get CssColor()      { return this.get(CssColor); }
+
+    static NonlinearSRGB(components)     { return new this(new NonlinearSRGB(components)); }
+    static LinearSRGB(components)        { return new this(new LinearSRGB(components)); }
+    static OkLab(components)             { return new this(new OkLab(components)); }
+    static OkLch(components)             { return new this(new OkLch(components)); }
+    static CIEXYZ(components)            { return new this(new CIEXYZ(components)); }
+    static CssColor(cssString, element)  { return new this(new CssColor(cssString, element)); }
 
     set(value) {
         this.#nonlinear_srgb = null;

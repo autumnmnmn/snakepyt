@@ -1,3 +1,4 @@
+
 # Webui module conventions
 
 Everything a module needs is a handful of globals defined in
@@ -144,3 +145,4 @@ Entries whose `main` returns `replace: true` take over the nothing slot.
    the module is a self-contained tool.
 4. `exitTool` releases resources and replaces itself with `layout/nothing`.
 5. If it's user-loadable, register it in `layout/nothing.js`'s menu.
+

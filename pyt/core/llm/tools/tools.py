@@ -3,7 +3,6 @@ import os
 import types
 import dataclasses
 import typing
-import requests
 from pathlib import Path
 from typing import Any, Optional, List, Dict
 
@@ -190,6 +189,11 @@ def _get_openrouter_key() -> str:
 
 def tool_call(api, model, messages: List[Dict], tools: List[Dict],
               forced=False, jinja_args={}, request_timeout=None, **etc) -> Dict:
+    try:
+        import requests
+    except ImportError:
+        return {"error": {"message": "the 'requests' package is not installed; "
+                                     "llm api calls are unavailable"}}
     api_key = _get_openrouter_key()
     try:
         response = requests.post(

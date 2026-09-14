@@ -26,7 +26,7 @@ $css(`
         position: relative;
         width: fit-content;
         height: 100%;
-        background-color: var(--faded-background);
+        background-color: var(--main-background);
         flex-shrink: 0;
     }
 
@@ -53,6 +53,7 @@ import "/code/math/constants.js";
 import { Vec2 as v2 } from "/code/math/vector.js";
 import { cartesian as c } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
+import { Color } from "/code/math/color.js"
 
 export async function main() {
     let canRender = false;
@@ -172,27 +173,12 @@ export async function main() {
     const hue_neg = Math.floor(Math.random() * 360);
     const hue_pos = (hue_neg + 60) % 360;
 
-    blitParams.neg_color = { space: "hsl", vals: [hue_neg, 80, 50] };
-    blitParams.pos_color = { space: "hsl", vals: [hue_pos, 80, 50] };
+    blitParams.neg_color = Color.OkLch({ lightness: 0.7, chroma: 0.2, hue: hue_neg });
+    blitParams.pos_color = Color.OkLch({ lightness: 0.7, chroma: 0.2, hue: hue_pos });
 
-    const retheme = () => {
-        const style = getComputedStyle(colorDetector);
-        const newBackgroundColor = parseRgb(style.backgroundColor);
-        if (!rgbaEq(newBackgroundColor, backgroundColor)) {
-            backgroundColor = newBackgroundColor;
-            blitParams.nan_color = {
-                space: "rgb",
-                vals: [
-                    backgroundColor.r * 255,
-                    backgroundColor.g * 255,
-                    backgroundColor.b * 255
-                ]
-            };
-        }
-    };
-
+    // TODO find a way to make colors themselves handle this
     observers.theme = new MutationObserver(() => {
-        retheme();
+        blitParams.nan_color = Color.CssColor("var(--main-background)", topmost)
 
         if (canRender) render();
     });
@@ -327,7 +313,7 @@ export async function main() {
         overlay.setAttribute("width", width);
         overlay.setAttribute("height", height);
 
-        retheme();
+        blitParams.nan_color = Color.CssColor("var(--main-background)", topmost);
 
         canvas.width = width;
         canvas.height = height;

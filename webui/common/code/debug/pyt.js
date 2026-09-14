@@ -1,3 +1,4 @@
+
 export async function main() {
     const topmost = $div("pyt-debug");
 
@@ -20,9 +21,43 @@ export async function main() {
         output.$with(line);
     };
 
+    const renderPayload = (payload) => {
+        const line = $div("pyt-debug-line");
+        if (payload.stream) {
+            line.classList.add(payload.stream);
+        }
+        line.style.whiteSpace = "pre-wrap";
+        line.style.paddingLeft = (payload.indent || 0) + "ch";
+        for (const span of payload.spans) {
+            const el = $element("span");
+            el.className = span.style || "";
+            el.innerText = span.text;
+            if (span.link) {
+                el.title = span.link;
+                el.addEventListener("click", () => {
+                    navigator.clipboard?.writeText(span.link).catch(() => {});
+                });
+            }
+            line.$with(el);
+        }
+        output.$with(line);
+    };
+
+    const handleMessage = (text) => {
+        let msg;
+        try {
+            msg = JSON.parse(text);
+        } catch {}
+        if (msg && Array.isArray(msg.content?.spans)) {
+            renderPayload(msg.content);
+        } else {
+            append(text);
+        }
+    };
+
     ws.onmessage = (event) => {
         if (typeof event.data === "string") {
-            append(event.data);
+            handleMessage(event.data);
         } else {
             append("[binary: " + event.data.byteLength + " bytes]");
         }
@@ -34,7 +69,7 @@ export async function main() {
 
     const send = () => {
         if (ws.readyState !== WebSocket.OPEN) return;
-        ws.send(input.value);
+        ws.send(JSON.stringify({"to": "session 0", "content": input.value}));
         input.value = "";
     };
 
@@ -63,3 +98,4 @@ export async function main() {
         replace: true
     };
 }
+

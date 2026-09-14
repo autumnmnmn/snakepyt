@@ -1,3 +1,3 @@
-from pyt.repl import main
+from pyt.snakepyt import main
 
 main()

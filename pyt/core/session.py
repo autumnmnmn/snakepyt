@@ -4,10 +4,11 @@ import sys
 
 from pathlib import Path
 
-from pyt.core.terminal.ansi import codes as ac
 from pyt.core import AttrDict, lsnap
+from pyt.core.terminal import persona
+from pyt.core.terminal import Logger, TerminalLogger
+from pyt.core.terminal.ansi import codes as ac
 from pyt.core.commands import registrar_attr, register_builtins
-from pyt.core.websocket import WebsocketServer
 
 def _find_pytrc():
     config_home = os.getenv("XDG_CONFIG_HOME")
@@ -48,7 +49,7 @@ class PytSession:
     def _except_callback(self, exception):
         self.last_exception = exception
 
-    def __init__(self, cli_args):
+    def __init__(self, cli_args, log=None):
         self.cli_args = cli_args
         self.snakepyt_version = (0, 2)
         self.repl_continue = True
@@ -60,8 +61,7 @@ class PytSession:
         self.persistent_state = {}
         self.persistent_hashes = {}
 
-        from pyt.core.terminal import Logger
-        self.log = Logger().mode("ok").tag("snakepyt").on_except(self._except_callback)
+        self.log = log or TerminalLogger().mode("ok").tag("snakepyt").on_except(self._except_callback)
         self.last_exception = None
 
         self.commands = AttrDict()
@@ -72,9 +72,6 @@ class PytSession:
 
         self._get_paths()
 
-        self.socket = WebsocketServer(self.log.tag("socket"))
-
-        from pyt.core.terminal import persona
         self.persona = persona.Persona.from_config(persona.default) # TODO configurable
 
         self.commands.builtin = []
@@ -95,8 +92,8 @@ class PytSession:
     def injected_state(self):
         return {
             **self.persistent_state,
-            "send": self.socket.send,
-            "receive": self.socket.receive
+            #"send": self.socket.send,
+            #"receive": self.socket.receive
         }
 
     def _get_paths(self):
@@ -141,7 +138,7 @@ class PytSession:
             namespace = {
                 "command": registrar_attr(self.commands.user),
                 "session": self,
-                "print": log
+                "print": log.print
             }
             try:
                 with open(pytrc) as rcfile:
@@ -163,7 +160,8 @@ class PytSession:
                 return True
         return False
 
-    def handle_message(self, message):
+    def handle_message(self, message, log = None):
+        self.log = log or self.log
         log = self.log
         try:
             if self.prefix:

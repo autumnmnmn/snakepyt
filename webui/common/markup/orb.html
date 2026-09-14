@@ -43,6 +43,8 @@
                 }]);
             }
 
+            $apply("theme", document.body);
+
             if (orb) {
                 $apply("code/orb", document.body, `/markup/orb/${orb}.orb`)
                     .then(async () => {

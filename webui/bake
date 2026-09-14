@@ -1,0 +1,383 @@
+#!/usr/bin/env node
+"use strict";
+
+// bake — run the orb viewer's "bake" function (common/markup/orb.html) in
+// headless chromium and capture the downloaded html file.
+//
+//     ./bake <orb> [more orbs...] [options]
+//
+// Each <orb> resolves like the viewer's ?orb= param: /markup/orb/<orb>.orb
+// (so "../gallery" reaches a site-root orb like sites/ponder/content/
+// gallery.orb). An argument starting with "/" is treated as a full page
+// path instead; a "bake" query param is added if missing.
+//
+// Options:
+//     --site <name>       site whose content/ overlays common/ (default: local)
+//     --out <dir>         where the baked files end up (default: cwd)
+//     --timeout <sec>     per-orb download timeout (default: 120)
+//     --origin <url>      bake from a running server (e.g. http://localhost:1313
+//                         from ./test) instead of serving files from disk
+//     --chromium <path>   chromium binary (default: $CHROMIUM or "chromium")
+//     --verbose           requests, browser stderr, page console
+//
+// Files are served to the browser by intercepting requests to a synthetic
+// origin (https://webui.example) over the devtools protocol and fulfilling
+// them from sites/<site>/content overlaid on common/ (the same overlay as
+// ./deploy and ./test). Chromium is driven over --remote-debugging-pipe, so
+// no network ports are involved at all. No external dependencies.
+
+const fs = require("node:fs");
+const path = require("node:path");
+const os = require("node:os");
+const { spawn } = require("node:child_process");
+
+const WEBUI_DIR = __dirname;
+const INTERCEPT_ORIGIN = "https://webui.example";
+
+const MIME = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json",
+    ".orb": "text/plain; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".avif": "image/avif",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".mp3": "audio/mpeg",
+    ".txt": "text/plain; charset=utf-8",
+    ".cl": "text/plain; charset=utf-8",
+};
+
+let VERBOSE = false;
+const note = (...args) => { if (VERBOSE) console.error("[bake]", ...args); };
+
+function usage(code = 1) {
+    console.error(`usage: ./bake <orb> [more orbs...] [--site name] [--out dir]
+                [--timeout sec] [--origin url] [--chromium path] [--verbose]`);
+    process.exit(code);
+}
+
+function parseArgs(argv) {
+    const opts = { orbs: [], site: "local", out: process.cwd(), timeout: 120,
+                   origin: null, chromium: process.env.CHROMIUM ?? "chromium" };
+    for (let i = 0; i < argv.length; i++) {
+        const arg = argv[i];
+        if (arg === "--verbose") VERBOSE = true;
+        else if (arg === "--help" || arg === "-h") usage(0);
+        else if (arg === "--site") opts.site = argv[++i];
+        else if (arg === "--out") opts.out = argv[++i];
+        else if (arg === "--timeout") opts.timeout = Number(argv[++i]);
+        else if (arg === "--origin") opts.origin = argv[++i];
+        else if (arg === "--chromium") opts.chromium = argv[++i];
+        else if (arg.startsWith("--")) { console.error(`unknown option: ${arg}`); usage(); }
+        else opts.orbs.push(arg);
+    }
+    if (opts.orbs.length === 0 || !opts.site || !opts.out || !(opts.timeout > 0)) usage();
+    return opts;
+}
+
+// ---------- devtools protocol over --remote-debugging-pipe ----------
+// chromium reads null-terminated json commands on fd 3, writes responses
+// and events (also null-terminated) on fd 4.
+
+class CDP {
+    #write;
+    #id = 0;
+    #buffer = "";
+    #pending = new Map();
+    #listeners = new Map();
+
+    constructor(readStream, writeStream) {
+        this.#write = writeStream;
+        readStream.setEncoding("utf8");
+        readStream.on("data", (chunk) => {
+            this.#buffer += chunk;
+            let index;
+            while ((index = this.#buffer.indexOf("\0")) >= 0) {
+                const raw = this.#buffer.slice(0, index);
+                this.#buffer = this.#buffer.slice(index + 1);
+                if (!raw.trim()) continue;
+                let msg;
+                try { msg = JSON.parse(raw); }
+                catch { continue; }
+                this.#dispatch(msg);
+            }
+        });
+        // the browser going away rejects everything outstanding
+        const drop = () => {
+            for (const pending of this.#pending.values()) {
+                pending.reject(new Error("devtools pipe closed"));
+            }
+            this.#pending.clear();
+        };
+        readStream.on("error", drop);
+        readStream.on("close", drop);
+        writeStream.on("error", () => {});
+    }
+
+    #dispatch(msg) {
+        if (msg.id !== undefined) {
+            const pending = this.#pending.get(msg.id);
+            if (!pending) return;
+            this.#pending.delete(msg.id);
+            if (msg.error) pending.reject(new Error(`${pending.method}: ${msg.error.message}`));
+            else pending.resolve(msg.result ?? {});
+        }
+        else if (msg.method) {
+            for (const cb of this.#listeners.get(msg.method) ?? []) cb(msg.params ?? {}, msg.sessionId);
+        }
+    }
+
+    send(method, params = {}, sessionId = undefined) {
+        const id = ++this.#id;
+        return new Promise((resolve, reject) => {
+            this.#pending.set(id, { resolve, reject, method });
+            this.#write.write(JSON.stringify(sessionId ? { id, method, params, sessionId } : { id, method, params }) + "\0");
+        });
+    }
+
+    // returns an unsubscribe function
+    on(method, cb) {
+        if (!this.#listeners.has(method)) this.#listeners.set(method, []);
+        const list = this.#listeners.get(method);
+        list.push(cb);
+        return () => { const i = list.indexOf(cb); if (i >= 0) list.splice(i, 1); };
+    }
+
+    close() { try { this.#write.end(); } catch {} }
+}
+
+// resolves with the downloaded file's name once the bake download completes
+function waitForDownload(cdp, timeoutMs) {
+    return new Promise((resolve, reject) => {
+        const names = new Map(); // guid -> suggestedFilename
+        const offs = [];
+
+        const cleanup = () => { clearTimeout(timer); for (const off of offs) off(); };
+        const fail = (err) => { cleanup(); reject(err); };
+
+        const timer = setTimeout(() => fail(new Error("timed out waiting for download (missing orb or failed bake? rerun with --verbose to see the page's traffic)")), timeoutMs);
+
+        offs.push(cdp.on("Browser.downloadWillBegin", (p) => names.set(p.guid, p.suggestedFilename)));
+        offs.push(cdp.on("Browser.downloadProgress", (p) => {
+            if (p.state === "completed") { cleanup(); resolve(names.get(p.guid)); }
+            else if (p.state === "canceled") fail(new Error(`download canceled (${names.get(p.guid) ?? p.guid})`));
+        }));
+    });
+}
+
+// ---------- serving files via request interception ----------
+
+function makeInterceptor(cdp, roots, sessionId) {
+    return async (params) => {
+        const { requestId, request } = params;
+
+        let rel;
+        try {
+            rel = path.posix.normalize(decodeURIComponent(new URL(request.url).pathname)).replace(/^\/+/, "");
+        }
+        catch {
+            rel = null;
+        }
+        if (rel === "") rel = "main.html"; // the worker serves WEBUI_MAIN at /
+
+        // deploy prunes media/*/input
+        if (rel && !/^media\/[^/]+\/input(\/|$)/.test(rel)) {
+            for (const root of roots) {
+                const file = path.resolve(root, rel);
+                if (file !== root && !file.startsWith(root + path.sep)) continue;
+                let body;
+                try { body = fs.readFileSync(file); } catch { continue; }
+                note(200, request.url);
+                await cdp.send("Fetch.fulfillRequest", {
+                    requestId,
+                    responseCode: 200,
+                    responseHeaders: [
+                        { name: "content-type", value: MIME[path.extname(file).toLowerCase()] ?? "application/octet-stream" },
+                        { name: "cache-control", value: "no-store" },
+                    ],
+                    body: body.toString("base64"),
+                }, sessionId).catch(() => {});
+                return;
+            }
+        }
+
+        note(404, request.url);
+        await cdp.send("Fetch.fulfillRequest", {
+            requestId,
+            responseCode: 404,
+            responseHeaders: [{ name: "content-type", value: "text/plain" }],
+            body: Buffer.from(`not found: ${rel}`).toString("base64"),
+        }, sessionId).catch(() => {});
+    };
+}
+
+// ---------- chromium ----------
+
+function spawnChromium(binary, profileDir, extraArgs = []) {
+    const args = [
+        "--headless",
+        "--remote-debugging-pipe",
+        `--user-data-dir=${profileDir}`,
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--mute-audio",
+        "--hide-crash-restore-bubble",
+        ...extraArgs,
+        "about:blank",
+    ];
+    // fds 3 and 4 are the devtools pipe
+    const proc = spawn(binary, args, { stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"] });
+    let stderrTail = "";
+    proc.stderr.on("data", (chunk) => {
+        stderrTail = (stderrTail + chunk).slice(-4096);
+        if (VERBOSE) process.stderr.write(`[chromium] ${chunk}`);
+    });
+    return { proc, stderrTail: () => stderrTail };
+}
+
+async function launchChromium(binary, profileDir) {
+    // retry with --no-sandbox if the sandbox can't initialize (containers etc.)
+    for (const extra of [[], ["--no-sandbox"]]) {
+        const { proc, stderrTail } = spawnChromium(binary, profileDir, extra);
+        const cdp = new CDP(proc.stdio[4], proc.stdio[3]);
+
+        const version = await Promise.race([
+            cdp.send("Browser.getVersion").then((r) => r, (e) => ({ error: e })),
+            new Promise((r) => proc.on("exit", () => r({ error: new Error("process exited") }))),
+            new Promise((r) => setTimeout(() => r({ error: new Error("timed out") }), 15000)),
+        ]);
+
+        if (!version.error) return { proc, cdp, stderrTail };
+
+        cdp.close();
+        if (proc.exitCode === null) proc.kill("SIGKILL");
+        const tail = stderrTail().trim();
+        if (extra.length === 0 && /sandbox|zygote|namespace operation|clone\(\)/i.test(tail)) {
+            note("sandbox init failed, retrying with --no-sandbox");
+            continue;
+        }
+        throw new Error(`chromium failed to start (${version.error.message})${tail ? `:\n${tail}` : ""}`);
+    }
+}
+
+// ---------- main ----------
+
+function pageUrl(origin, arg) {
+    if (arg.startsWith("/")) {
+        const url = new URL(origin + arg);
+        if (!url.searchParams.has("bake")) url.searchParams.set("bake", "");
+        return url.toString();
+    }
+    const url = new URL(`${origin}/markup/orb.html`);
+    url.searchParams.set("orb", arg);
+    url.searchParams.set("bake", "");
+    return url.toString();
+}
+
+async function main() {
+    const opts = parseArgs(process.argv.slice(2));
+    const origin = opts.origin ?? INTERCEPT_ORIGIN;
+
+    const roots = [path.join(WEBUI_DIR, "sites", opts.site, "content"), path.join(WEBUI_DIR, "common")];
+    for (const root of roots) {
+        if (!fs.statSync(root, { throwIfNoEntry: false })?.isDirectory()) {
+            throw new Error(`no such directory: ${root}`);
+        }
+    }
+    fs.mkdirSync(opts.out, { recursive: true });
+
+    const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), "orb-bake-profile-"));
+    const downloadDir = fs.mkdtempSync(path.join(os.tmpdir(), "orb-bake-dl-"));
+
+    let browser = null;
+    const cleanup = () => {
+        try { browser?.kill("SIGKILL"); } catch {}
+        fs.rmSync(profileDir, { recursive: true, force: true });
+        fs.rmSync(downloadDir, { recursive: true, force: true });
+    };
+    process.on("SIGINT", () => { cleanup(); process.exit(130); });
+    process.on("SIGTERM", () => { cleanup(); process.exit(143); });
+
+    try {
+        const { proc, cdp } = await launchChromium(opts.chromium, profileDir);
+        browser = proc;
+        note("chromium up");
+
+        const { browserContextId } = await cdp.send("Target.createBrowserContext", { disposeOnDetach: true });
+        await cdp.send("Browser.setDownloadBehavior", {
+            behavior: "allow",
+            downloadPath: downloadDir,
+            eventsEnabled: true,
+            browserContextId,
+        });
+
+        for (const orb of opts.orbs) {
+            const url = pageUrl(origin, orb);
+            note(`baking ${url}`);
+
+            const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank", browserContextId });
+            const { sessionId } = await cdp.send("Target.attachToTarget", { targetId, flatten: true });
+
+            let offIntercept = null;
+            if (!opts.origin) {
+                const intercept = makeInterceptor(cdp, roots, sessionId);
+                offIntercept = cdp.on("Fetch.requestPaused", (p, sid) => { if (sid === sessionId) intercept(p); });
+                await cdp.send("Fetch.enable", { patterns: [{ urlPattern: `${INTERCEPT_ORIGIN}/*` }] }, sessionId);
+            }
+
+            // forward the page's console when verbose (helps debug failed bakes)
+            let offConsole = null, offException = null;
+            if (VERBOSE) {
+                offConsole = cdp.on("Runtime.consoleAPICalled", (p, sid) => {
+                    if (sid !== sessionId) return;
+                    console.error(`[page:${p.type}]`, ...p.args.map((a) => a.value ?? a.description ?? ""));
+                });
+                offException = cdp.on("Runtime.exceptionThrown", (p, sid) => {
+                    if (sid === sessionId) console.error("[page:exception]", p.exceptionDetails?.exception?.description ?? p.exceptionDetails?.text);
+                });
+                await cdp.send("Runtime.enable", {}, sessionId);
+            }
+
+            const download = waitForDownload(cdp, opts.timeout * 1000);
+            download.catch(() => {}); // handled at the await below
+
+            await cdp.send("Page.navigate", { url }, sessionId);
+
+            const fileName = await download;
+            if (!fileName) throw new Error("download completed but filename unknown");
+
+            const src = path.join(downloadDir, fileName);
+            const dest = path.join(opts.out, fileName);
+            const overwrote = fs.existsSync(dest);
+            fs.copyFileSync(src, dest);
+            fs.rmSync(src, { force: true });
+            note(overwrote ? `overwrote ${dest}` : `wrote ${dest}`);
+            console.log(path.resolve(dest));
+
+            offIntercept?.();
+            offConsole?.();
+            offException?.();
+            await cdp.send("Target.closeTarget", { targetId }).catch(() => {});
+        }
+
+        await cdp.send("Browser.close").catch(() => {});
+        cdp.close();
+    }
+    finally {
+        cleanup();
+    }
+}
+
+main().then(() => process.exit(0), (err) => { console.error(`bake: ${err.message}`); process.exit(1); });
