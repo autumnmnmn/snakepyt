@@ -20,7 +20,7 @@ $css {
     }
 
     .landing .title {
-        margin-top: 22vh;
+        margin-top: 3rem;
         font-size: 1.5rem;
     }
 
@@ -33,7 +33,7 @@ $css {
     }
 
     .landing h2 {
-        margin-top: 4rem;
+        margin-top: 1.5rem;
         font-size: 1rem;
         font-weight: normal;
         text-decoration: underline;
@@ -50,30 +50,28 @@ $css {
 
 [class=landing]{
 
-$[class=title]{ponder}
+$[class=title]{Ponder Technology}
 
-$[class=subtitle]{⸺ technology ⸺}
+$[class=subtitle]{⸺ ooo ⸺}
 
-$[class=tagline]{an independent research lab}
+h2{About}
 
-h2{about}
+Ponder Technology is an independent multidisciplinary research laboratory expanding the horizons of mathematics, art, philosophy, and computing.
 
-ponder is an independent research lab run by a[href=https://autumn.computer]{autumn malmberg}.
+h2{Research}
 
-h2{research}
+Current areas of interest include dynamical systems & chaos, machine learning, tooling for experimental computation, and math communication.
 
-current areas of interest include dynamical systems & chaos, machine learning, and the development of tooling that makes both easier to think about.
+Coming soon: Blog posts on the logistic Lyapunov fractal and the projective shift map.
 
-h2{projects}
+h2{Projects}
 
-a[href=https://tangled.org/ponder.ooo/snakepyt]{snakepyt}, a repl and custom runner environment for python sketches
+a[href=https://tangled.org/ponder.ooo/snakepyt]{snakepyt}: A repl and custom runner environment for python sketches.
 
-a[href=https://ponder.ooo]{ponder.ooo}, a fractal gallery & collection of interactive writeups
+a[href=https://ponder.ooo]{ponder.ooo}: A testing ground for the snakepyt webui.
 
-h2{contact}
+h2{Contact}
 
-a[href=mailto:hello@ponder.technology]{hello@ponder.technology}
-
-$[class=footer]{⸺ ⸺ ⸺}
+a[href=mailto:research@ponder.technology]{research@ponder.technology}
 
 }

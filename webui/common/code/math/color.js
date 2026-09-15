@@ -23,6 +23,9 @@ function _nonlinearize(value) {
         return value * 12.92;
     } else {
         let transformed = value ** (1.0 / 2.4);
+        if (isNaN(transformed)) {
+            transformed = 0;
+        }
         return (1.055 * transformed) - 0.055;
     }
 }
@@ -33,6 +36,8 @@ export class NonlinearSRGB {
         this.green = green;
         this.blue = blue;
     }
+
+    static params = ["red", "green", "blue"];
 
     get r() { return this.red; }
     get g() { return this.green; }
@@ -55,6 +60,8 @@ export class LinearSRGB {
         this.green = green;
         this.blue = blue;
     }
+
+    static params = ["red", "green", "blue"];
 
     get r() { return this.red; }
     get g() { return this.green; }
@@ -101,6 +108,8 @@ export class OkLab {
         this.blue_yellow = blue_yellow; // negative=blue, positive=yellow
     }
 
+    static params = ["lightness", "green_red", "blue_yellow"];
+
     get L() { return this.lightness; }
     get a() { return this.green_red; }
     get b() { return this.blue_yellow; }
@@ -122,9 +131,10 @@ export class OkLab {
     }
 
     to_oklch() {
+        let chroma = sqrt(this.green_red**2 + this.blue_yellow**2);
         return new OkLch({
             lightness: this.lightness,
-            chroma: sqrt(this.green_red**2 + this.blue_yellow**2),
+            chroma: isNaN(chroma) ? 0 : chroma,
             hue: atan2(this.blue_yellow, this.green_red)
         });
     }
@@ -136,6 +146,8 @@ export class OkLch {
         this.chroma = chroma;
         this.hue = hue;
     }
+
+    static params = ["lightness", "chroma", "hue"];
 
     get L() { return this.lightness; }
     get c() { return this.chroma; }
@@ -157,6 +169,8 @@ export class CIEXYZ { // CIE 1931 XYZ
         this.z = z;
     }
 
+    static params = ["x", "y", "z"];
+
     to_linear_srgb() {
         return new LinearSRGB({
             red:    3.2406*this.x - 1.5372*this.y - 0.4986*this.z,
@@ -170,7 +184,7 @@ export class CssColor {
     #cssString;
     #reader;
 
-    constructor(cssString, element) {
+    constructor({ cssString, element }) {
         this.#cssString = cssString;
 
         if (element.$cssColorReader) {
@@ -192,6 +206,8 @@ export class CssColor {
         // finally set the reader element's background color to `cssString`
         this.#reader.style.backgroundColor = cssString;
     }
+
+    static params = ["cssString", "element"];
 
     // setter for `cssString` that updates the reader's css
     set cssString(value) {

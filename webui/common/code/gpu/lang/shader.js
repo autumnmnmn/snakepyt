@@ -2,7 +2,7 @@
 import "/code/gpu/webgpu.js";
 import * as wgsl from "/code/gpu/lang/wgsl.js";
 import { greek } from "/code/math/math.js";
-import { Color, LinearSRGB } from "/code/math/color.js"
+import { Color, NonlinearSRGB } from "/code/math/color.js"
 import "/code/math/constants.js";
 
 const constants = {
@@ -240,7 +240,7 @@ export async function loadShader(shaderName, substitutions = {}) {
                 label: getUiName(composite.varName),
                 name: composite.varName,
                 hidden: composite.hidden,
-                value: composite.value ?? new Color(new LinearSRGB({ red: 1, green: 0, blue: 1})),
+                value: composite.value ?? new Color(new NonlinearSRGB({ red: 1, green: 0, blue: 1})),
                 onUpdate: (color, set, panelState, doCallback = true) => {
                     const srgb = color.NonlinearSRGB;
 

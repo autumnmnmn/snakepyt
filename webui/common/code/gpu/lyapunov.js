@@ -178,7 +178,7 @@ export async function main() {
 
     // TODO find a way to make colors themselves handle this
     observers.theme = new MutationObserver(() => {
-        blitParams.nan_color = Color.CssColor("var(--main-background)", topmost)
+        blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost })
 
         if (canRender) render();
     });
@@ -313,7 +313,7 @@ export async function main() {
         overlay.setAttribute("width", width);
         overlay.setAttribute("height", height);
 
-        blitParams.nan_color = Color.CssColor("var(--main-background)", topmost);
+        blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost });
 
         canvas.width = width;
         canvas.height = height;
