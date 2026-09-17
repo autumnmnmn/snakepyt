@@ -84,12 +84,15 @@ pre {
 
 button {
     border: none;
-    border-radius: 0.5em;
-    height: 1.5em;
+    border-radius: 0.2rem;
+    height: 1.5rem;
     background-color: var(--main-solid);
     color: var(--main-solid-content);
-    padding-left: 1em;
-    padding-right: 1em;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-bottom: 0.1rem;
+    padding-top: 0.2rem;
+    cursor: pointer;
 }
 
 p {
@@ -120,6 +123,30 @@ input {
 input:focus {
     outline: none;
     background-color: var(--main-faded);
+}
+
+select {
+    border-bottom: 1px solid var(--main-faded);
+    border-radius: 0;
+    padding: 0;
+    background-color: var(--main-background);
+    color: var(--main-solid);
+    cursor: pointer;
+}
+
+select:focus {
+    border-radius: 0;
+    background-color: var(--main-faded);
+    border-bottom: 1px solid var(--main-solid);
+    outline: none;
+}
+
+option {
+    background-color: var(--main-background);
+}
+
+label {
+    cursor: text;
 }
 
 .nothing_old {

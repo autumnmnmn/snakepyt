@@ -153,7 +153,6 @@ export async function build(nodes, source, inline=false, namespace=null) {
 
         if (pendingSpace || inlineEnded) {
             segment.appendChild(document.createTextNode(" "));
-            console.log("here");
         }
         pendingSpace = false;
         segment.appendChild(script);

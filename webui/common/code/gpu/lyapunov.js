@@ -104,7 +104,9 @@ export async function main() {
     params.center_high_y = center_y[0];
 
     const controls = await $mod("control/panel",
-        "Parameters", uniforms.getControlSettings(render).concat(blitUniforms.getControlSettings(render))
+        "parameters",
+        uniforms.getControlSettings(render)
+            .concat(blitUniforms.getControlSettings(render))
     );
 
     const computePipeline = $gpu.device.createComputePipeline({

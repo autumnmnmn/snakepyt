@@ -11,13 +11,13 @@ struct Uniforms /* buffer 0 0 */ {
     seq_mask: u32, // hard 0 to hard 4294967295 = 5
     seq_len: u32, // hard 1 to hard 32 = 2
     seq_offset: u32, // hard 0 to hard 31 = 0
-    mode: u32, // hard 0 to hard 3 = 0
+    offset_mode: u32, // hard 0 to hard 3 = 0 $select(single, minimum, maximum, average)
     do_discont: u32, // hard 0 to hard 1 = 0 $bool $test
     discont_alpha: f32, // 0 to 1 = 0.907 $depend(do_discont)
     do_tent: u32, // hard 0 to hard 1 = 0 $bool
     do_neg: u32, // hard 0 to hard 1 = 0 $bool
-    do_stochasticity: u32, // hard 0 to 1 = 0 $bool
-    stochastic_modulus: u32, // 1 to 200 = 100 $depend(do_stochasticity)
+    stochasticity: u32, // hard 0 to 1 = 0 $bool
+    stochastic_modulus: u32, // 1 to 200 = 100 $depend(stochasticity)
     rotation: f32, // 0 to 1 = 0
 }
 
@@ -56,12 +56,12 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     var diverged_at: u32 = 0;
 
     for (var iter = 0u; iter < uniforms.iterations; iter = iter + 1u) {
-        var final_offset = select(uniforms.seq_len,0,uniforms.mode == 0u);
+        var final_offset = select(uniforms.seq_len,0,uniforms.offset_mode == 0u);
         for (var offset = 0u; offset <= final_offset; offset = offset + 1u) {
             let rng_seed = pcg_hash(px + pcg_hash(py << 1)) ^ pcg_hash(iter) ^ pcg_hash(bitcast<u32>(r_vals.x) + pcg_hash(bitcast<u32>(r_vals.y) << 1));
             // todo nan and inf checks
             var cond = ((uniforms.seq_mask >> ((iter + offset + uniforms.seq_offset) % uniforms.seq_len)) & 1u) != 0u;
-            if (uniforms.do_stochasticity == 1) {
+            if (uniforms.stochasticity == 1) {
                 flipped = select(flipped, !flipped, rng_seed % uniforms.stochastic_modulus == 0);
             }
             if (flipped) {
@@ -80,8 +80,8 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
                 x_next = x_next + (uniforms.discont_alpha - 1.0) * (r - 2.0) / 4.0;
             }
             var term = log(abs(r * (1.0 - 2.0 * x[offset])));
-            if (iter > uniforms.skip) {
-                lyapunov[offset] = c_avg(lyapunov[offset], term, iter - uniforms.skip);
+            if (iter >= uniforms.skip) {
+                lyapunov[offset] = c_avg(lyapunov[offset], term, iter - uniforms.skip + 1);
             }
             x[offset] = x_next;
 
@@ -93,19 +93,19 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var val: f32;
 
-    if (uniforms.mode == 0) {
+    if (uniforms.offset_mode == 0) {
         val = lyapunov[0];
-    } else if (uniforms.mode == 1) {
+    } else if (uniforms.offset_mode == 1) {
         val = lyapunov[0];
         for (var i = 1u; i < uniforms.seq_len; i++) {
             val = min(val, lyapunov[i]);
         }
-    } else if (uniforms.mode == 2) {
+    } else if (uniforms.offset_mode == 2) {
         val = lyapunov[0];
         for (var i = 1u; i < uniforms.seq_len; i++) {
             val = max(val, lyapunov[i]);
         }
-    } else if (uniforms.mode == 3) {
+    } else if (uniforms.offset_mode == 3) {
         val = lyapunov[0];
         for (var i = 1u; i < uniforms.seq_len; i++) {
             val = val + lyapunov[i];

@@ -8,8 +8,8 @@ $css(`
 
 .toggle label {
     color: var(--main-solid);
-    line-height: 1em;
-    min-height: 1em;
+    line-height: 1rem;
+    min-height: 1rem;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -23,10 +23,10 @@ $css(`
     accent-color: var(--main-solid);
     cursor: pointer;
 
-    width: 1.25em;
-    height: 1.25em;
+    width: 1.25rem;
+    height: 1.25rem;
 
-    margin-bottom: 0.125em;
+    margin-bottom: 0.125rem;
 
     appearance: none;
     background-color: transparent;
@@ -46,15 +46,15 @@ $css(`
 
 .toggle label {
     color: var(--main-solid);
-    line-height: 1em;
+    line-height: 1rem;
     cursor: text;
     display: inline;
-    padding-right: 0.5em;
+    padding-right: 0.5rem;
 }
 
 .toggle .status {
     color: var(--main-faded);
-    padding-left: 0.5em;
+    padding-left: 0.5rem;
 }
 
 .toggle:has(input[type="checkbox"]:checked) .status {
@@ -85,6 +85,8 @@ const defaults = {
     subcontrols: null
 };
 
+// TODO copyable text
+
 export async function main(spec, panelState) {
     spec = { ...defaults, ...spec };
 
@@ -111,7 +113,6 @@ export async function main(spec, panelState) {
     box_container.className = "box";
     const longerState = spec.states.reduce((a, b) => a.length >= b.length ? a : b);
     box_container.style = `width: calc(${longerState.length}ch + 2em)`;
-
 
     box_container.addEventListener("pointerdown", (e) => {
         if (e.target !== checkbox) {

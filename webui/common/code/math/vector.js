@@ -1,4 +1,6 @@
 
+import { smoothstep } from "/code/math/core.js";
+
 export class Vec2 {
     constructor(x, y) {
         this.x = x;
@@ -21,12 +23,23 @@ export class Vec2 {
         );
     }
 
+    add(other) {
+        return new Vec2(this.x + other.x, this.y + other.y);
+    }
+
     sub(other) {
         return new Vec2(this.x - other.x, this.y - other.y);
     }
 
     scale(s) {
         return new Vec2(this.x * s, this.y * s);
+    }
+
+    static lerp(a, b, t) {
+        return new Vec2(
+            a.x + (b.x - a.x) * t,
+            a.y + (b.y - a.y) * t
+        );
     }
 }
 
@@ -50,6 +63,28 @@ export class Vec3 {
     get u() { return this.x; } set u(v) { this.x = v; }
     get v() { return this.y; } set v(v) { this.y = v; }
     get w() { return this.z; } set w(v) { this.z = v; }
+
+    add(other) {
+        return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
+    }
+
+    sub(other) {
+        return new Vec3(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+
+    scale(s) {
+        return new Vec3(this.x * s, this.y * s, this.z * s);
+    }
+
+    static lerp(a, b, t) {
+        return new Vec3(
+            a.x + (b.x - a.x) * t,
+            a.y + (b.y - a.y) * t,
+            a.z + (b.z - a.z) * t
+        );
+    }
+
+    static smoothstep(a, b, t) { return Vec3.lerp(a, b, smoothstep(t)); }
 
     leftMatmul(m) {
         const mat = m.data || m;

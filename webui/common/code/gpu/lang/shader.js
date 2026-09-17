@@ -227,6 +227,24 @@ export async function loadShader(shaderName, substitutions = {}) {
             subcontrols: v.dependents.length === 0 ? null : []
         });
 
+        const buildSelect = (v, options, afterChangeCallback) => {
+            // TODO more complex option mappings than just enum from 0 up
+            return {
+                type: "select",
+                label: v.uiName,
+                name: v.varName,
+                options: options.map((label, value) => ({ label, value })),
+                value: v.value,
+                hidden: v.hidden,
+                onUpdate: (value, set, panelState) => {
+                    v.value = value;
+                    // TODO dependents for selections
+                    afterChangeCallback();
+                },
+                register: (registration) => v.registrations.push(registration)
+            }
+        };
+
         const processedComposites = new Set();
 
         const buildColor = (composite, afterChangeCallback) => {
@@ -265,6 +283,12 @@ export async function loadShader(shaderName, substitutions = {}) {
                 if (v.isCompositeSubvar) return null;
 
                 return buildColor(v, afterChangeCallback);
+            }
+
+            const selectTag = getTag(v, "select")
+
+            if (selectTag) {
+                return buildSelect(v, selectTag[1].split(',').map(s => s.trim()), afterChangeCallback);
             }
 
             if (v.subVars) return;

@@ -1,6 +1,8 @@
 
 const { Math: { sqrt, atan2, cos, sin, cbrt } } = globalThis;
 
+import { Vec3 } from "/code/math/vector.js";
+
 // OkLab Magic Numbers from:
 // Ottosson, Björn "A perceptual color space for image processing"
 // https://bottosson.github.io/posts/oklab/
@@ -43,11 +45,53 @@ export class NonlinearSRGB {
     get g() { return this.green; }
     get b() { return this.blue; }
 
+    get vector() { return Vec3.of(this.red, this.green, this.blue); }
+
+    set vector(v) {
+        this.red = v.x;
+        this.green = v.y;
+        this.blue = v.z;
+    }
+
+    static fromVector(v) {
+        return new this({ red: v.x, green: v.y, blue: v.z });
+    }
+
+    get hex() {
+        const byte = v => Math.round(Math.min(Math.max(v, 0), 1) * 255);
+        const hex2 = v => byte(v).toString(16).padStart(2, "0");
+        return `#${hex2(this.red)}${hex2(this.green)}${hex2(this.blue)}`;
+    }
+
+    set hex(value) {
+        const ch = t => parseInt(t, 16) / 255;
+
+        this.red   = ch(value.slice(1, 3));
+        this.green = ch(value.slice(3, 5));
+        this.blue  = ch(value.slice(5, 7));
+    }
+
+    static fromHex(value) {
+        const ch = t => parseInt(t, 16) / 255;
+        return new this({
+            red: ch(value.slice(1, 3)),
+            green: ch(value.slice(3, 5)),
+            blue: ch(value.slice(5, 7))
+        });
+    }
+
     to_linear_srgb() {
         return new LinearSRGB({
             red: _linearize(this.red),
             green: _linearize(this.green),
             blue: _linearize(this.blue)
+        });
+    }
+
+    to_css_color() {
+        return new CssColor({
+            cssString: this.hex,
+            element: null
         });
     }
 }
@@ -66,6 +110,18 @@ export class LinearSRGB {
     get r() { return this.red; }
     get g() { return this.green; }
     get b() { return this.blue; }
+
+    get vector() { return Vec3.of(this.red, this.green, this.blue); }
+
+    set vector(v) {
+        this.red   = v.x;
+        this.green = v.y;
+        this.blue  = v.z;
+    }
+
+    static fromVector(v) {
+        return new this({ red: v.x, green: v.y, blue: v.z });
+    }
 
     to_nonlinear_srgb() {
         return new NonlinearSRGB({
@@ -114,6 +170,18 @@ export class OkLab {
     get a() { return this.green_red; }
     get b() { return this.blue_yellow; }
 
+    get vector() { return Vec3.of(this.lightness, this.green_red, this.blue_yellow); }
+
+    set vector(v) {
+        this.lightness   = v.x;
+        this.green_red   = v.y;
+        this.blue_yellow = v.z;
+    }
+
+    static fromVector(v) {
+        return new this({ lightness: v.x, green_red: v.y, blue_yellow: v.z });
+    }
+
     to_linear_srgb() {
         let long   = this.lightness + 0.3963377774*this.green_red + 0.2158037573*this.blue_yellow;
         let medium = this.lightness - 0.1055613458*this.green_red - 0.0638541728*this.blue_yellow;
@@ -153,6 +221,18 @@ export class OkLch {
     get c() { return this.chroma; }
     get h() { return this.hue; }
 
+    get vector() { return Vec3.of(this.lightness, this.chroma, this.hue); }
+
+    set vector(v) {
+        this.lightness = v.x;
+        this.chroma    = v.y;
+        this.hue       = v.z;
+    }
+
+    static fromVector(v) {
+        return new this({ lightness: v.x, chroma: v.y, hue: v.z });
+    }
+
     to_oklab() {
         return new OkLab({
             lightness: this.lightness,
@@ -171,6 +251,18 @@ export class CIEXYZ { // CIE 1931 XYZ
 
     static params = ["x", "y", "z"];
 
+    get vector() { return Vec3.of(this.x, this.y, this.z); }
+
+    set vector(v) {
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
+    }
+
+    static fromVector(v) {
+        return new this({ x: v.x, y: v.y, z: v.z });
+    }
+
     to_linear_srgb() {
         return new LinearSRGB({
             red:    3.2406*this.x - 1.5372*this.y - 0.4986*this.z,
@@ -186,6 +278,13 @@ export class CssColor {
 
     constructor({ cssString, element }) {
         this.#cssString = cssString;
+
+        // null = intentionally absent, meaning this is a "derived" css value
+        // we only really *need* the element context for more "exotic" css
+        if (element === null) {
+            this.#reader = null;
+            return;
+        }
 
         if (element.$cssColorReader) {
             this.#reader = element.$cssColorReader;
@@ -220,6 +319,16 @@ export class CssColor {
     }
 
     to_nonlinear_srgb() {
+        if (this.#reader === null) {
+            const h = this.#cssString.slice(1);
+
+            return new NonlinearSRGB({
+                red:   parseInt(h.slice(0, 2), 16) / 255,
+                green: parseInt(h.slice(2, 4), 16) / 255,
+                blue:  parseInt(h.slice(4, 6), 16) / 255
+            });
+        }
+
         const computed = getComputedStyle(this.#reader).backgroundColor;
 
         if (!computed) return DebugPurple;
@@ -258,21 +367,22 @@ function oklch_helix_map(
 const _CONVERSION_EDGES = new Map([
     [NonlinearSRGB, [
         [LinearSRGB, x => x.to_linear_srgb()],
+        [CssColor, x => x.to_css_color()]
     ]],
     [LinearSRGB, [
         [NonlinearSRGB, x => x.to_nonlinear_srgb()],
         [OkLab,         x => x.to_oklab()],
-        [CIEXYZ,        x => x.to_cie_xyz()],
+        [CIEXYZ,        x => x.to_cie_xyz()]
     ]],
     [OkLab, [
         [LinearSRGB, x => x.to_linear_srgb()],
-        [OkLch,      x => x.to_oklch()],
+        [OkLch,      x => x.to_oklch()]
     ]],
     [OkLch, [
-        [OkLab, x => x.to_oklab()],
+        [OkLab, x => x.to_oklab()]
     ]],
     [CIEXYZ, [
-        [LinearSRGB, x => x.to_linear_srgb()],
+        [LinearSRGB, x => x.to_linear_srgb()]
     ]],
     [CssColor, [
         [NonlinearSRGB, x => x.to_nonlinear_srgb()]
@@ -410,6 +520,123 @@ export class Color {
 
     get type() {
         return this.#source;
+    }
+}
+
+const interpolators = new Map([
+    ["linear", Vec3.lerp],
+
+    ["smoothstep", Vec3.smoothstep],
+
+    // for oklch
+    ["hue-shortest", (a, b, t) => {
+        let dh = b.z - a.z;
+        dh -= $tau * Math.round(dh / $tau);
+        return Vec3.of(
+            a.x + (b.x - a.x) * t,
+            a.y + (b.y - a.y) * t,
+            a.z + dh * t
+        );
+    }]
+]);
+
+export class Gradient {
+    #points;
+    #space;
+    #interpolate;
+
+    constructor({ points, space = OkLab, method = "linear" }) {
+        if (points.length < 2) {
+            throw new Error("gradient needs at least 2 points");
+        }
+
+        this.#points = points
+            .map(point => ({
+                position: Math.min(Math.max(point.position, 0), 1),
+                color: point.color
+            }))
+            .sort((p, q) => p.position - q.position);
+
+        this.#space = space;
+
+        this.#interpolate = typeof method === "function"
+            ? method
+            : interpolators.get(method);
+        if (!this.#interpolate) {
+            throw new Error(`unknown interpolation method: ${method}`);
+        }
+    }
+
+    static of(...positionedColors) {
+        return new this({
+            points: positionedColors.map(([position, color]) => ({ position, color }))
+        });
+    }
+
+    #segment(t) {
+        const points = this.#points;
+        const last = points.length - 1;
+
+        if (t <= points[0].position)    return { a: points[0],    b: points[0],    local_t: 0 };
+        if (t >= points[last].position) return { a: points[last], b: points[last], local_t: 0 };
+
+        let i = 0;
+        while (points[i + 1].position <= t) i++;
+
+        const a = points[i], b = points[i + 1];
+        const span = b.position - a.position;
+        return { a, b, local_t: span > 0 ? (t - a.position) / span : 0 };
+    }
+
+    set space(spaceClass) {
+        this.#space = spaceClass;
+    }
+
+    at(t) {
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
+
+        const { a, b, local_t } = this.#segment(t);
+
+        const va = a.color.get(this.#space).vector;
+        const vb = b.color.get(this.#space).vector;
+
+        return new Color(this.#space.fromVector(this.#interpolate(va, vb, local_t)));
+    }
+
+    precompute(array_length) {
+        const points = this.#points;
+        const last = points.length - 1;
+        const space = this.#space;
+        const interp = this.#interpolate;
+
+        const vectors = points.map(p => p.color.get(space).vector);
+
+        const out = new Array(array_length);
+        let current_segment = 0;
+
+        for (const [i, t] of linspace(0, 1, array_length).entries()) {
+            if (t <= points[0].position) {
+                out[i] = new Color(space.fromVector(vectors[0]));
+                continue;
+            }
+            if (t >= points[last].position) {
+                out[i] = new Color(space.fromVector(vectors[last]));
+                continue;
+            }
+
+            while (current_segment < last - 1 && points[current_segment + 1].position <= t) current_segment++;
+
+            const a = points[current_segment], b = points[current_segment + 1];
+            const span = b.position - a.position;
+            const local_t = span > 0 ? (t - a.position) / span : 0;
+
+            out[i] = new Color(space.fromVector(
+                interp(vectors[current_segment], vectors[current_segment + 1], local_t)
+            ));
+        }
+
+        return out;
     }
 }
 

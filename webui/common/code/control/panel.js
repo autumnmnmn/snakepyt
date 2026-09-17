@@ -30,8 +30,7 @@ $css(`
 }
 
 .control {
-    display: flex;
-    flex-direction: column;
+    display: block;
     flex-shrink: 0;
 }
 
@@ -45,7 +44,7 @@ $css(`
     padding-left: calc(0.5rem - 2px);
 }
 
-.control > .control, .control > .control:has(:focus) {
+.control .control, .control .control:has(:focus) {
     border-left: none;
     padding-left: 0;
     padding-top: 0.5rem;
@@ -88,7 +87,6 @@ export async function main(name, controls) {
 
     const controlState = {};
 
-
     for (const control of controls) {
         const name = control.name ?? control.label;
         controlState[name] = await createControl(container, control, controlState);
@@ -96,6 +94,8 @@ export async function main(name, controls) {
             controlState[name].hide?.();
         }
     }
+
+    container.$contextMenu = { override: true };
 
     return {
         dom: [container],

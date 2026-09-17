@@ -29,7 +29,7 @@ $css {
     }
 
     .blog-content {
-        margin-left: 1em;
+        padding-left: 1em;
         padding-right: 1em;
 
         height: 100%;
@@ -76,6 +76,10 @@ $css {
         max-height: 98vh;
         object-fit: contain;
     }
+
+    .render-container {
+        height: 75%;
+    }
 }
 
 [id=lightbox| onclick=this.classList.remove('open')] {
@@ -96,10 +100,27 @@ $[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
 
 $layout/switch { content #content | gallery #gallery }
 
-
-div[style=height: 75%]{ $gpu/lyapunov {} }
+$layout/loadwall { load interactive renderer? (works best on desktop) | gpu/lyapunov | render-container }
 
 h3[style=text-decoration:underline]{TODO}
+
+priority goals:
+sane ergonomics of main controls
+explanation of what the controls mean
+main visualizations
+
+stretch goals:
+color picker
+math labels
+overlay
+collapsible controls
+
+postpone to part 2:
+color gradients
+topology
+algebraic curves
+
+
 
 archival links to combat link rot
 

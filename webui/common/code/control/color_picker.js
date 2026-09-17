@@ -1,4 +1,35 @@
 
+$css(`
+
+.control.color-picker {
+    display: block;
+}
+
+.control.color-picker label {
+    padding-right: 0.5rem;
+}
+
+.control.color-picker input[type="color"] {
+    border: 1px solid var(--main-solid);
+    vertical-align: bottom;
+    height: 1.6rem;
+    width: 2rem;
+}
+
+.control.color-picker input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.control.color-picker input[type="color"]::-webkit-color-swatch {
+  border: none;
+}
+
+.control.color-picker input[type="color"]::-moz-color-swatch {
+  border: none;
+}
+
+`);
+
 import * as Color from "/code/math/color.js"
 
 const defaults = {
@@ -8,10 +39,22 @@ const defaults = {
     register: null
 };
 
+// TODO labels
+
 export async function main(spec, panelState) {
     spec = { ...defaults, ...spec };
 
     const control = $div("control color-picker");
+
+    const name = spec.label.toLowerCase().replace(/\s+/g, "-");
+
+    const label = document.createElement("label");
+    label.innerText = spec.label + ":";
+    label.id = `${name}-label`;
+
+    const nativePicker = $element("input");
+    nativePicker.type = "color";
+    nativePicker.value = spec.value.CssColor.cssString;
 
     const colorType = $element("select");
 
@@ -51,6 +94,7 @@ export async function main(spec, panelState) {
                 value: params[paramName],
                 onUpdate: (value) => {
                     params[paramName] = Number(value);
+
                     spec.value.set(new Color[type](params));
                     spec.onUpdate(spec.value);
                 }
@@ -80,6 +124,13 @@ export async function main(spec, panelState) {
         createSubControls(key, spec.value);
     });
 
+    nativePicker.addEventListener("change", e => {
+        console.log(e.target.value);
+        spec.value.set(Color.NonlinearSRGB.fromHex(e.target.value));
+        console.log(spec.value);
+        spec.onUpdate(spec.value);
+    });
+
 
     createSubControls(colorType.value, spec.value);
 
@@ -104,6 +155,7 @@ const defaults = {
     console.log();
 
     spec.register?.({ set: value => {
+        nativePicker.value = value.NonlinearSRGB.hex;
         spec.value = value;
         colorType.value = spec.value.type.name;
         createSubControls(colorType.value, spec.value);
@@ -111,6 +163,7 @@ const defaults = {
 
     return { dom: [
         control.$with(
+            label, nativePicker,
             colorType,
             subControls)
     ] };

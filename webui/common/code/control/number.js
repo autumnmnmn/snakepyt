@@ -16,6 +16,7 @@ $css(`
 .number .copyable-value {
     width: 0;
     display: inline-block;
+    vertical-align: bottom;
 }
 
 .number input[type=number] {
@@ -150,6 +151,7 @@ export async function main(spec, panelState) {
     }
     field.step = spec.step;
     field.value = spec.value;
+    field.$contextMenu = { override: true };
 
     const play_button = $element("button");
     play_button.innerText = "▶/⏸";
@@ -161,14 +163,15 @@ export async function main(spec, panelState) {
         field.value = value;
     }
 
+    const reset = () => {
+        set(spec.value);
+        spec.onUpdate?.(spec.value, set, panelState);
+    };
+
     const reset_button = $element("button");
     reset_button.innerText = "⟳";
     reset_button.title = `reset ${spec.name}`;
-    reset_button.addEventListener("click", () => {
-        set(spec.value);
-        spec.onUpdate?.(spec.value, set, panelState);
-    });
-
+    reset_button.addEventListener("click", reset);
 
     slider.addEventListener("input", () => {
         field.value = slider.value;
@@ -185,7 +188,7 @@ export async function main(spec, panelState) {
     const dom = [control.$with(
         label, label_eq.$with(copyable_value), field,
         slider,
-        reset_button
+        //reset_button
     )];
 
     const hide = () => {
@@ -195,6 +198,13 @@ export async function main(spec, panelState) {
     const show = () => {
         control.removeAttribute("hidden");
     }
+
+    control.$contextMenu = {
+        items: [
+            [`reset ${spec.label}`, reset]
+        ],
+        override: true
+    };
 
     const bundle = { dom, set, show, hide };
 
