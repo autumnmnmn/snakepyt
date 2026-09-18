@@ -32,6 +32,7 @@ export async function main(argumentString) {
 
     const button = $element("button");
     button.textContent = "load";
+    button.classList = "inverted";
 
     const args = argumentString.split("|").map(arg => arg.trim());
 

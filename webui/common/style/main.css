@@ -83,15 +83,25 @@ pre {
 }
 
 button {
-    border: none;
-    border-radius: 0.2rem;
-    height: 1.5rem;
+    background-color: var(--main-background);
+    color: var(--main-solid);
+    font-family: var(--main-font);
+    border: 1px solid var(--main-faded);
+    border-radius: 2px;
+    padding: 0.1rem 0.5rem;
+    min-height: 1rem;
+    line-height: 1rem;
+    cursor: pointer;
+}
+
+button.inverted {
     background-color: var(--main-solid);
     color: var(--main-solid-content);
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    padding-bottom: 0.1rem;
-    padding-top: 0.2rem;
+    font-family: var(--main-font);
+    border-radius: 2px;
+    padding: 0.1rem 0.5rem;
+    min-height: 1rem;
+    line-height: 1rem;
     cursor: pointer;
 }
 

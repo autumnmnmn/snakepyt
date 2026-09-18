@@ -10,20 +10,6 @@ const constants = {
     tau: $tau
 }
 
-/// hack by gemini -- at the very least deserves its own file
-const _colorCanvas = document.createElement("canvas");
-_colorCanvas.width = 1; _colorCanvas.height = 1;
-const _colorCtx = _colorCanvas.getContext("2d", { willReadFrequently: true });
-
-function cssToNormalizedRgb(cssString) {
-    _colorCtx.clearRect(0, 0, 1, 1);
-    _colorCtx.fillStyle = cssString;
-    _colorCtx.fillRect(0, 0, 1, 1);
-    const data = _colorCtx.getImageData(0, 0, 1, 1).data;
-    return [data[0] / 255, data[1] / 255, data[2] / 255];
-}
-/// end hack
-
 function getUiName(varName) {
     return greek[varName] || varName.replace(/_/g, ' ');
 };
@@ -179,10 +165,10 @@ export async function loadShader(shaderName, substitutions = {}) {
             varMap[v.varName] = v;
         });
         vars.forEach(v => {
-            const dependsOn = getDependsOn(v);
-            v.dependsOn = dependsOn;
+            const dependsOn = getDependsOn(v)?.split("=");
+            v.dependsOn = dependsOn ? { varName: dependsOn[0], values: dependsOn[1]?.split(",") } : null;
             if (dependsOn) {
-                varMap[dependsOn].dependents.push(v.varName);
+                varMap[dependsOn[0]].dependents.push({ varName: v.varName, values: v.dependsOn.values });
             }
         });
 
@@ -194,7 +180,7 @@ export async function loadShader(shaderName, substitutions = {}) {
             min: v.min,
             max: v.max,
             step: v.isIntegral ? 1 : 0.001,
-            onUpdate: (value, set, panel) => {
+            onUpdate: (value, set, panel, doCallback = true) => {
                 v.value = value;
                 if (v.hardMin && v.value < v.min) {
                     v.value = v.min;
@@ -204,7 +190,7 @@ export async function loadShader(shaderName, substitutions = {}) {
                     v.value = v.max;
                     set(v.value);
                 }
-                afterChangeCallback();
+                if (doCallback) afterChangeCallback();
             },
             register: (registration) => v.registrations.push(registration),
             hidden: v.hidden
@@ -216,32 +202,56 @@ export async function loadShader(shaderName, substitutions = {}) {
             name: v.varName,
             value: !!v.value,
             hidden: v.hidden,
-            onUpdate: (checked, panelState) => {
+            resolveDependency: desiderata => desiderata.some(value => (!!v.value) === (!!value)),
+            onUpdate: (checked, set, panelState, doCallback = true) => {
                 v.value = checked ? 1 : 0;
-                for (const depName of v.dependents) {
-                    checked ? panelState[depName]?.show?.() : panelState[depName]?.hide?.();
+                for (const dep of v.dependents) {
+                    // TODO allow $depend(boolval=false) as well
+                    console.log(dep);
+                    console.log(panelState);
+                    console.log(panelState[dep.varName]);
+                    checked ? panelState[dep.varName]?.show?.() : panelState[dep.varName]?.hide?.();
                 }
-                afterChangeCallback();
+                if (doCallback) afterChangeCallback();
             },
             register: (registration) => v.registrations.push(registration),
             subcontrols: v.dependents.length === 0 ? null : []
         });
 
-        const buildSelect = (v, options, afterChangeCallback) => {
+        const buildSelect = (v, options_raw, afterChangeCallback) => {
             // TODO more complex option mappings than just enum from 0 up
+            const options = options_raw.map((label, value) => ({ label, value }));
             return {
                 type: "select",
                 label: v.uiName,
                 name: v.varName,
-                options: options.map((label, value) => ({ label, value })),
+                options: options,
                 value: v.value,
                 hidden: v.hidden,
-                onUpdate: (value, set, panelState) => {
+                resolveDependency: desiderata => desiderata.some(desideratum =>
+                    desideratum === options.find(o => o.value == v.value)?.label
+                ),
+                onUpdate: (value, set, panelState, doCallback = true) => {
                     v.value = value;
-                    // TODO dependents for selections
-                    afterChangeCallback();
+                    const label = options.find(o => o.value == value)?.label;
+                    for (const dep of v.dependents) {
+                        if (!dep.values) {
+                            console.warn(`${v.varName}: dependent ${dep.varName} should declare values!`);
+                            continue;
+                        }
+                        let found = false;
+                        for (const desired of dep.values) {
+                            if (label === desired) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        found ? panelState[dep.varName]?.show?.() : panelState[dep.varName]?.hide?.();
+                    }
+                    if (doCallback) afterChangeCallback();
                 },
-                register: (registration) => v.registrations.push(registration)
+                register: (registration) => v.registrations.push(registration),
+                subcontrols: v.dependents.length === 0 ? null : []
             }
         };
 
@@ -273,8 +283,6 @@ export async function loadShader(shaderName, substitutions = {}) {
         };
 
         const buildControl = (v, afterChangeCallback) => {
-            v.hidden = v.dependsOn !== undefined && !varMap[v.dependsOn].value;
-
             if (getTag(v, "bool")) {
                 return buildBool(v, afterChangeCallback);
             }
@@ -310,8 +318,8 @@ export async function loadShader(shaderName, substitutions = {}) {
 
             for (const c of controls) {
                 const info = varMap[c.name];
-                if (info.dependsOn && controlMap[info.dependsOn]) {
-                    const parent = controlMap[info.dependsOn];
+                if (info.dependsOn && controlMap[info.dependsOn.varName]) {
+                    const parent = controlMap[info.dependsOn.varName];
                     parent.subcontrols.push(c);
                 } else {
                     topLevelControls.push(c);

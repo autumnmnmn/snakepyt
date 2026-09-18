@@ -21,7 +21,9 @@ ln -s "$(pwd)/$TARGET/wrangler.jsonc" "./sites/_deploy/wrangler.jsonc"
 
 cd sites/_deploy || exit
 
-npx wrangler deploy
+export PATH="$HOME/.nvm/versions/node/v20.20.0/bin:$PATH"
+
+wrangler deploy
 
 cd - || exit
 

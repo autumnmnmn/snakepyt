@@ -105,14 +105,14 @@ export async function main(spec, panelState) {
     checkbox.checked = spec.value;
     checkbox.setAttribute("aria-label", spec.label);
     checkbox.addEventListener("change", () => {
-        spec.onUpdate?.(checkbox.checked, panelState);
+        spec.onUpdate?.(checkbox.checked, /*TODO set*/ () => {}, panelState);
         status.innerText = checkbox.checked ? spec.states[1] : spec.states[0];
     });
 
     const box_container = $element("span");
     box_container.className = "box";
     const longerState = spec.states.reduce((a, b) => a.length >= b.length ? a : b);
-    box_container.style = `width: calc(${longerState.length}ch + 2em)`;
+    box_container.style = `width: calc(${longerState.length}ch + 2rem)`;
 
     box_container.addEventListener("pointerdown", (e) => {
         if (e.target !== checkbox) {
@@ -145,6 +145,9 @@ export async function main(spec, panelState) {
     }
 
     const set = () => {/*TODO*/};
+
+    // set dependent states
+    spec.onUpdate(spec.value, set, panelState, false);
 
     const bundle = { set, dom };
 

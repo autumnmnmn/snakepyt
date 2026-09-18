@@ -94,62 +94,13 @@ svg[style=height:0;width:0;margin:0;padding:0;display:block] {
 
 [class=blog-content]{
 
-$[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] {the logistic lyapunov fractal}
+h1[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] {The Logistic Lyapunov Fractal}
 
-$[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
+h2[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
 
-$layout/switch { content #content | gallery #gallery }
-
-$layout/loadwall { load interactive renderer? (works best on desktop) | gpu/lyapunov | render-container }
-
-h3[style=text-decoration:underline]{TODO}
-
-priority goals:
-sane ergonomics of main controls
-explanation of what the controls mean
-main visualizations
-
-stretch goals:
-color picker
-math labels
-overlay
-collapsible controls
-
-postpone to part 2:
-color gradients
-topology
-algebraic curves
+$layout/loadwall { Load interactive renderer? (designed for desktop) | gpu/lyapunov | render-container }
 
 
-
-archival links to combat link rot
-
-wow: $math/math { inline
-ident x
-op +
-in
-x_2
-} an inline math expression
-
-first plots: widen the 2d plots maybe?
-
-generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases
-
-gradient and color picker input controls
-
-advanced colorization controls for the renderer
-
-subpanel control for panels
-
-finish writeup; other plots building up toward what lyap exp is and why
-
-log LUT like in the original paper
-
-emulated double-precision; maybe just for center / position calculations?
-
-
-mention "verhulst dynamics" and link:
-https://www.lactamme.polytechnique.fr/Mosaic/descripteurs/Commentaires_EspaceLyapunovComplexe.01.html
 
 
 h3[style=text-decoration:underline]{Overview}
@@ -230,4 +181,56 @@ h3[style=text-decoration:underline]{Gallery}
 
     $gallery-loader {}
 }
+
+
+
+
+h3[style=text-decoration:underline]{TODO}
+
+priority goals:
+sane ergonomics of main controls
+explanation of what the controls mean
+main visualizations
+
+stretch goals:
+color picker
+math labels
+overlay
+collapsible controls
+
+postpone to part 2:
+color gradients
+topology
+algebraic curves
+
+
+
+archival links to combat link rot
+
+wow: $math/math { inline
+ident x
+op +
+in
+x_2
+} an inline math expression
+
+first plots: widen the 2d plots maybe?
+
+generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases
+
+gradient and color picker input controls
+
+advanced colorization controls for the renderer
+
+subpanel control for panels
+
+finish writeup; other plots building up toward what lyap exp is and why
+
+log LUT like in the original paper
+
+emulated double-precision; maybe just for center / position calculations?
+
+
+mention "verhulst dynamics" and link:
+https://www.lactamme.polytechnique.fr/Mosaic/descripteurs/Commentaires_EspaceLyapunovComplexe.01.html
 

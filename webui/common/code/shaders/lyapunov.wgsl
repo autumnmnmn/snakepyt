@@ -10,7 +10,7 @@ struct Uniforms /* buffer 0 0 */ {
     skip: u32, // hard 0 to 500 = 50
     seq_mask: u32, // hard 0 to hard 4294967295 = 5
     seq_len: u32, // hard 1 to hard 32 = 2
-    seq_offset: u32, // hard 0 to hard 31 = 0
+    seq_offset: u32, // hard 0 to hard 31 = 0 $depend(offset_mode=single)
     offset_mode: u32, // hard 0 to hard 3 = 0 $select(single, minimum, maximum, average)
     do_discont: u32, // hard 0 to hard 1 = 0 $bool $test
     discont_alpha: f32, // 0 to 1 = 0.907 $depend(do_discont)

@@ -104,10 +104,46 @@ export async function main() {
     params.center_high_y = center_y[0];
 
     const controls = await $mod("control/panel",
-        "parameters",
-        uniforms.getControlSettings(render)
-            .concat(blitUniforms.getControlSettings(render))
+        "Parameters",
+        [
+            { type: "string", label: "sequence", value: "AB", onUpdate: (value, set, panelState) => {
+                let display_value = value
+                    .toUpperCase()
+                    .replace(/[^AB^0-9]/g, "");
+
+                // anywhere there's a ^ not followed by a number treat it as ^1. otherwise, treat X^n as "n copies of X". permit multi-digit numbers.
+                // this should only affect the *logical* value.
+                let logical_value = display_value
+                    .replace(/([AB])\^(\d*)/g, (_, ch, n) =>
+                        ch.repeat(n ? Math.min(+n, 32) : 1))
+                    .replace(/[\^0-9]/g, "");
+
+                logical_value = logical_value.slice(0, 32);
+
+                set(display_value);
+
+                let seq_mask = 0;
+                for (const c of logical_value) {
+                    seq_mask = seq_mask * 2 + (c === "B" ? 1 : 0);
+                }
+
+                const seq_len = Math.max(logical_value.length, 1);
+
+                panelState["seq_len"].set(seq_len);
+                panelState["seq_mask"].set(seq_mask);
+
+                uniforms.vars.seq_len = seq_len;
+                uniforms.vars.seq_mask = seq_mask;
+
+                render();
+            } }
+        ]
+        .concat(uniforms.getControlSettings(render))
+        .concat(blitUniforms.getControlSettings(render))
     );
+
+    controls.controls["seq_len"].hide();
+    controls.controls["seq_mask"].hide();
 
     const computePipeline = $gpu.device.createComputePipeline({
         layout: "auto",

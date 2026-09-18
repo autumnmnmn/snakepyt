@@ -43,6 +43,7 @@ $css(`
         border-radius: 0;
         text-align: left;
         height: auto;
+        border: none;
     }
 
     .context-menu-item:focus {
