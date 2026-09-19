@@ -213,7 +213,6 @@ export async function main(expression, inline=false) {
     const trimmed = expression.trim();
 
     const cache_hit = cache.get(trimmed);
-    console.log(cache_hit);
     if (cache_hit !== undefined) return {
         ...cache_hit,
         dom: cache_hit.dom.map(element => element.cloneNode(true))

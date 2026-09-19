@@ -34,6 +34,9 @@ export async function main(argumentString) {
     button.textContent = "load";
     button.classList = "inverted";
 
+    // TODO unique id generation helper in core.js
+    // then associate the label here w/ the button
+
     const args = argumentString.split("|").map(arg => arg.trim());
 
     const text = args[0];

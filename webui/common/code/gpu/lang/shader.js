@@ -207,9 +207,6 @@ export async function loadShader(shaderName, substitutions = {}) {
                 v.value = checked ? 1 : 0;
                 for (const dep of v.dependents) {
                     // TODO allow $depend(boolval=false) as well
-                    console.log(dep);
-                    console.log(panelState);
-                    console.log(panelState[dep.varName]);
                     checked ? panelState[dep.varName]?.show?.() : panelState[dep.varName]?.hide?.();
                 }
                 if (doCallback) afterChangeCallback();

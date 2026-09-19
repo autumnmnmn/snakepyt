@@ -347,6 +347,8 @@ export async function main() {
         width = canvas.clientWidth * dpr;
         height = canvas.clientHeight * dpr;
 
+        if (width * height === 0) return;
+
         overlay.setAttribute("viewBox", `0 0 ${width} ${height}`);
         overlay.setAttribute("width", width);
         overlay.setAttribute("height", height);

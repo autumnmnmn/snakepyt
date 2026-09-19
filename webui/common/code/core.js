@@ -56,7 +56,13 @@ window.$replace = async function(target, moduleName, ...args) {
 
         target.remove();
 
-        if (!parent.hasChildNodes()) parent.remove();
+        if (!parent.hasChildNodes()) {
+            parent.remove();
+        }
+        else if (![...parent.childNodes].some(child =>
+            child.nodeType !== Node.TEXT_NODE || child.nodeValue.trim() !== "")) {
+            parent.remove();
+        }
     } else {
         target.replaceWith(...result.dom);
     }

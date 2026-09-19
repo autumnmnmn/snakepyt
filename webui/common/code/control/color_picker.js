@@ -152,7 +152,6 @@ const defaults = {
 
 // TODO make the Color type properly handle invalidation :3
 
-    console.log();
 
     spec.register?.({ set: value => {
         nativePicker.value = value.NonlinearSRGB.hex;

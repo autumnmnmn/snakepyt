@@ -33,5 +33,6 @@ export async function main(target, settings) {
         });
     });
 
+    return { dom: [], replace: true };
 }
 
