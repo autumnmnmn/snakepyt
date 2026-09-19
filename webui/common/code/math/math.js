@@ -40,7 +40,7 @@ $css(`
             max-width: max-content;
         }
     }
-`);
+`, true);
 
 function makeLeaf(tag, content) {
     return () => {
@@ -104,12 +104,50 @@ const commonOps = {
     "interpunct": "·"
 };
 
+const autoOps = {
+    "+": "+",
+    "-": "−",
+    "posneg": "±",
+    "dot": commonOps.interpunct, // * on the keyboard, · on the screen
+    "cross": "×",
+    "div": "÷",
+    "/": "/",
+    "=": "=",
+    "<": "<",
+    ">": ">",
+    "<=": "≤",
+    ">=": "≥",
+    "!=": "≠",
+    "~=": "≈",
+    "(": "(",
+    ")": ")",
+    "[": "[",
+    "]": "]",
+    ",": ",",
+    ";": ";",
+    ":": ":",
+    "!": "!",
+    "|": "|",
+    "->": "→",
+    "in": "∈",
+    "!in": "∉",
+    "union": "∪",
+    "intersect": "∩",
+    "subset": "⊂",
+    "strictsubset": "⊆",
+    "empty": "∅",
+    "inf": "∞",
+    "diff": "∂",
+    "...": "…",
+    "'": "′"
+};
+
 const whitespace = /\s/;
-const numeric = /[\d.,]/;
+const numeric = /[\d.]/;
 const hasNumber = /\d/;
 const alphabet = /[a-zA-Z]/;
 
-function tokenize(expression, declarations) {
+function tokenize(expression, declarations, isAuto) {
     const tokens = [];
     let current = "";
     let i = 0;
@@ -117,11 +155,15 @@ function tokenize(expression, declarations) {
     function token(source) {
         let result;
         if (hasNumber.test(source)) {
-            result = declarations["numeric"](source)
+            result = declarations["_auto_numeric"](source);
         } else {
             result = declarations[source];
         }
-        if (!result) throw new Error(`Undeclared token "${source}"`);
+        if (!result) {
+            if (!isAuto) throw new Error(`Undeclared token "${source}"`);
+
+            result = declarations["_auto_ident"](source);
+        }
         tokens.push(result);
     }
 
@@ -165,15 +207,24 @@ export const staticModule = true;
 
 // TODO fix issue where "0.5," gets read as <mn>0.5,</mn> instead of <mn>0.5</mn><mo>,</mo>
 
-export async function main(expression, inline=false) {
-    //console.log(inline);
+const cache = new Map();
 
-    const lines = expression.trim().split("\n");
+export async function main(expression, inline=false) {
+    const trimmed = expression.trim();
+
+    const cache_hit = cache.get(trimmed);
+    console.log(cache_hit);
+    if (cache_hit !== undefined) return {
+        ...cache_hit,
+        dom: cache_hit.dom.map(element => element.cloneNode(true))
+    };
+
+    const lines = trimmed.split("\n");
     const mathContent = [];
 
-    const idents = {};
+    let idents = {};
     const texts = {};
-    const ops = {};
+    let ops = {};
     const contentLines = [];
 
     let isInline = false;
@@ -291,8 +342,14 @@ export async function main(expression, inline=false) {
         "_": { type: "infix", make: makeGroup("msub") },
         "{": { type: "row_begin" },
         "}": { type: "row_end" },
-        "numeric": n => ({ type: "leaf", make: makeLeaf("mn", n) })
+        "_auto_numeric": n => ({ type: "leaf", make: makeLeaf("mn", n) }),
+        "_auto_ident": content => ({ type: "leaf", make: makeLeaf("mi", content) })
     };
+
+    if (isAuto) {
+        ops = { ...autoOps, ...ops };
+        idents = { ...greek, ...idents };
+    }
 
     for (const ident in idents) {
         declaredTokens[ident] = { type: "leaf", make: makeLeaf("mi", idents[ident]) };
@@ -308,7 +365,7 @@ export async function main(expression, inline=false) {
         const trimmed = line.trim();
         if (!trimmed) continue;
 
-        const tokens = tokenize(trimmed, declaredTokens);
+        const tokens = tokenize(trimmed, declaredTokens, isAuto);
 
         const root = { type: "group", make: makeGroup("math"), children: [] };
         const groupStack = [root];
@@ -364,6 +421,13 @@ export async function main(expression, inline=false) {
 
     container.className = isInline ? "math-inline" : "math-block";
 
-    return { dom: [container.$with(...mathContent)], inline: isInline };
+    const result = { dom: [container.$with(...mathContent)], inline: isInline };
+
+    cache.set(trimmed, result);
+
+    return {
+        ...result,
+        dom: result.dom.map(element => element.cloneNode(true))
+    };
 }
 

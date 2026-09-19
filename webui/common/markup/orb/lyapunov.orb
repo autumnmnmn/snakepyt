@@ -1,4 +1,6 @@
 
+$theme {}
+
 $title { Lyapunov Fractals }
 
 $og_image { /media/lyapunov/preview.png }
@@ -213,6 +215,15 @@ op +
 in
 x_2
 } an inline math expression
+
+$math/math {inline
+ident x
+op +
+in
+x_2
+}
+
+$math/math { inline auto log{|f'(x_n)|} + alpha dot beta }
 
 first plots: widen the 2d plots maybe?
 

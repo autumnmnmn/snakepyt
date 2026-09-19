@@ -10,6 +10,7 @@
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
     --main-font: var(--code-font);
+    --math-font: "STIX Two Math", "Cambria Math", "Latin Modern Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
 
     --code-keyword: #8B4F99;
     --code-string: #B5651D;
@@ -55,6 +56,7 @@
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
     --main-font: var(--code-font);
+    --math-font: "STIX Two Math", "Cambria Math", "Latin Modern Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
 
     --code-keyword: #569cd6;
     --code-string: #ce9178;
@@ -101,6 +103,7 @@
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
     --main-font: var(--code-font);
+    --math-font: "STIX Two Math", "Cambria Math", "Latin Modern Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
 
     --code-keyword: #569cd6;
     --code-string: #ce9178;
@@ -147,6 +150,7 @@
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
     --main-font: var(--code-font);
+    --math-font: "STIX Two Math", "Cambria Math", "Latin Modern Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
 
     --code-keyword: #569cd6;
     --code-string: #ce9178;

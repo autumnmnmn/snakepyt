@@ -84,7 +84,7 @@ $css(`
     line-height: 1.5rem;
 }
 
-`)
+`, true)
 
 const defaults = {
 };

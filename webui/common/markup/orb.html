@@ -28,6 +28,7 @@
                 window.$replace = async (target, module, ...args) => {
                     document.$replaces.push(import(`/code/${module}.js`).then(async result => {
                         if (result.staticModule) {
+                            console.log("replace", module);
                             await replace(target, module, ...args);
                         }
                     }));
@@ -42,8 +43,6 @@
                     location.search = params.toString();
                 }]);
             }
-
-            $apply("theme", document.body);
 
             if (orb) {
                 $apply("code/orb", document.body, `/markup/orb/${orb}.orb`)
@@ -61,9 +60,12 @@
                                     const sheet = $element("style");
                                     sheet.textContent = sheetText;
                                     document.head.appendChild(sheet);
+                                    console.log("foo");
                                 }
                                 document.$orbSheets = null;
                             }
+
+                            alert();
 
                             const blob = new Blob(["<!DOCTYPE html>\n" + document.documentElement.outerHTML], {type: 'text/html'});
                             const a = document.createElement('a');

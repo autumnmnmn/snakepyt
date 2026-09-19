@@ -59,6 +59,7 @@ export async function main(svg) {
     let resolution = 200;
 
     let endpoints = true;
+    let render_points = true;
 
     const logistic_map = x => r * x * (1 - x);
     const discontinuous_map = x => {
@@ -280,6 +281,8 @@ export async function main(svg) {
             data_group.replaceChildren(path);
         }
     };
+
+
 
     let layouts = get_layouts();
     draw_grid(layouts.xyz);

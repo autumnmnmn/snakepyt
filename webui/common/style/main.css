@@ -13,6 +13,7 @@
 
 math * {
     overflow: visible;
+    font-family: var(--math-font);
 }
 
 math:not(last-child) {
@@ -21,6 +22,15 @@ math:not(last-child) {
 
 mtext {
     padding-right: 1em;
+    font-family: var(--main-font);
+}
+
+mi {
+    font-family: var(--main-font);
+}
+
+mn {
+    font-family: var(--main-font);
 }
 
 mtext:not(:first-child) {

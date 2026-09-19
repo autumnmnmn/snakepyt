@@ -80,11 +80,11 @@ window.$prepMod = async function(moduleName, args = []) {
     return null;
 }
 
-window.$css = async function(cssText, fromOrb=false) {
+window.$css = async function(cssText, bake=false) {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(cssText);
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-    if (fromOrb) {
+    if (bake) {
         if (!document.$orbSheets) { document.$orbSheets = []; }
         document.$orbSheets.push(cssText);
     }
