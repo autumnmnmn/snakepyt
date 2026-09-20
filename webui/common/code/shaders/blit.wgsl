@@ -1,6 +1,6 @@
 
 struct Uniforms /* buffer 0 0 */ {
-    negative_scale: f32, // hard 0 to 10 = 1
+    negative_scale: f32, // -7 to 7 = 1
     positive_scale: f32, // hard 0 to 10 = 1
     offset: f32, // -5 to 5 = 0
     nan_color: vec3f, // $color(var(--main-background))
@@ -35,7 +35,13 @@ fn frag(@builtin(position) frag_coord: vec4<f32>) -> @location(0) vec4<f32> {
     //val.g = select(0.0, 1.0 - exp(val.r * uniforms.negative_scale), val.r < 0.0);
     //val.b = select(0.0, val.r * uniforms.positive_scale, val.r > 0.0);
     //val.r = max(val.g, val.b);
-    let val3 = select((1.0 - exp(val.r * uniforms.negative_scale)) * uniforms.neg_color, val.r * uniforms.positive_scale * uniforms.pos_color, val.r > 0.0);
+    var neg_term = exp(val.r * abs(uniforms.negative_scale));
+
+    if (uniforms.negative_scale > 0.0) {
+        neg_term = 1.0 - neg_term;
+    }
+
+    let val3 = select(neg_term * uniforms.neg_color, val.r * uniforms.positive_scale * uniforms.pos_color, val.r > 0.0);
 
     val = vec4<f32>(val3, 1.0);
     //val.a = 1.0;

@@ -2,7 +2,7 @@
 $css(`
 .number {
     display: block;
-    line-height: 1.5rem;
+    line-height: 1.5em;
 }
 
 
@@ -24,8 +24,8 @@ $css(`
     font-family: var(--main-font);
     transition: border-color 0.2s ease;
     border-bottom: 1px solid var(--main-faded);
-    min-height: 1rem;
-    line-height: 1rem;
+    min-height: 1em;
+    line-height: 1em;
     width: 5rem;
 }
 
@@ -51,7 +51,7 @@ $css(`
     outline: none;
     cursor: pointer;
     overflow: visible;
-    margin-top: 0.25rem;
+    margin-top: 0.25em;
     border: none;
     border-radius: 2px;
 }
@@ -83,20 +83,63 @@ $css(`
 .number input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 0.5rem;
-    height: 1rem;
+    width: 0.5em;
+    height: 1em;
     border-radius: 2px;
     background: var(--main-solid);
-    margin-top: calc(1px - 0.5rem); /* center the thumb on the track */
-
+    margin-top: calc(1px - 0.5em); /* center the thumb on the track */
 }
 
 .number input[type=range]::-moz-range-thumb {
-    width: 0.5rem;
-    height: 1rem;
+    width: 0.5em;
+    height: 1em;
     border-radius: 2px;
     border: none; /* cancel default style */
     background: var(--main-solid);
+}
+
+
+@media (max-width: 768px) {
+
+/* -webkit: Chromium, Safari, Opera */
+.number input[type=range]::-webkit-slider-runnable-track {
+    background: var(--main-faded);
+    height: 2px;
+}
+
+.number input[type=range]:focus::-webkit-slider-runnable-track {
+    background: var(--main-solid);
+}
+
+/* -moz: Firefox */
+.number input[type=range]::-moz-range-track {
+    background: var(--main-faded);
+    height: 2px;
+}
+
+.number input[type=range]:focus::-moz-range-track {
+    background: var(--main-solid);
+}
+
+.number input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0.5em;
+    height: 1em;
+    border-radius: 2px;
+    background: var(--main-solid);
+    margin-top: calc(1px - 0.5em); /* center the thumb on the track */
+}
+
+.number input[type=range]::-moz-range-thumb {
+    width: 0.5em;
+    height: 1em;
+    border-radius: 2px;
+    border: none; /* cancel default style */
+    background: var(--main-solid);
+}
+
+
 }
 
 `);

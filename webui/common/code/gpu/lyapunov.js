@@ -53,7 +53,7 @@ import "/code/math/constants.js";
 import { Vec2 as v2 } from "/code/math/vector.js";
 import { cartesian as c } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
-import { Color } from "/code/math/color.js"
+import { Color } from "/code/math/color.js";
 
 export async function main() {
     let canRender = false;
@@ -103,40 +103,178 @@ export async function main() {
     params.center_high_x = center_x[0];
     params.center_high_y = center_y[0];
 
+    function setCenter(x, y) {
+        var center_x = splitDouble(x);
+        var center_y = splitDouble(-y);
+
+        params.center_low_x = center_x[1];
+        params.center_low_y = center_y[1];
+        params.center_high_x = center_x[0];
+        params.center_high_y = center_y[0];
+    }
+
+/*
+255 81 6
+255 213 0
+neg scale -5.9
+4000 skip 600
+x_0 0.515
+sequence BA
+
+        */
+
+    function updateSequence(value, set, panelState, shouldRender=true) {
+        let display_value = value
+            .toUpperCase()
+            .replace(/[^AB^0-9]/g, "");
+
+        // anywhere there's a ^ not followed by a number treat it as ^1. otherwise, treat X^n as "n copies of X". permit multi-digit numbers.
+        // this should only affect the *logical* value.
+        let logical_value = display_value
+            .replace(/([AB])\^(\d*)/g, (_, ch, n) =>
+                ch.repeat(n ? Math.min(+n, 32) : 1))
+            .replace(/[\^0-9]/g, "");
+
+        logical_value = logical_value.slice(0, 32);
+
+        set(display_value);
+
+        let seq_mask = 0;
+        for (const c of logical_value) {
+            seq_mask = seq_mask * 2 + (c === "B" ? 1 : 0);
+        }
+
+        const seq_len = Math.max(logical_value.length, 1);
+
+        panelState["seq_len"].set(seq_len);
+        panelState["seq_mask"].set(seq_mask);
+
+        uniforms.vars.seq_len = seq_len;
+        uniforms.vars.seq_mask = seq_mask;
+
+        if (shouldRender) render();
+    }
+
     const controls = await $mod("control/panel",
         "Parameters",
         [
-            { type: "string", label: "sequence", value: "AB", onUpdate: (value, set, panelState) => {
-                let display_value = value
-                    .toUpperCase()
-                    .replace(/[^AB^0-9]/g, "");
+            { type: "select",
+                label: "preset",
+                value: "",
+                options: [
+                    {label: "", value: ""},
+                    {label: "Markus 1989 Fig. 1(a)", value: "1989_1_a"},
+                    {label: "Markus 1989 Fig. 1(b)", value: "1989_1_b"},
+                    {label: "Markus 1989 Fig. 2", value: "1989_2"},
+                    {label: "Markus 1989 Fig. 3", value: "1989_3"},
+                    {label: "Markus 1989 Fig. 4", value: "1989_4"},
+                    {label: "Markus 1989 Fig. 5", value: "1989_5"},
+                    {label: "Markus 1989 Fig. 6", value: "1989_6"},
+                    {label: "Markus 1989 Fig. 7", value: "1989_7"},
+                    {label: "Markus 1990 Fig. 1(a)", value: "1990_1_a"},
+                    {label: "Markus 1990 Fig. 1(b)", value: "1990_1_b"},
+                    {label: "Markus 1990 Fig. 2", value: "1990_2"},
+                    {label: "Markus 1990 Fig. 3", value: "1990_3"},
+                    {label: "Markus 1990 Fig. 4", value: "1990_4"},
+                    {label: "Markus 1990 Fig. 5", value: "1990_5"},
+                    {label: "Markus 1990 Fig. 6", value: "1990_6"},
+                    {label: "Markus 1990 Fig. 7(a)", value: "1990_7_a"},
+                    {label: "Markus 1990 Fig. 7(b)", value: "1990_7_b"},
+                    {label: "Markus 1990 Fig. 10", value: "1990_10"},
+                    {label: "Markus 1990 Fig. 11", value: "1990_11"},
+                    {label: "Markus 1990 Fig. 12", value: "1990_12"},
+                    {label: "Markus 1990 Fig. 13", value: "1990_13"},
+                    {label: "Markus 1990 Fig. 14(a)", value: "1990_14_a"},
+                    {label: "Markus 1990 Fig. 14(b)", value: "1990_14_b"},
+                    {label: "Markus 1990 Fig. 17", value: "1990_17"},
+                    {label: "Markus 1990 Fig. 18", value: "1990_18"},
+                    {label: "Markus 1990 Fig. 19", value: "1990_19"},
+                    {label: "Markus 1990 Fig. 20", value: "1990_20"},
+                    {label: "Markus 1990 Fig. 21", value: "1990_21"},
+                    {label: "Markus 1990 Fig. 22(a)", value: "1990_22_a"},
+                    {label: "Markus 1990 Fig. 22(b)", value: "1990_22_b"},
+                    {label: "Markus 1990 Fig. 23", value: "1990_23"},
+                    {label: "Markus 1990 Fig. 24", value: "1990_24"},
+                ],
+                onUpdate: (value, set, panelState) => {
+                    if (value === "") return;
 
-                // anywhere there's a ^ not followed by a number treat it as ^1. otherwise, treat X^n as "n copies of X". permit multi-digit numbers.
-                // this should only affect the *logical* value.
-                let logical_value = display_value
-                    .replace(/([AB])\^(\d*)/g, (_, ch, n) =>
-                        ch.repeat(n ? Math.min(+n, 32) : 1))
-                    .replace(/[\^0-9]/g, "");
+                    params.iterations = 1000;
+                    params.skip = 200;
+                    params.seq_offset = 0;
+                    params.offset_mode = 0;
+                    params.rotation = 0;
 
-                logical_value = logical_value.slice(0, 32);
+                    if (value === "1989_1_a") {
+                        setCenter(3.8425, 3.8425);
+                        params.zoom = 18;
+                        params.x_0 = 0.515;
+                        updateSequence("BA", panelState.sequence.set, panelState, false);
+                        blitParams.negative_scale = -6;
+                    }
+                    else if (value === "1989_1_b") {
+                        setCenter(3.8425, 3.8425);
+                        params.zoom = 40;
+                        params.x_0 = 0.515;
+                        updateSequence("BA", panelState.sequence.set, panelState, false);
+                        blitParams.negative_scale = -6;
+                    }
+                    else if (value === "1989_2") {
+                        setCenter(3.2515, 3.605);
+                        params.zoom = 1.25;
+                        updateSequence("AABABAB", panelState.sequence.set, panelState, false);
+                        blitParams.negative_scale = -2.35;
+                    }
+                    else if (value === "1989_3") {
+                        setCenter(3.53, 3.605);
+                        params.zoom = 9;
+                        updateSequence("AABAB", panelState.sequence.set, panelState, false);
+                        params.seq_offset = 3;
+                        blitParams.negative_scale = -20;
+                        blitParams.positive_scale = 0;
+                    }
+                    else if (value === "1989_4") {
+                        setCenter(3.085, 3.73);
+                        params.zoom = 1.5;
+                        updateSequence("B^6A^6", panelState.sequence.set, panelState, false);
+                        //params.seq_offset = 3;
+                        blitParams.negative_scale = -12;
+                        blitParams.positive_scale = 0;
+                    }
+                    else if (value === "1989_5") {
+                        setCenter(1.1687, 3.4483);
+                        params.zoom = 3.9;
+                        updateSequence("B^21A", panelState.sequence.set, panelState, false);
+                        params.seq_offset = 1;
+                        blitParams.negative_scale = -3;
+                        blitParams.positive_scale = 0;
+                    }
+                    else if (value === "1989_6") {
+                        setCenter(3.774, 3.423);
+                        params.zoom = 2.7397;
+                        updateSequence("B^12A", panelState.sequence.set, panelState, false);
+                        params.seq_offset = 1;
+                        blitParams.negative_scale = -3;
+                        blitParams.positive_scale = 0;
 
-                set(display_value);
+                    }
+                    else if (value === "1989_7") {
+                        setCenter(3.625, 3.055);
+                        params.zoom = 2.1;
+                        params.rotation = 0.16944;
+                        updateSequence("A^5B^5", panelState.sequence.set, panelState, false);
+                        params.seq_offset = 1;
+                        blitParams.negative_scale = -3;
+                        blitParams.positive_scale = 0;
 
-                let seq_mask = 0;
-                for (const c of logical_value) {
-                    seq_mask = seq_mask * 2 + (c === "B" ? 1 : 0);
+                    }
+                    render();
                 }
-
-                const seq_len = Math.max(logical_value.length, 1);
-
-                panelState["seq_len"].set(seq_len);
-                panelState["seq_mask"].set(seq_mask);
-
-                uniforms.vars.seq_len = seq_len;
-                uniforms.vars.seq_mask = seq_mask;
-
-                render();
-            } }
+            },
+            { type: "button", label: "params", action: () => {
+                console.log(params, blitParams)
+            } },
+            { type: "string", label: "sequence", value: "AB", onUpdate: updateSequence }
         ]
         .concat(uniforms.getControlSettings(render))
         .concat(blitUniforms.getControlSettings(render))

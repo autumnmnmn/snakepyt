@@ -14,11 +14,10 @@
 math * {
     overflow: visible;
     font-family: var(--math-font);
+    font-size: math;
 }
 
-math:not(last-child) {
-    padding-bottom: 0.5em;
-}
+
 
 mtext {
     padding-right: 1em;
@@ -71,6 +70,7 @@ msup > :last-child {
     box-sizing: border-box;
 
     font-family: var(--main-font);
+    font-size: inherit;
 
     --panel-margin: 0.5rem;
 }

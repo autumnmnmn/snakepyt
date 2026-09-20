@@ -5,14 +5,14 @@ $css(`
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 0.5rem;
+    gap: 1em;
+    padding: 0.5em;
     font-family: var(--main-font);
     color: var(--main-solid);
     overflow-y: scroll;
     height: 100%;
     width: fit-content;
-    padding-right: 1rem;
+    padding-right: 1em;
 }
 
 .control-panel > * {
@@ -20,13 +20,13 @@ $css(`
 }
 
 .control-panel legend {
-    line-height: 1rem;
+    line-height: 1em;
     margin: auto;
     border-bottom: 3px double var(--main-solid);
-    padding-top: 0.5rem;
-    padding-bottom: 0.2rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    padding-top: 0.5em;
+    padding-bottom: 0.2em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
 }
 
 .control {
@@ -36,18 +36,18 @@ $css(`
 
 .control {
     border-left: 1px solid var(--main-faded);
-    padding-left: 0.5rem;
+    padding-left: 0.5em;
 }
 
 .control:has(:focus) {
     border-left: 3px solid var(--main-solid);
-    padding-left: calc(0.5rem - 2px);
+    padding-left: calc(0.5em - 2px);
 }
 
 .control .control, .control .control:has(:focus) {
     border-left: none;
     padding-left: 0;
-    padding-top: 0.5rem;
+    padding-top: 0.5em;
 }
 
 .control[hidden] {
@@ -56,14 +56,22 @@ $css(`
 
 @media (max-width: 768px) {
     .control-panel {
-        flex-direction: row;
-        flex-wrap: wrap;
         width: 100%;
+        padding-left: calc(0.5em + 10%);
     }
 
     .control {
-        width: 45%;
-        max-width: 45%;
+        max-width: 60vw;
+    }
+
+    .control-panel legend {
+        position: relative;
+        left: calc(-11.1% - 0.5em);
+
+        width: calc(111.1% + 1.3em);
+        max-width: 100vw;
+        margin: 0;
+        margin-bottom: 1em;
     }
 }
 

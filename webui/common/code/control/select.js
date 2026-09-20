@@ -81,7 +81,7 @@ export async function main(spec, panelState) {
         control.removeAttribute("hidden");
     }
 
-    if (spec.subcontrols !== null) {
+    if (spec.subcontrols) {
         for(const subcontrol of spec.subcontrols) {
             const name = subcontrol.name ?? subcontrol.label;
             panelState[name] = await $apply(`control/${subcontrol.type}`, control, subcontrol, panelState);

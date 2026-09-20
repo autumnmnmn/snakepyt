@@ -33,6 +33,10 @@ $css(`
         max-width: 100%;
     }
 
+    .math-block math:not(last-child) {
+        padding-bottom: 0.5em;
+    }
+
     @supports (display: math) {
         .math-block math {
             display: math;
@@ -416,11 +420,14 @@ export async function main(expression, inline=false) {
         //}
     }
 
+    // TODO clean this up: no longer using "math-inline" for inline
     const container = $element(isInline ? "span" : "div");
 
     container.className = isInline ? "math-inline" : "math-block";
 
-    const result = { dom: [container.$with(...mathContent)], inline: isInline };
+    const content = isInline ? mathContent : [container.$with(...mathContent)];
+
+    const result = { dom: content, inline: isInline };
 
     cache.set(trimmed, result);
 

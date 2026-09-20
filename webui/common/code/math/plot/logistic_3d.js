@@ -5,22 +5,10 @@ const tick_range = (min, max, step) =>
         (_, i) => min + i * step)
     .filter(v => Math.abs(v) > 1e-9);
 
-const linspace = (start, end, n) =>
-    Array.from({ length: n }, (_, i) => start + (end - start) * i / (n - 1))
-
-const line = (p1, p2, _class) => {
-    const element = $svgElement("line");
-    if (Number.isNaN(p1.x)) {console.trace()}
-    element.setAttribute("x1", p1.x);
-    element.setAttribute("x2", p2.x);
-    element.setAttribute("y1", p1.y);
-    element.setAttribute("y2", p2.y);
-    element.setAttribute("class", _class);
-    return element;
-};
-
-import { Vec2 as v2, Vec3 as v3, Mat3x3 as mat } from '/code/math/vector.js';
-import '/code/math/constants.js';
+import { Vec2 as v2, Vec3 as v3, Mat3x3 as mat } from "/code/math/vector.js";
+import "/code/math/constants.js";
+import { svg_space } from "/code/math/plot.js";
+import { linspace, smoothstep } from "/code/math/core.js";
 
 function partition_region(width, height) {
     const scale_wide = Math.min(width / 3, height / 2);
@@ -47,8 +35,6 @@ function partition_region(width, height) {
         return { small_a, small_b, big };
     }
 }
-
-const smoothstep = t => t * t * (3 - 2 * t);
 
 export async function main(svg) {
 
@@ -188,17 +174,17 @@ export async function main(svg) {
 
         return {
             xyz: {
-                place: place_3d,
+                space: svg_space(place_3d),
                 grid_group: grid_group_3d,
                 data_group: data_group_3d
             },
             xy: {
-                place: place_xy,
+                space: svg_space(place_xy),
                 grid_group: grid_group_xy,
                 data_group: data_group_xy
             },
             xz: {
-                place: place_xz,
+                space: svg_space(place_xz),
                 grid_group: grid_group_xz,
                 data_group: data_group_xz
             }
@@ -206,48 +192,48 @@ export async function main(svg) {
     };
 
     const draw_grid = (layout) => {
-        const { place, grid_group } = layout;
+        const { space, grid_group } = layout;
 
-        const x_axis = line(
-            place(v3.of(bounds_min.x - overhang.x, 0, 0)),
-            place(v3.of(bounds_max.x + overhang.x, 0, 0)),
+        const x_axis = space.line(
+            v3.of(bounds_min.x - overhang.x, 0, 0),
+            v3.of(bounds_max.x + overhang.x, 0, 0),
             "axis"
         );
-        const y_axis = line(
-            place(v3.of(0, bounds_min.y - overhang.y, 0)),
-            place(v3.of(0, bounds_max.y + overhang.y, 0)),
+        const y_axis = space.line(
+            v3.of(0, bounds_min.y - overhang.y, 0),
+            v3.of(0, bounds_max.y + overhang.y, 0),
             "axis"
         );
-        const z_axis = line(
-            place(v3.of(0, 0, bounds_min.z - overhang.z)),
-            place(v3.of(0, 0, bounds_max.z + overhang.z)),
+        const z_axis = space.line(
+            v3.of(0, 0, bounds_min.z - overhang.z),
+            v3.of(0, 0, bounds_max.z + overhang.z),
             "axis 3d"
         );
         const x_guides_xy = x_ticks.map(x_val =>
-            line(
-                place(v3.of(x_val, bounds_min.y - overhang.y / 2, 0)),
-                place(v3.of(x_val, bounds_max.y + overhang.y / 2, 0)),
+            space.line(
+                v3.of(x_val, bounds_min.y - overhang.y / 2, 0),
+                v3.of(x_val, bounds_max.y + overhang.y / 2, 0),
                 "guide"
             )
         );
         const y_guides_xy = y_ticks.map(y_val =>
-            line(
-                place(v3.of(bounds_min.x - overhang.x / 2, y_val, 0)),
-                place(v3.of(bounds_max.x + overhang.x / 2, y_val, 0)),
+            space.line(
+                v3.of(bounds_min.x - overhang.x / 2, y_val, 0),
+                v3.of(bounds_max.x + overhang.x / 2, y_val, 0),
                 "guide"
             )
         );
         const x_guides_xz = x_ticks.map(x_val =>
-            line(
-                place(v3.of(x_val, 0, bounds_min.z - overhang.z / 2)),
-                place(v3.of(x_val, 0, bounds_max.z + overhang.z / 2)),
+            space.line(
+                v3.of(x_val, 0, bounds_min.z - overhang.z / 2),
+                v3.of(x_val, 0, bounds_max.z + overhang.z / 2),
                 "guide 3d"
             )
         );
         const z_guides_xz = z_ticks.map(z_val =>
-            line(
-                place(v3.of(bounds_min.x - overhang.x / 2, 0, z_val)),
-                place(v3.of(bounds_max.x + overhang.x / 2, 0, z_val)),
+            space.line(
+                v3.of(bounds_min.x - overhang.x / 2, 0, z_val),
+                v3.of(bounds_max.x + overhang.x / 2, 0, z_val),
                 "guide 3d"
             )
         );
@@ -262,19 +248,24 @@ export async function main(svg) {
     const clamp = (value, low=-100, high=100) => Math.max(low, Math.min(high, value));
 
     const draw_path = (layout, zero_y=false, zero_z=false) => {
-        const { place, data_group } = layout;
+        const { space, data_group } = layout;
 
-        const path = $svgElement("path");
-        const p = (x_val, i) => place(v3.of(x_val, zero_y ? 0 : clamp(y_data[i]), zero_z ? 0 : clamp(z_data[i])));
         const sliced = endpoints ? init_x_data : init_x_data.slice(1, -1);
         const offset = endpoints ? 0 : 1;
-        const d = sliced
-            .map((x_val, i) => `${i === 0 ? "M" : "L"}${p(x_val, i + offset).x},${p(x_val, i + offset).y}`)
-            .join(" ");
-        path.setAttribute("d", d);
+
+        const points = sliced.map((x_val, i) => v3.of(
+            x_val,
+            zero_y ? 0 : clamp(y_data[i + offset]),
+            zero_z ? 0 : clamp(z_data[i + offset])
+        ));
+
+        const path = space.path(
+            (abs, rel) => points.map((p,i) => i === 0 ? abs.move(p) : abs.line(p)),
+            (zero_y || zero_z) ? "data dashed" : "data"
+        );
+
         path.setAttribute("fill", "none");
-        const classes = (zero_y || zero_z) ? "data dashed" : "data";
-        path.setAttribute("class", classes);
+
         if (zero_y || zero_z) {
             data_group.append(path);
         } else {

@@ -33,9 +33,48 @@ svg.plot .data.dashed {
     stroke-width: 1;
 }
 
+.plot-topmost {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.plot-topmost .control-container {
+    position: relative;
+    width: fit-content;
+    height: 100%;
+    background-color: var(--main-background);
+    flex-shrink: 0;
+}
+
+
+@media (max-width: 768px) {
+    .plot-topmost {
+        flex-direction: column;
+    }
+
+    .plot-topmost > * {
+        flex: 1 1 0;
+    }
+
+    .plot-topmost .control-container {
+        flex-shrink: revert;
+        width: 100%;
+        height: fit-content;
+    }
+
+    legend {
+    }
+
+    .plot-topmost svg {
+    }
+}
+
 `);
 
-import { identity } from '/code/math/core.js';
+import { identity } from "/code/math/core.js";
 
 export const svg_space = (project=identity, scale=identity) => {
 
@@ -179,7 +218,7 @@ export async function main(plot_id) {
     const plot = await import(`/code/math/plot/${plot_id.trim()}.js`);
 
     const svg = $svgElement("svg");
-    const plotContainer = $div("full").$with(svg);
+    const plotContainer = $div("plot-topmost").$with(svg);
 
     const dom = [];
 
@@ -195,11 +234,13 @@ export async function main(plot_id) {
             "Parameters", plotModule.controls
         );
 
-        const split = await $mod("layout/split",
-            { content: [controls.dom, plotContainer], percents: [20, 80] }
-        );
+        //const split = await $mod("layout/split",
+        //    { content: [controls.dom, plotContainer], percents: [20, 80] }
+        //);
 
-        dom.push(...split.dom);
+        const container = $div("control-container").$with(...controls.dom);
+
+        dom.push(plotContainer.$with(container));
     } else {
         dom.push(plotContainer);
     }

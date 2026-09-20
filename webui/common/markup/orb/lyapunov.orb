@@ -38,6 +38,11 @@ $css {
         overflow-y: scroll;
     }
 
+    .interactive-plot {
+        width: 100%;
+        height: 500px;
+    }
+
     @media (min-width: 600px) {
         .gallery img {
             width: calc(max(min(25vw, 512px), 256px) - 0.875em);
@@ -46,6 +51,16 @@ $css {
 
         .gallery {
             gap: 0.5em;
+        }
+
+    }
+
+    @media (max-width: 768px) {
+
+        .interactive-plot {
+            height: 85vh;
+            border-bottom: 3px double var(--main-solid);
+            border-top: 3px double var(--main-solid);
         }
     }
 
@@ -126,11 +141,11 @@ $math/math {
     then x_{n+1} = r_n · x_n · (1 - x_n)
 }
 
-This formula is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} (though in other settings the logistic map is usually taken to have a fixed r-value). We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
+The function $math/math { inline auto f(x) = r dot x dot (1 - x)} is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
 
 Let's try and get a feel for what this map is, beginning with some simple plots:
 
-[style=width:100%;height:500px;] { $math/plot { logistic_3d } }
+[class=interactive-plot] { $math/plot { logistic_3d } }
 
 Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the i{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
 
@@ -170,6 +185,9 @@ h3[style=text-decoration:underline]{Other Results}
 
 The original paper concerns itself only with A and B values in the range [0,4]. However, there is no technical constraint that prevents us from peeking outside that box. When we do, it becomes visually apparent that this range is not entirely arbitrary (a[href=https://en.wikipedia.org/wiki/Logistic_map#Characterization_of_the_logistic_map]{the logistic map remains finite there}). The crisp edge of this "blessed" square stands out prominently. Nevertheless, there is some interesting structure outside of it. Some of the superstable curves poke out into the void of divergence. A smaller, distorted square exists where A and B are both negative. There are even isolated islands of stability, i{apparently} disconnected from the rest. i{Apparently} is emphasized as this is only a visual assessment of a finite-resolution render.
 
+h3[style=text-decoration:underline]{Presets}
+
+Presets in the interactive renderer have been set up to approximately reproduce the figures from Markus's 1989 and 1990 papers. The renders are not 100% faithful, but they are best-effort. The papers specify the r-value sequences and the coordinate bounds of each render. They do not specify the starting offset in the sequence, which, as I discovered in the course of implementing the presets, is not always 0. This page's interactive renderer has a variable width and height, so I calculated a center point and zoom value that would approximately match the original bounds. It may be necessary to resize one's window, zoom, and pan around, in order to get a more exact match to what is present in the original papers. Some of the original renders also exhibit anisotropic stretching. My renderer does not at present have the capacity to replicate this effect. The original papers specify the $math/math {inline auto x_0} values for many of the figures, but I found that some visual features (for example, in 1989 Fig. 1(a)) could not be reproduced without modifying $math/math {inline auto x_0} slightly. I opted to make this modification, prioritizing visual similarity with the original visualization over precise copying of parameters.
 
 h3[style=text-decoration:underline]{Gallery}
 
