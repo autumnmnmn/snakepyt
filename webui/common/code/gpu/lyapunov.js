@@ -268,6 +268,17 @@ sequence BA
                         blitParams.positive_scale = 0;
 
                     }
+                    else if (value === "1990_1_a") {
+                        params.x_0 = 0.364;
+                        setCenter(3.625, 3.055);
+                        params.zoom = 2.1;
+                        params.rotation = 0.16944;
+                        updateSequence("A^5B^5", panelState.sequence.set, panelState, false);
+                        params.seq_offset = 1;
+                        blitParams.negative_scale = -3;
+                        blitParams.positive_scale = 0;
+
+                    }
                     render();
                 }
             },
@@ -479,7 +490,7 @@ sequence BA
 
     }
 
-
+    let nan_color_initialized = false;
 
     function resize() {
         width = canvas.clientWidth * dpr;
@@ -491,7 +502,10 @@ sequence BA
         overlay.setAttribute("width", width);
         overlay.setAttribute("height", height);
 
-        blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost });
+        if (!nan_color_initialized) {
+            blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost });
+            nan_color_initialized = true;
+        }
 
         canvas.width = width;
         canvas.height = height;

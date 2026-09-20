@@ -17,15 +17,27 @@ $css(`
 }
 
 .control.color-picker input[type="color"]::-webkit-color-swatch-wrapper {
-  padding: 0;
+    padding: 0;
 }
 
 .control.color-picker input[type="color"]::-webkit-color-swatch {
-  border: none;
+    border: none;
 }
 
 .control.color-picker input[type="color"]::-moz-color-swatch {
-  border: none;
+    border: none;
+}
+
+.control.color-picker select.mode {
+    margin-left: 1em;
+}
+
+.control.color-picker .raw-controls {
+    display: none;
+}
+
+.control.color-picker[data-mode="raw"] .raw-controls {
+    display: block;
 }
 
 `);
@@ -56,9 +68,47 @@ export async function main(spec, panelState) {
     nativePicker.type = "color";
     nativePicker.value = spec.value.CssColor.cssString;
 
-    const colorType = $element("select");
+    control.$contextMenu = {
+        items: [
+            ["Copy hex", () => navigator.clipboard.writeText(spec.value.NonlinearSRGB.hex)],
+            async () => {
+                const clipboardContent = await navigator.clipboard.readText();
+                if (!/^#[0-9a-fA-F]{6}$/.test(clipboardContent)) return;
+                return ["Paste hex", () => {
+                    spec.value.set(Color.NonlinearSRGB.fromHex(clipboardContent))
+                    spec.onUpdate(spec.value);
+                    nativePicker.value = spec.value.CssColor.cssString;
+                }]
+            },
+        ]
+    };
 
-    const subControls = $div();
+    const pickerMode = $element("select");
+    pickerMode.classList = "mode";
+
+    [
+        { value: "hsv", label: "HSV" },
+        { value: "srgb", label: "sRGB" },
+        { value: "theme", label: "Theme" },
+        { value: "css", label: "CSS" },
+        { value: "raw", label: "Raw" },
+    ].forEach(item => {
+        const option = $element("option");
+        option.value = item.value;
+        option.textContent = item.label;
+        pickerMode.appendChild(option);
+    });
+
+    pickerMode.value = "hsv";
+    control.dataset.mode = "hsv";
+
+    pickerMode.addEventListener("change", e => {
+        control.dataset.mode = e.target.value;
+    });
+
+    const colorSpace = $element("select");
+
+    const rawControls = $div("raw-controls");
 
     const colors = {
         NonlinearSRGB: { type: Color.NonlinearSRGB, label: "Nonlinear sRGB" },
@@ -66,22 +116,22 @@ export async function main(spec, panelState) {
         OkLab: { type: Color.OkLab, label: "OkLab" },
         OkLch: { type: Color.OkLch, label: "OkLch" },
         CIEXYZ: { type: Color.CIEXYZ, label: "CIE XYZ" },
-        CssColor: { type: Color.CssColor, label: "CSS" },
     };
 
     for (const [key, { type, label }] of Object.entries(colors)) {
         const option = $element("option");
         option.value = key;
         option.textContent = label;
-        colorType.appendChild(option);
+        colorSpace.appendChild(option);
     }
 
-    colorType.value = spec.value.type.name;
+    colorSpace.value = spec.value.type.name;
 
-    const createSubControls = async (type, value) => {
+    const createRawControls = async (type, value) => {
         let params = {};
 
-        if (type === "CssColor") { return; /*TODO*/ }
+        if (type === "CssColor") { return; }
+
 
         Color[type].params.forEach(paramName => {
             params[paramName] = value[type][paramName];
@@ -105,10 +155,10 @@ export async function main(spec, panelState) {
         const elements = (await Promise.all(modules)).flat();
 
 
-        subControls.replaceChildren(...elements);
+        rawControls.replaceChildren(...elements);
     };
 
-    colorType.addEventListener("change", e => {
+    colorSpace.addEventListener("change", e => {
         const key = e.target.value;
 
         const color = colors[key];
@@ -121,33 +171,20 @@ export async function main(spec, panelState) {
         //console.log(spec.value);
         //console.log(color);
 
-        createSubControls(key, spec.value);
+        createRawControls(key, spec.value);
     });
 
     nativePicker.addEventListener("change", e => {
-        console.log(e.target.value);
         spec.value.set(Color.NonlinearSRGB.fromHex(e.target.value));
-        console.log(spec.value);
         spec.onUpdate(spec.value);
     });
 
 
-    createSubControls(colorType.value, spec.value);
+    createRawControls(colorSpace.value, spec.value);
 
     //let selectedType = colors[spec.value.type.name].;
 
-/*
-const defaults = {
-    label: "x",
-    min: -1.0,
-    max: 1.0,
-    limitField: false,
-    step: 0.01,
-    value: 0,
-    onUpdate: null,
-    register: null
-}
-*/
+
 
 
 // TODO make the Color type properly handle invalidation :3
@@ -156,14 +193,16 @@ const defaults = {
     spec.register?.({ set: value => {
         nativePicker.value = value.NonlinearSRGB.hex;
         spec.value = value;
-        colorType.value = spec.value.type.name;
-        createSubControls(colorType.value, spec.value);
+        const space = spec.value.type.name === "CssColor" ? "NonlinearSRGB" : spec.value.type.name;
+        colorSpace.value = space
+        createRawControls(colorSpace.value, spec.value);
     }});
 
     return { dom: [
         control.$with(
             label, nativePicker,
-            colorType,
-            subControls)
+            pickerMode,
+            colorSpace,
+            rawControls)
     ] };
 }

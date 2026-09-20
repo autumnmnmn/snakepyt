@@ -13,8 +13,9 @@
 
 math * {
     overflow: visible;
-    font-family: var(--math-font);
     font-size: math;
+    font-family: var(--math-font);
+    math-style: normal;
 }
 
 
@@ -30,6 +31,13 @@ mi {
 
 mn {
     font-family: var(--main-font);
+}
+
+munderover > :last-child {
+    margin-bottom: 0.15em;
+}
+
+munderover > :not(:last-child):not(:first-child) {
 }
 
 mtext:not(:first-child) {

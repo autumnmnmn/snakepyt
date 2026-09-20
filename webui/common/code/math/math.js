@@ -101,8 +101,33 @@ export const greek = {
     "curlyphi": "φ",
     "chi": "χ",
     "psi": "ψ",
-    "omega": "ω"
-}; // TODO: capital letters
+    "omega": "ω",
+
+    "Alpha": "Α",
+    "Beta": "Β",
+    "Gamma": "Γ",
+    "Delta": "Δ",
+    "Epsilon": "Ε",
+    "Zeta": "Ζ",
+    "Eta": "Η",
+    "Theta": "Θ",
+    "Iota": "Ι",
+    "Kappa": "Κ",
+    "Lambda": "Λ",
+    "Mu": "Μ",
+    "Nu": "Ν",
+    "Xi": "Ξ",
+    "Omicron": "Ο",
+    "Pi": "Π",
+    "Rho": "Ρ",
+    "Sigma": "Σ",
+    "Tau": "Τ",
+    "Upsilon": "Υ",
+    "Phi": "Φ",
+    "Chi": "Χ",
+    "Psi": "Ψ",
+    "Omega": "Ω"
+};
 
 const commonOps = {
     "interpunct": "·"
@@ -115,7 +140,6 @@ const autoOps = {
     "dot": commonOps.interpunct, // * on the keyboard, · on the screen
     "cross": "×",
     "div": "÷",
-    "/": "/",
     "=": "=",
     "<": "<",
     ">": ">",
@@ -132,7 +156,7 @@ const autoOps = {
     ":": ":",
     "!": "!",
     "|": "|",
-    "->": "→",
+    "arrowr": "→",
     "in": "∈",
     "!in": "∉",
     "union": "∪",
@@ -142,6 +166,7 @@ const autoOps = {
     "empty": "∅",
     "inf": "∞",
     "diff": "∂",
+    "sum": "∑",
     "...": "…",
     "'": "′"
 };
@@ -343,8 +368,12 @@ export async function main(expression, inline=false) {
     const declaredTokens = {
         "^": { type: "infix", make: makeGroup("msup") },
         "_": { type: "infix", make: makeGroup("msub") },
+        "/": { type: "infix", make: makeGroup("mfrac") },
+        "root": { type: "infix", make: makeGroup("mroot") },
         "{": { type: "row_begin" },
         "}": { type: "row_end" },
+        "end": { type: "row_end" },
+        "underover": { type: "underover_begin" },
         "_auto_numeric": n => ({ type: "leaf", make: makeLeaf("mn", n) }),
         "_auto_ident": content => ({ type: "leaf", make: makeLeaf("mi", content) })
     };
@@ -375,6 +404,9 @@ export async function main(expression, inline=false) {
         for (const token of tokens) {
             if (token.type === "row_begin") {
                 groupStack.push({ type: "group", make: makeGroup("mrow"), children: [] });
+            }
+            else if (token.type === "underover_begin") {
+                groupStack.push({ type: "group", make: makeGroup("munderover"), children: [] });
             }
             else if (token.type === "row_end") {
                 const row = groupStack.pop();

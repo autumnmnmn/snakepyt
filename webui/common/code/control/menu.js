@@ -71,20 +71,12 @@ $css(`
     }
 `);
 
-function collectItems(element) {
-    const items = [];
+function collectConfigs(element) {
+    const configs = [];
 
     for (let node = element; node; node = node.parentNode) {
         if (node.$contextMenu !== null && node.$contextMenu !== undefined) {
-            const nodeItems = $actualize(node.$contextMenu.items) || [];
-            for (const item of nodeItems.map($actualize)) {
-                if (Array.isArray(item) && item[0] && Array.isArray(item[0])) {
-                    items.push(...item);
-                }
-                else {
-                    items.push(item);
-                }
-            }
+            configs.push(node.$contextMenu);
 
             if (node.$contextMenu.override) {
                 break;
@@ -92,6 +84,25 @@ function collectItems(element) {
         }
     }
 
+    return configs;
+}
+
+async function resolveMenuItems(configs) {
+    const items = [];
+
+    for (const config of configs) {
+        if (!config.items) continue;
+
+        const nodeItems = await $actualize(config.items) || [];
+        for (const item of await Promise.all(nodeItems.map($actualize))) {
+            if (Array.isArray(item) && item[0] && Array.isArray(item[0])) {
+                items.push(...item);
+            }
+            else {
+                items.push(item);
+            }
+        }
+    }
     return items;
 }
 
@@ -182,12 +193,18 @@ const showMenu = (target, position = null) => {
     }
 };
 
-document.addEventListener("contextmenu", (e) => {
+document.addEventListener("contextmenu", async (e) => {
     if (e.shiftKey) return;
 
     menu.replaceChildren();
 
-    const items = collectItems(e.target);
+    const configs = collectConfigs(e.target);
+
+    if (!configs.some(config => config.items)) return;
+
+    e.preventDefault();
+
+    const items = await resolveMenuItems(configs);
 
     if (items.length === 0) return;
 
@@ -225,15 +242,14 @@ document.addEventListener("contextmenu", (e) => {
         menu.appendChild(menuItem);
     });
 
-    e.preventDefault();
-
     showMenu(e.target, {x: e.clientX, y: e.clientY});
 });
 
-document.$showMenu = (target) => {
+document.$showMenu = async (target) => {
     menu.replaceChildren();
 
-    const items = collectItems(target);
+    const configs = collectConfigs(target);
+    const items = await resolveMenuItems(configs);
 
     if (items.length === 0) return;
 
