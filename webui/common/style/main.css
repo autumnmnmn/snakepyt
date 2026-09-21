@@ -11,6 +11,10 @@
     border: 0;
 }
 
+math {
+    font-size: 1.3em;
+}
+
 math * {
     overflow: visible;
     font-size: math;
@@ -18,19 +22,24 @@ math * {
     math-style: normal;
 }
 
-
+math :not(mtext) {
+}
 
 mtext {
     padding-right: 1em;
-    font-family: var(--main-font);
+    font-family: var(--math-font);
 }
 
 mi {
-    font-family: var(--main-font);
+    font-family: var(--math-font);
 }
 
 mn {
-    font-family: var(--main-font);
+    font-family: var(--math-font);
+}
+
+munderover {
+    font-size: 100%;
 }
 
 munderover > :last-child {
@@ -38,6 +47,11 @@ munderover > :last-child {
 }
 
 munderover > :not(:last-child):not(:first-child) {
+    font-size: 70%;
+}
+
+munderover > :first-child {
+    font-size: 110%;
 }
 
 mtext:not(:first-child) {
@@ -50,8 +64,11 @@ msub > :last-child {
 
 @supports (-moz-appearance: none) {
     msub > :last-child {
+        /*
         font-size: 0.75rem;
         transform: translateY(0.3em);
+        */
+        font-size: 0.8rem;
     }
 }
 

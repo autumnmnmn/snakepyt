@@ -196,20 +196,24 @@ Qualitatively, the fractal appears to be structured along a "skeleton" of precis
 
 Consider the formula for the Lyapunov exponent: $math/math { inline auto underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|diff/{diff x} f_i(x_i)|} }
 
-Since $math/math { inline auto log{|x|} } diverges to $math/math { inline auto -inf } as x approaches 0, we have that the entire sum must diverge when $math/math { inline auto diff/{diff x} f_n(x_n) = 0 }. Given $math/math { inline auto x_0 = 1/2} we can apply the logistic formula with alternating parameters $math/math {inline auto a} and $math/math {inline auto b} repeatedly and obtain $math/math { inline auto diff/{diff x} f_n(x_n) } as a multivariate polynomial in $math/math {inline auto a} and $math/math {inline auto b}.
+Since $math/math { inline auto log{|x|} } diverges to $math/math { inline auto -inf } as x approaches 0, we have that the entire sum must diverge when $math/math { inline auto diff/{diff x} f_n(x_n) = 0 }. Given $math/math { inline auto x_0 = 1/2} we can apply the logistic formula with alternating parameters $math/math {inline auto a} and $math/math {inline auto b} repeatedly and obtain $math/math { inline auto diff/{diff x} f_n(x_n) } as a multivariate polynomial in $math/math {inline auto a} and $math/math {inline auto b}. I'd go as far as to suggest that the set of points where the Lyapunov exponent diverges toward negative infinity is precisely the union of the zero sets of all these polynomials. I suggest it instead of asserting it because I suspect that a proof might require irritatingly subtle considerations.
 
-Because $math/math { inline auto x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, the first few curves are as follows:
+Because $math/math { inline auto x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, the first few curves $math/math { inline auto P_n = diff/{diff x} f_n(x_n) = 0 } are as follows:
 
 $math/math {auto P_1 = 1 - 1/2 a = 0
 
 P_2 = 1/8 a^2 b - 1/2 ab + 1 = 0
 
 P_3 = 1/128a^5b^2 - 1/16 a^4b^2 + 1/8 a^3 b^2 + 1/8 a^3 b - 1/2 a^2 b + 1 = 0
+
+P_4 = 1/32768 a^10 b^5 - 1/2048 a^9 b^5 + 3/1024 a^8 b^5 + 1/1024 a^8 b^4 - 1/128 a^7 b^5 - 3/256 a^7 b^4 + 1/128 a^6 b^5 + 3/64 a^6 b^4 + 1/128 a^6 b^3 - 1/16 a^5 b^4 - 7/128 a^5 b^3 + 1/16 a^4 b^3 + 1/8 a^3 b^3 + 1/8 a^3 b^2 - 1/2 a^2 b^2 + 1 = 0
 }
 
 While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes.
 
 You can see how these curves accumulate and form the "backbone" of the fractal in the interactive renderer by setting "skip" to 1 and "iterations" to 2, and then gradually incrementing the iteration count. The negative-infinite exponents pleasingly trace out exactly these algebraic curves.
+
+Of course, in the original papers, the first 600 iterations are skipped. Some of the algebraic curves from early on are lost due to this, but others reassert themselves no matter how late the accumulation begins. Indeed even with "skip" set to 1 in the renderer you can see that many of the lines appear to fade away quite quickly as the iteration count grows. In reality, unless they are skipped, they still exist as infinite terms causing the whole limit to diverge, it's just that the ones that fade have vanishing influence on nearby trajectories. The curves that very visibly remain are those that are subsets of infinitely many later curves. If it is only these "limiting superstable curves" one cares about, however, there is no finite number of iterations we can skip to exclude all the rest. But I don't feel like pursuing that line of thought any further here and now.
 
 h3[style=text-decoration:underline]{Gallery}
 
