@@ -15,8 +15,8 @@
     --main-solid-content: #DDDDDD;
 
     --code-font: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-    --main-font: var(--code-font);
     --math-font: "Latin Modern Math", "STIX Two Math", "Cambria Math", "Latin Modern Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
+    --main-font: var(--code-font);
 
     --code-keyword: #8B4F99;
     --code-string: #B5651D;

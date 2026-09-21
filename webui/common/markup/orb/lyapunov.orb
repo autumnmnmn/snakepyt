@@ -97,6 +97,19 @@ $css {
     .render-container {
         height: 75%;
     }
+
+    .carousel {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        overflow-x: scroll;
+        gap: 1em;
+    }
+
+    .carousel img {
+        max-height: 35vh;
+        flex-shrink: 0;
+    }
 }
 
 [id=lightbox| onclick=this.classList.remove('open')] {
@@ -138,10 +151,10 @@ $math/math {
     in
     given ll r_0 , r_1 , r_2 , ... r_n rr
     let x_0 = 0.5 ,
-    then x_{n+1} = r_n · x_n · (1 - x_n)
+    then x_{n+1} = r_n · x_n · {(1 - x_n)}
 }
 
-The function $math/math { inline auto f(x) = r dot x dot (1 - x)} is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
+The function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
 
 Let's try and get a feel for what this map is, beginning with some simple plots:
 
@@ -164,14 +177,15 @@ $math/math {
     text if:~
     op > leq:≤ + ( ) - = ·
     in
-    x_{n+1} = r_n · x_n · (1 - x_n) if x_n > 0.5
-    x_{n+1} = r_n · x_n · (1 - x_n) + 0.25 (alpha - 1) (r_n - 2) if x_n leq 0.5
+    x_{n+1} = r_n · x_n · {(1 - x_n)} if x_n > 0.5
+    x_{n+1} = r_n · x_n · {(1 - x_n)} + 0.25 {(alpha - 1)} {(r_n - 2)} if x_n leq 0.5
 }
 
-Where α is a real parameter, typically just a little less than 1.
+Where α is a real parameter, typically just a little less than 1. Note that in the case where α is 1, this reduces to the familiar logistic map.
 
+Note that in the discontinuous case, Markus chose to set the starting x value to 0.499 instead of 0.5. The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's. The exact details of how that variation is implemented are a little bit hard to parse, in my opinion, but I believe I have settled on an implementation which closely matches the results of Markus's paper. TODO describe this explain the parameter
 
-Note that in the discontinuous case, Markus chose to set the starting x value to 0.499 instead of 0.5. The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's.
+Most explanations of the Lyapunov fractal on the web (at time of writing) don't explore these variations, and I think that's a shame; which is one of the primary reasons I decided to write this whole article in the first place.
 
 A somewhat more common modification is to include a third value, C, corresponding either to a third spatial dimension or time. a[href=https://gidden.net/2017/03/09/exploring-lyapunov-space/]{Tom Gidden's 2017 blog post} provides a more in-depth description of that, and a[href=https://www.youtube.com/shorts/KAK6IJMbhwI]{this short animation by @desden0va on youtube} makes the idea intuitive.
 
@@ -194,26 +208,42 @@ h3[style=text-decoration:underline]{Algebraic Curves}
 
 Qualitatively, the fractal appears to be structured along a "skeleton" of precise curves, the so-called "superstable" curves, where the Lyapunov exponent diverges to $math/math { inline auto -inf }. We can actually produce exact algebraic descriptions of these curves!
 
-Consider the formula for the Lyapunov exponent: $math/math { inline auto underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|diff/{diff x} f_i(x_i)|} }
+Consider the formula for the Lyapunov exponent: $math/math { inline auto underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|d/{d x} f_i{(x_i)}|} }
 
-Since $math/math { inline auto log{|x|} } diverges to $math/math { inline auto -inf } as x approaches 0, we have that the entire sum must diverge when $math/math { inline auto diff/{diff x} f_n(x_n) = 0 }. Given $math/math { inline auto x_0 = 1/2} we can apply the logistic formula with alternating parameters $math/math {inline auto a} and $math/math {inline auto b} repeatedly and obtain $math/math { inline auto diff/{diff x} f_n(x_n) } as a multivariate polynomial in $math/math {inline auto a} and $math/math {inline auto b}. I'd go as far as to suggest that the set of points where the Lyapunov exponent diverges toward negative infinity is precisely the union of the zero sets of all these polynomials. I suggest it instead of asserting it because I suspect that a proof might require irritatingly subtle considerations.
+Since $math/math { inline auto log{|x|} } diverges to $math/math { inline auto -inf } as x approaches 0, we have that the entire sum must diverge when $math/math { inline auto d/{d x} f_n{(x_n)} = 0 }. Given $math/math { inline auto x_0 = 1/2} we can apply the logistic formula with alternating parameters $math/math {inline auto a} and $math/math {inline auto b} repeatedly and obtain $math/math { inline auto d/{d x} f_n{(x_n)} } as a multivariate polynomial in $math/math {inline auto a} and $math/math {inline auto b}. I'd go as far as to suggest that the set of points where the Lyapunov exponent diverges toward negative infinity is precisely the union of the zero sets of all these polynomials. I suggest it instead of asserting it because I suspect that a proof might require irritatingly subtle considerations.
 
-Because $math/math { inline auto x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, the first few curves $math/math { inline auto P_n = diff/{diff x} f_n(x_n) = 0 } are as follows:
+Because $math/math { inline auto x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors $math/math { inline auto c_n } so as to produce polynomials with the same zeros but with integer coefficients, the first few curves $math/math { inline auto P_n = c_n dot d/{d x} f_n{(x_n)} = 0 } are as follows:
 
-$math/math {auto P_1 = 1 - 1/2 a = 0
+$math/math {auto P_1 = {- a} + 2 = 0
 
-P_2 = 1/8 a^2 b - 1/2 ab + 1 = 0
+P_2 = a^2 b - 4 ab + 8 = 0
 
-P_3 = 1/128a^5b^2 - 1/16 a^4b^2 + 1/8 a^3 b^2 + 1/8 a^3 b - 1/2 a^2 b + 1 = 0
+P_3 = a^5b^2 - 8 a^4b^2 + 16 a^3 b^2 + 16 a^3 b - 64 a^2 b + 128 = 0
 
-P_4 = 1/32768 a^10 b^5 - 1/2048 a^9 b^5 + 3/1024 a^8 b^5 + 1/1024 a^8 b^4 - 1/128 a^7 b^5 - 3/256 a^7 b^4 + 1/128 a^6 b^5 + 3/64 a^6 b^4 + 1/128 a^6 b^3 - 1/16 a^5 b^4 - 7/128 a^5 b^3 + 1/16 a^4 b^3 + 1/8 a^3 b^3 + 1/8 a^3 b^2 - 1/2 a^2 b^2 + 1 = 0
+P_4 = a^10b^5 - 16a^9b^5 + 96a^8b^5 + 32a^8b^4 - 256a^7b^5 - 384a^7b^4 + 256a^6b^5 + 1536a^6b^4 + 256a^6b^3 - 2048a^5b^4 - 1792a^5b^3 + 2048a^4b^3 + 4096a^3b^3 + 4096a^3b^2 - 16384a^2b^2 + 32768 = 0
 }
 
-While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes.
+While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes. I had an LLM agent use sympy to produce the first ten iterations of polynomials, and while I didn't look at the code at all, the task was straightforward and the plots look correct:
 
-You can see how these curves accumulate and form the "backbone" of the fractal in the interactive renderer by setting "skip" to 1 and "iterations" to 2, and then gradually incrementing the iteration count. The negative-infinite exponents pleasingly trace out exactly these algebraic curves.
+[class=carousel] {
+    img[src=/media/lyapunov/full/curve_composite.webp] {}
+    img[src=/media/lyapunov/full/curve_d01.webp] {}
+    img[src=/media/lyapunov/full/curve_d02.webp] {}
+    img[src=/media/lyapunov/full/curve_d03.webp] {}
+    img[src=/media/lyapunov/full/curve_d04.webp] {}
+    img[src=/media/lyapunov/full/curve_d05.webp] {}
+    img[src=/media/lyapunov/full/curve_d06.webp] {}
+    img[src=/media/lyapunov/full/curve_d07.webp] {}
+    img[src=/media/lyapunov/full/curve_d08.webp] {}
+    img[src=/media/lyapunov/full/curve_d09.webp] {}
+    img[src=/media/lyapunov/full/curve_d10.webp] {}
+}
 
-Of course, in the original papers, the first 600 iterations are skipped. Some of the algebraic curves from early on are lost due to this, but others reassert themselves no matter how late the accumulation begins. Indeed even with "skip" set to 1 in the renderer you can see that many of the lines appear to fade away quite quickly as the iteration count grows. In reality, unless they are skipped, they still exist as infinite terms causing the whole limit to diverge, it's just that the ones that fade have vanishing influence on nearby trajectories. The curves that very visibly remain are those that are subsets of infinitely many later curves. If it is only these "limiting superstable curves" one cares about, however, there is no finite number of iterations we can skip to exclude all the rest. But I don't feel like pursuing that line of thought any further here and now.
+You can see how these curves accumulate and form the "backbone" of the fractal in the interactive renderer by setting "skip" to 1 and "iterations" to 2, and then gradually incrementing the iteration count. The negative-infinite exponents pleasingly trace out exactly these algebraic curves. It's also interesting to note the alternation between two different qualitative types of curve on even and odd iterations. I have not put much thought into that, but I'm sure there's an interesting reason for it.
+
+Of course, in the original papers, the first 600 iterations are skipped. Some of the algebraic curves from early on are lost due to this, but others reassert themselves no matter how late the accumulation begins. Indeed even with "skip" set to 1 in the renderer you can see that many of the lines appear to fade away quite quickly as the iteration count grows. In reality the limit does still diverge at every point on any of these curves, it's just that the ones that fade have vanishing influence on nearby points. The curves that very i{visibly} remain are those that are included in infinitely many later curves. If it is only these "limiting superstable curves" one cares about, however, there is no finite number of iterations we can skip to exclude all the rest. But I don't feel like pursuing that line of thought any further here and now.
+
+Anyway, I think this is a pretty neat decomposition of much of the structure of the fractal.
 
 h3[style=text-decoration:underline]{Gallery}
 
@@ -243,6 +273,7 @@ color picker
 math labels
 overlay
 collapsible controls
+archival links to combat link rot
 
 postpone to part 2:
 color gradients
@@ -251,40 +282,11 @@ algebraic curves
 
 
 
-archival links to combat link rot
-
-wow: $math/math { inline
-ident x
-op +
-in
-x_2
-} an inline math expression
-
-$math/math {inline
-ident x
-op +
-in
-x_2
-}
-
-$math/math { inline auto log{|f'(x_n)|} + alpha dot beta }
-
-first plots: widen the 2d plots maybe?
-
 generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases
 
-gradient and color picker input controls
-
-advanced colorization controls for the renderer
-
-subpanel control for panels
+color picker input controls
 
 finish writeup; other plots building up toward what lyap exp is and why
-
-log LUT like in the original paper
-
-emulated double-precision; maybe just for center / position calculations?
-
 
 mention "verhulst dynamics" and link:
 https://www.lactamme.polytechnique.fr/Mosaic/descripteurs/Commentaires_EspaceLyapunovComplexe.01.html

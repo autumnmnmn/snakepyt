@@ -14,9 +14,9 @@ function checkForParentTheme(element, theme) {
 
 function getOppositeTheme(theme) {
     if (theme === "blackboard") return "whiteboard";
-    if (theme === "whiteboard") return "volcano";
-    if (theme === "volcano") return "glacier";
-    if (theme === "glacier") return "blackboard";
+    if (theme === "whiteboard") return "blackboard";
+    //if (theme === "volcano") return "glacier";
+    //if (theme === "glacier") return "blackboard";
     return theme;
 }
 
@@ -97,8 +97,8 @@ export async function main(spec, panelState) {
     const themes = [
         "whiteboard",
         "blackboard",
-        "volcano",
-        "glacier"
+        //"volcano",
+        //"glacier"
     ];
 
     const buttons = [];

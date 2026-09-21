@@ -129,6 +129,10 @@ export const greek = {
     "Omega": "Ω"
 };
 
+const commonIdents = {
+    "inf": "∞"
+}
+
 const commonOps = {
     "interpunct": "·"
 };
@@ -164,7 +168,6 @@ const autoOps = {
     "subset": "⊂",
     "strictsubset": "⊆",
     "empty": "∅",
-    "inf": "∞",
     "diff": "∂",
     "sum": "∑",
     "...": "…",
@@ -380,7 +383,7 @@ export async function main(expression, inline=false) {
 
     if (isAuto) {
         ops = { ...autoOps, ...ops };
-        idents = { ...greek, ...idents };
+        idents = { ...greek, ...commonIdents, ...idents };
     }
 
     for (const ident in idents) {
