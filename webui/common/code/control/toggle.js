@@ -149,7 +149,15 @@ export async function main(spec, panelState) {
     // set dependent states
     spec.onUpdate(spec.value, set, panelState, false);
 
-    const bundle = { set, dom };
+    const hide = () => {
+        control.setAttribute("hidden", "");
+    }
+
+    const show = () => {
+        control.removeAttribute("hidden");
+    }
+
+    const bundle = { set, dom, show, hide };
 
     spec.register?.(bundle);
 

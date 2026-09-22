@@ -208,7 +208,7 @@ export async function main(spec, panelState) {
 
     const reset = () => {
         set(spec.value);
-        spec.onUpdate?.(spec.value, set, panelState);
+        spec.onUpdate?.(Number(spec.value), set, panelState);
     };
 
     const reset_button = $element("button");
@@ -219,13 +219,13 @@ export async function main(spec, panelState) {
     slider.addEventListener("input", () => {
         field.value = slider.value;
         copyable_value.innerText = slider.value;
-        spec.onUpdate?.(slider.value, set, panelState);
+        spec.onUpdate?.(Number(slider.value), set, panelState);
     });
 
     field.addEventListener("input", () => {
         slider.value = field.value;
         copyable_value.innerText = field.value;
-        spec.onUpdate?.(field.value, set, panelState);
+        spec.onUpdate?.(Number(field.value), set, panelState);
     });
 
     const dom = [control.$with(

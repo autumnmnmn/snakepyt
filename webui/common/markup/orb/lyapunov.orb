@@ -110,6 +110,14 @@ $css {
         max-height: 35vh;
         flex-shrink: 0;
     }
+
+    .info-box {
+        margin: auto;
+        border: 1px solid var(--main-solid);
+        background-color: var(--main-faded);
+        padding-left: 1em;
+        width: fit-content;
+    }
 }
 
 [id=lightbox| onclick=this.classList.remove('open')] {
@@ -159,6 +167,10 @@ The function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} is known a
 Let's try and get a feel for what this map is, beginning with some simple plots:
 
 [class=interactive-plot] { $math/plot { logistic_3d } }
+
+[class=info-box] { In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
+
+[class=interactive-plot] { $math/plot { logistic/timeseries } }
 
 Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the i{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
 

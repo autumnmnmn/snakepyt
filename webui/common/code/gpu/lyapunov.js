@@ -365,7 +365,7 @@ sequence BA
 
     // TODO find a way to make colors themselves handle this
     observers.theme = new MutationObserver(() => {
-        blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost })
+        //blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost })
 
         if (canRender) render();
     });

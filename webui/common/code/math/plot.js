@@ -49,6 +49,8 @@ svg.plot .data.dashed {
     flex-shrink: 0;
 }
 
+svg.plot .embedded-math {
+}
 
 @media (max-width: 768px) {
     .plot-topmost {
@@ -189,25 +191,39 @@ export const svg_space = (project=identity, scale=identity) => {
             const proj = project(point);
 
             const element = $svgElement("foreignObject");
-            element.setAttribute("x", proj.x);
-            element.setAttribute("y", proj.y);
 
-            // according to gemini:
-            // foreignObject strictly *requires* width and height attributes in most browsers
-            // to avoid having to calculate it we just set width/height to 1 and let it overflow
-            element.setAttribute("width", "1");
-            element.setAttribute("height", "1");
             element.setAttribute("overflow", "visible");
 
+            element.classList = "embedded-math";
+
             if (_class) element.setAttribute("class", _class);
+
 
             if (typeof mathContent === "string") {
                 const wrapper = $htmlElement("div");
                 wrapper.textContent = mathContent;
-                element.appendChild(wrapper);
-            } else {
-                element.appendChild(mathContent);
+
+                mathContent = wrapper;
             }
+
+
+            mathContent.style.width = "fit-content";
+            mathContent.style.height = "fit-content";
+            mathContent.style.position = "absolute";
+            mathContent.style.top = "0";
+            mathContent.style.left = "0";
+
+            $toHell.$with(mathContent);
+
+            const bounds = mathContent.getBoundingClientRect();
+
+
+            element.setAttribute("width", bounds.width);
+            element.setAttribute("height", bounds.height);
+            element.setAttribute("x", proj.x - bounds.width / 2);
+            element.setAttribute("y", proj.y - bounds.height / 2);
+
+            element.appendChild(mathContent);
 
             return element;
         }

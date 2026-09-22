@@ -164,3 +164,21 @@ window.$actualize = (maybeFunction) => {
     return maybeFunction;
 };
 
+window.$toHell = $div("hell");
+
+document.body.appendChild($toHell);
+
+Object.defineProperty(Array.prototype, "$asyncMap", {
+    value: async function(mapping) {
+        const results = await Promise.allSettled(
+            this.map(mapping)
+        );
+        return results.map(_ => _.value);
+    },
+    writable: true,
+    configurable: true,
+    enumerable: false
+});
+
+
+

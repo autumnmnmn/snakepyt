@@ -94,6 +94,73 @@ export class NonlinearSRGB {
             element: null
         });
     }
+
+    to_hsv() {
+        const { red: r, green: g, blue: b } = this;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const d = max - min;
+
+        let sector = 0;
+        if (d > 0) {
+            if (max === r)      sector = ((g - b) / d) % 6;
+            else if (max === g) sector = (b - r) / d + 2;
+            else                sector = (r - g) / d + 4;
+        }
+
+        return new HSV({
+            hue: (((sector % 6) + 6) % 6) * ($tau / 6),
+            saturation: max === 0 ? 0 : d / max,
+            value: max
+        });
+    }
+}
+
+export class HSV {
+    constructor({ hue, saturation, value }) {
+        this.hue = hue;
+        this.saturation = saturation;
+        this.value = value;
+    }
+
+    static params = ["hue", "saturation", "value"];
+
+    get h() { return this.hue; }
+    get s() { return this.saturation; }
+    get v() { return this.value; }
+
+    get vector() { return Vec3.of(this.hue, this.saturation, this.value); }
+
+    set vector(v) {
+        this.hue        = v.x;
+        this.saturation = v.y;
+        this.value      = v.z;
+    }
+
+    static fromVector(v) {
+        return new this({ hue: v.x, saturation: v.y, value: v.z });
+    }
+
+    to_nonlinear_srgb() {
+        const scaled = (this.hue - $tau * Math.floor(this.hue / $tau)) / ($tau / 6);
+        const sector = Math.floor(scaled);
+        const fraction = scaled - sector;
+
+        const v = this.value;
+        const s = this.saturation;
+        const p = v * (1 - s);
+        const q = v * (1 - fraction * s);
+        const t = v * (1 - (1 - fraction) * s);
+
+        switch (sector) {
+            case 0:  return new NonlinearSRGB({ red: v, green: t, blue: p });
+            case 1:  return new NonlinearSRGB({ red: q, green: v, blue: p });
+            case 2:  return new NonlinearSRGB({ red: p, green: v, blue: t });
+            case 3:  return new NonlinearSRGB({ red: p, green: q, blue: v });
+            case 4:  return new NonlinearSRGB({ red: t, green: p, blue: v });
+            default: return new NonlinearSRGB({ red: v, green: p, blue: q });
+        }
+    }
 }
 
 export const DebugPurple = new NonlinearSRGB({ red: 1, green: 0, blue: 1 });
@@ -367,7 +434,8 @@ function oklch_helix_map(
 const _CONVERSION_EDGES = new Map([
     [NonlinearSRGB, [
         [LinearSRGB, x => x.to_linear_srgb()],
-        [CssColor, x => x.to_css_color()]
+        [CssColor, x => x.to_css_color()],
+        [HSV, x => x.to_hsv()]
     ]],
     [LinearSRGB, [
         [NonlinearSRGB, x => x.to_nonlinear_srgb()],
@@ -386,7 +454,10 @@ const _CONVERSION_EDGES = new Map([
     ]],
     [CssColor, [
         [NonlinearSRGB, x => x.to_nonlinear_srgb()]
-    ]]
+    ]],
+    [HSV, [
+        [NonlinearSRGB, x => x.to_nonlinear_srgb()]
+    ]],
 ]);
 
 // map of maps of "maps" :^)
@@ -448,6 +519,7 @@ export class Color {
     #oklch = null;
     #cie_xyz = null;
     #css_color = null;
+    #hsv = null;
 
     // TODO (eventually) (maybe)
     // relative transformations with provenance-chain tracking;
@@ -465,6 +537,7 @@ export class Color {
             case OkLch:         return this.#oklch;
             case CIEXYZ:        return this.#cie_xyz;
             case CssColor:      return this.#css_color;
+            case HSV:           return this.#hsv;
             default:            return undefined;
         }
     }
@@ -477,6 +550,7 @@ export class Color {
             case OkLch:         this.#oklch = value;          break;
             case CIEXYZ:        this.#cie_xyz = value;        break;
             case CssColor:      this.#css_color = value;      break;
+            case HSV:           this.#hsv = value;            break;
         }
     }
 
@@ -498,6 +572,7 @@ export class Color {
     get OkLch()         { return this.get(OkLch); }
     get CIEXYZ()        { return this.get(CIEXYZ); }
     get CssColor()      { return this.get(CssColor); }
+    get HSV()           { return this.get(HSV); }
 
     static NonlinearSRGB(components)     { return new this(new NonlinearSRGB(components)); }
     static LinearSRGB(components)        { return new this(new LinearSRGB(components)); }
@@ -505,6 +580,7 @@ export class Color {
     static OkLch(components)             { return new this(new OkLch(components)); }
     static CIEXYZ(components)            { return new this(new CIEXYZ(components)); }
     static CssColor(cssString, element)  { return new this(new CssColor(cssString, element)); }
+    static HSV(components)               { return new this(new HSV(components)); }
 
     set(value) {
         this.#nonlinear_srgb = null;
@@ -513,6 +589,7 @@ export class Color {
         this.#oklch = null;
         this.#cie_xyz = null;
         this.#css_color = null;
+        this.#hsv = null;
 
         this.#source = value.constructor;
         this.#setSlot(this.#source, value);
