@@ -170,13 +170,34 @@ Let's try and get a feel for what this map is, beginning with some simple plots:
 
 [class=info-box] { In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
 
-[class=interactive-plot] { $math/plot { logistic/timeseries } }
 
 Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the i{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
 
-The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from any x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} x_0 and plot its behavior for many timesteps:
+The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from any x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { inline auto x_0 } and plot its behavior for many timesteps:
 
-[style=width:100%;height:500px;] { $math/plot { logistic_trajectory } }
+[class=interactive-plot] { $math/plot { logistic/timeseries } }
+
+We can see here that indeed the long-term qualitative behavior of the system is not greatly impacted by our choice of $math/math { inline auto x_0 }. What stands out now is that there are values of $math/math {inline auto r} for which the long-term behavior is periodic, bouncing between the same several values in a repetitious pattern, and there are other values where it appears more i{chaotic}, albeit still bounded to some range or ranges. If you turn up the iteration count, you'll see that plot becomes qualitatively monotonous in the long run in either case. So, plotting the entire timeseries is still a bit of a waste of a dimension in our visualization of this system. Perhaps we should sweep across values of $math/math {inline auto r} and view some kind of summary of the long-term behavior of the system under that parametrization.
+
+todo: the classic logistic histogram sweep :)
+
+Now we're getting somewhere. There is a lot going on here. This kind of figure is known as a bifurcation diagram, and the bifurcation diagram of the logistic map has been studied i{extensively}. There's a good chance you've seen it before, maybe you've even seen a demonstration of how it relates to the Mandelbrot set. It is tempting to attempt to catalogue every interesting fact and feature of the bifurcation diagram, but this is an article about i{Lyapunov fractals}, so let's stay on task.
+
+In the context of our journey toward understanding the Lyapunov fractal, we are interested in a single simple question about each parametrization: is the trajectory stable, or chaotic? In a sense, the bifurcation diagram is telling us i{too much}. We'd like to put a single number to each parametrization, characterizing just how tidy or untidy a system it defined. We can look at any slice of the bifurcation diagram and eyeball it, but how can we i{compute} it?
+
+Well, one idea would be to simply take the limit of the average of the logarithm of the magnitude of the derivative:
+
+$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|d/{d x} f_i{(x_i)}|} }
+
+:)
+
+Many of the explanations you can find online of the Lyapunov fractal would be happy to just drop this formula on you from on high and move on, but personally I think you'd be justified in demanding a little more explanation than that.
+
+The idea from which this measure (the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{maximal Lyapunov exponent (MLE)}) arises is that of defining the quantity we're after as i{sensitivity to initial conditions}. If we give the system a tiny nudge at the start, how much do we expect that to change the result, hundreds of iterations later? If you return to the previous visualizations and toy with them for a bit, you can see that while the long term behavior of the system is i{qualitatively} largely independent of $math/math {inline auto x_0}, this idea of how sensitive the i{specific values} at any point late in the sequence are to slight changes in $math/math {inline auto x_0} lines up well with our looser intuitive notions of apparent-order-versus-apparent-chaos.
+
+So then we just need to quantify this sensitivity. Let's consider just one iteration. How sensitive is $math/math { inline auto x_1 = f(x_0) } to a change in $math/math { inline auto x_0 }? Well, this is exactly what a derivative $math/math {inline auto d/{d x_0} x_1 = d/{d x_0} f(x_0)} tells us.
+
+Now, how about $math/math { inline auto x_2 }? Well, we have $math/math { inline auto x_2 = f(x_1) = f(f(x_1)) } and thus $math/math { inline auto d/{d x_0} x_2 = d/{d x_0} f(x_1) = d/{d x_0} f(f(x_1)) }. This is computed via the chain rule TODO link and continue explanation
 
 In the original paper, the sequence has only two distinct r-values, denoted A and B, and is given as a short string like "AB", "BBABA", &c, which repeats indefinitely. The fractal, then, is a parameter sweep: each pixel's x-coordinate determines its A-value, and the y-coordinate determines B. The pixel's color is determined by measuring the long-term stability of the system under that parametrization.
 
