@@ -53,7 +53,7 @@ import "/code/math/constants.js";
 import { Vec2 as v2 } from "/code/math/vector.js";
 import { cartesian as c } from "/code/math/complex.js";
 import { splitDouble } from "/code/math/precision.js";
-import { Color } from "/code/math/color.js";
+import { Color, NonlinearSRGB } from "/code/math/color.js";
 
 export async function main() {
     let canRender = false;
@@ -205,58 +205,98 @@ sequence BA
                     params.offset_mode = 0;
                     params.rotation = 0;
 
+                    blitParams.negative_scale = 1;
+                    blitParams.negative_scale_b = 1;
+                    blitParams.positive_scale = 1;
+                    blitParams.positive_scale_b = 1;
+                    blitParams.offset = 0;
+
                     if (value === "1989_1_a") {
                         setCenter(3.8425, 3.8425);
                         params.zoom = 18;
-                        params.x_0 = 0.515;
-                        updateSequence("BA", panelState.sequence.set, panelState, false);
-                        blitParams.negative_scale = -6;
+                        params.x_0 = 0.3338;
+                        updateSequence("AB", panelState.sequence.set, panelState, false);
+
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#632b0a"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#c33000"));
+                        blitParams.negative_scale = -8;
+                        blitParams.negative_scale_b = 7;
+                        blitParams.positive_scale = 5.071;
+                        blitParams.positive_scale_b = 4.131;
                     }
                     else if (value === "1989_1_b") {
                         setCenter(3.8425, 3.8425);
                         params.zoom = 40;
-                        params.x_0 = 0.515;
-                        updateSequence("BA", panelState.sequence.set, panelState, false);
-                        blitParams.negative_scale = -6;
+                        params.x_0 = 0.3338;
+                        updateSequence("AB", panelState.sequence.set, panelState, false);
+
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#632b0a"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#c33000"));
+                        blitParams.negative_scale = -8;
+                        blitParams.negative_scale_b = 7;
+                        blitParams.positive_scale = 5.071;
+                        blitParams.positive_scale_b = 4.131;
                     }
                     else if (value === "1989_2") {
                         setCenter(3.2515, 3.605);
                         params.zoom = 1.25;
+                        params.x_0 = 0.5;
+                        params.seq_offset = 5;
                         updateSequence("AABABAB", panelState.sequence.set, panelState, false);
-                        blitParams.negative_scale = -2.35;
+
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#632b0a"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#c33000"));
+                        blitParams.negative_scale = -6.555;
+                        blitParams.negative_scale_b = 5.565;
+                        blitParams.positive_scale = 0.668;
+                        blitParams.positive_scale_b = 0.965;
                     }
                     else if (value === "1989_3") {
                         setCenter(3.53, 3.605);
                         params.zoom = 9;
                         updateSequence("AABAB", panelState.sequence.set, panelState, false);
                         params.seq_offset = 3;
+
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#000000"));
                         blitParams.negative_scale = -20;
-                        blitParams.positive_scale = 0;
+                        blitParams.negative_scale_b = 1.261;
                     }
                     else if (value === "1989_4") {
                         setCenter(3.085, 3.73);
                         params.zoom = 1.5;
                         updateSequence("B^6A^6", panelState.sequence.set, panelState, false);
                         //params.seq_offset = 3;
-                        blitParams.negative_scale = -12;
-                        blitParams.positive_scale = 0;
+
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#000000"));
+                        blitParams.negative_scale = -15;
+                        blitParams.negative_scale_b = 1.261;
                     }
                     else if (value === "1989_5") {
                         setCenter(1.1687, 3.4483);
                         params.zoom = 3.9;
                         updateSequence("B^21A", panelState.sequence.set, panelState, false);
                         params.seq_offset = 1;
-                        blitParams.negative_scale = -3;
-                        blitParams.positive_scale = 0;
+
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#000000"));
+                        blitParams.negative_scale = -9;
+                        blitParams.negative_scale_b = 1.064;
                     }
                     else if (value === "1989_6") {
                         setCenter(3.774, 3.423);
                         params.zoom = 2.7397;
                         updateSequence("B^12A", panelState.sequence.set, panelState, false);
                         params.seq_offset = 1;
-                        blitParams.negative_scale = -3;
-                        blitParams.positive_scale = 0;
 
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.negative_scale = -9;
+                        blitParams.negative_scale_b = 1.2;
+                        blitParams.positive_scale = -13;
+                        blitParams.positive_scale_b = 1.2;
+                        blitParams.offset = 0.088;
                     }
                     else if (value === "1989_7") {
                         setCenter(3.625, 3.055);
@@ -264,9 +304,14 @@ sequence BA
                         params.rotation = 0.16944;
                         updateSequence("A^5B^5", panelState.sequence.set, panelState, false);
                         params.seq_offset = 1;
-                        blitParams.negative_scale = -3;
-                        blitParams.positive_scale = 0;
 
+                        blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.pos_color = new Color(NonlinearSRGB.fromHex("#ffffff"));
+                        blitParams.negative_scale = -24;
+                        blitParams.negative_scale_b = 1.113;
+                        blitParams.positive_scale = -14;
+                        blitParams.positive_scale_b = 1.41;
+                        blitParams.offset = 0.081;
                     }
                     else if (value === "1990_1_a") {
                         params.x_0 = 0.364;

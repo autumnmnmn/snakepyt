@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta property="og:image" content="/media/lyapunov/preview.png">
+        <meta property="og:title" content="Lyapunov Fractals">
+        <meta property="og:description" content="Exploring and explaining Mario Markus's logistic Lyapunov fractals">
+        <title>Lyapunov Fractals</title>
+        <link rel="icon" href="/media/favicon.png">
+        <link id="themeLink" rel="stylesheet" type="text/css" href="/style/theme/themes.css">
+        <link rel="stylesheet" type="text/css" href="/style/main.css">
+    <style>
+
+.theme-panel {
+    position: absolute;
+    top: 0.2rem;
+    right: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    z-index: 1;
+}
+
+.theme-panel button {
+    color: var(--main-solid);
+    background-color: var(--main-background);
+    border-radius: 0.2rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.6rem;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+[data-theme="whiteboard"] .theme-panel .button-wrapper.whiteboard {
+}
+
+[data-theme="blackboard"] .theme-panel button[data-theme="blackboard"],
+[data-theme="whiteboard"] .theme-panel button[data-theme="whiteboard"],
+[data-theme="volcano"] .theme-panel button[data-theme="volcano"],
+[data-theme="glacier"] .theme-panel button[data-theme="glacier"]
+{
+    text-decoration: underline;
+    border: 1px solid var(--main-faded);
+    line-height: 1.5rem;
+}
+
+</style><style>
+    .gallery img {
+        width: calc(max(25vw, 64px) - 0.5em);
+        height: calc(max(25vw, 64px) - 0.5em);
+        padding: 0;
+        border-radius: 0.25rem;
+        border: 0.25rem solid transparent;
+    }
+
+    .gallery img:hover {
+        border: 0;
+        clip-path: inset(0) !important;
+    }
+
+    .gallery {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0px;
+        width: fit-content;
+    }
+
+    .blog-content {
+        padding-left: 1em;
+        padding-right: 1em;
+
+        height: 100%;
+        overflow-y: scroll;
+    }
+
+    .interactive-plot {
+        width: 100%;
+        height: 500px;
+    }
+
+    @media (min-width: 600px) {
+        .gallery img {
+            width: calc(max(min(25vw, 512px), 256px) - 0.875em);
+            height: calc(max(min(25vw, 512px), 256px) - 0.875em);
+        }
+
+        .gallery {
+            gap: 0.5em;
+        }
+
+    }
+
+    @media (max-width: 768px) {
+
+        .interactive-plot {
+            height: 85vh;
+            border-bottom: 3px double var(--main-solid);
+            border-top: 3px double var(--main-solid);
+        }
+    }
+
+    .center {
+        display: block;
+        margin: auto;
+        width: fit-content;
+    }
+
+    .gallery img:not(.loaded) {
+        filter: url(#thumb-blur);
+        clip-path: inset(0.25rem);
+    }
+
+    #lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #000a;
+        place-items: center;
+        z-index: 2;
+    }
+
+    #lightbox.open {
+        display: grid;
+    }
+
+    #lightbox img {
+        max-width: 98vw;
+        max-height: 98vh;
+        object-fit: contain;
+    }
+
+    .render-container {
+        height: 75%;
+    }
+
+    .carousel {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        overflow-x: scroll;
+        gap: 1em;
+    }
+
+    .carousel img {
+        max-height: 35vh;
+        flex-shrink: 0;
+    }
+
+    .info-box {
+        margin: auto;
+        border: 1px solid var(--main-solid);
+        background-color: var(--main-faded);
+        padding-left: 1em;
+        width: fit-content;
+    }
+</style><style>
+    .math-inline {
+        display: inline-block;
+        vertical-align: bottom;
+    }
+
+    .math-inline math {
+        display: inline-block;
+    }
+
+    @supports (display: inline math) {
+        .math-inline math {
+            display: inline math;
+            padding-bottom: 0;
+        }
+    }
+
+    .math-block {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-left: 0.75rem;
+        padding-top: 0.5rem;
+        border-left: 3px double var(--main-faded);
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .math-block math {
+        display: block;
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    .math-block math:not(last-child) {
+        padding-bottom: 0.5em;
+    }
+
+    @supports (display: math) {
+        .math-block math {
+            display: math;
+            width: max-content;
+            max-width: max-content;
+        }
+    }
+</style></head>
+    <body data-theme="blackboard">
+        <script src="/code/core.js"></script><div class="hell"></div>
+        <script type="module" src="/code/main.js"></script>
+        
+    
+
+
+
+
+<p data-provenance="0"><script data-provenance="9">$replace(document.currentScript, "theme", ...[], "");</script></p><div data-provenance="6" id="lightbox" onclick="this.classList.remove('open')"><img data-provenance="6" id="lightbox-img"></div><svg data-provenance="6" style="height:0;width:0;margin:0;padding:0;display:block"><filter data-provenance="6" id="thumb-blur"><feGaussianBlur data-provenance="6" stdDeviation="3 " edgeMode="duplicate"></feGaussianBlur></filter></svg><div data-provenance="6" class="blog-content"><h1 data-provenance="6" class="center " style="font-size: 1.5rem; margin-top: 1rem; overflow: visible; ">The Logistic Lyapunov Fractal</h1><h2 data-provenance="6" class="center " style="font-size: 0.7rem; ">⸺ ooo ⸺</h2><p data-provenance="0"><script data-provenance="9">$replace(document.currentScript, "layout/loadwall", ...[], " Load interactive renderer? (designed for desktop) | gpu/lyapunov | render-container ");</script></p><h2 data-provenance="6" style="text-decoration:underline">Outline</h2><p data-provenance="3"> This post endeavors to provide a thorough treatment of the Lyapunov fractal while remaining accessible to a reasonably wide audience. It is broken into three main sections: explaining what the fractal is, shining a light on some frequently overlooked variations of it, and then cataloguing some of its features. I should also mention, in case you missed it, that at the top of the page there is a button you can press to load up a webgpu-based Lyapunov fractal explorer, which some might find to be a more compelling introduction to the fractal than a textual writeup.</p><p data-provenance="3">We begin by exploring the logistic map with a number of interactive visualizations, and work our way up to defining the Lyapunov exponent as a tool for describing what we observe. Readers who have had prior encounters with calculus will have an easier time following along, but I have aimed to explain some of the essential concepts. Those <i data-provenance="4">intimately</i> familiar with it may find much of the explanation in the first section superfluous.</p><p data-provenance="3">In section II we describe a number of variations on the fractal, with particular focus on those introduced by its inventor which many writeups neglect to mention, but which greatly expand the variety of striking images that can be produced.</p><p data-provenance="3">The final section is loosest in its structure and purpose; a sort of grab-bag of observations, alongside some explanation of the interactive renderer.</p><h2 data-provenance="6" style="text-decoration:underline">I. What is the Lyapunov fractal?</h2><p data-provenance="3">The <a data-provenance="4" href="https://en.wikipedia.org/wiki/Lyapunov_fractal">Lyapunov fractal</a>,
+named after <a data-provenance="4" href="https://en.wikipedia.org/wiki/Aleksandr_Lyapunov">Aleksandr Lyapunov</a>, was
+introduced by <a data-provenance="4" href="https://en.wikipedia.org/wiki/Mario_Markus">Mario Markus</a> and <a data-provenance="4" href="https://onlinelibrary.wiley.com/doi/10.1002/anie.200390466">Benno Hess</a> in their 1989
+paper <a data-provenance="4" href="https://doi.org/10.1016/0097-8493(89)90019-8">Lyapunov exponents of the logistic
+map with periodic forcing</a> (<a data-provenance="4" href="https://sci-hub.ru/10.1016/0097-8493(89)90019-8">pirate link</a>).</p><p data-provenance="3">The fractal is a visualization of the behavior of the following iterative formula:</p><div class="math-block"><math><mtext>given a sequence of real numbers</mtext><mo>{</mo><msub><mi>r</mi><mn>0</mn></msub><mo>,</mo><msub><mi>r</mi><mn>1</mn></msub><mo>,</mo><msub><mi>r</mi><mn>2</mn></msub><mo>,</mo><mo>...</mo><msub><mi>r</mi><mi>n</mi></msub><mo>}</mo></math><math><mtext>let</mtext><msub><mi>x</mi><mn>0</mn></msub><mo>=</mo><mn>0.5</mn><mo>,</mo></math><math><mtext>then</mtext><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>r</mi><mi>n</mi></msub><mo>·</mo><msub><mi>x</mi><mi>n</mi></msub><mo>·</mo><mrow><mo>(</mo><mn>1</mn><mo>-</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow></math></div><p data-provenance="3"> The function <math><mi>f</mi><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow><mo>=</mo><mi>r</mi><mo>·</mo><mi>x</mi><mo>·</mo><mrow><mo>(</mo><mn>1</mn><mo>−</mo><mi>x</mi><mo>)</mo></mrow></math> is known as the <a data-provenance="4" href="https://en.wikipedia.org/wiki/Logistic_map">logistic map</a>. Let's try and get a feel for what this map is, beginning with some simple plots and working our way toward the Lyapunov fractal. First, let's <math><msub><mi>x</mi><mn>0</mn></msub></math> the entire unit interval <math><mo>[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>]</mo></math></p><div data-provenance="6" class="interactive-plot"><p data-provenance="0"><script data-provenance="9">$replace(document.currentScript, "math/plot", ...[], " logistic_3d ");</script></p></div><div data-provenance="6" class="info-box"><p data-provenance="0">ⓘ  In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril.</p></div><p data-provenance="3"> Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the <i data-provenance="4">same</i> two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.</p><p data-provenance="3">The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from any x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a <i data-provenance="4">single</i> <math><msub><mi>x</mi><mn>0</mn></msub></math> and plot its behavior for many timesteps:</p><div data-provenance="6" class="interactive-plot"><p data-provenance="0"><script data-provenance="9">$replace(document.currentScript, "math/plot", ...[], " logistic/timeseries ");</script></p></div><p data-provenance="3">We can see here that indeed the long-term qualitative behavior of the system is not greatly impacted by our choice of <math><msub><mi>x</mi><mn>0</mn></msub></math>. We can see more clearly now the periodic and aperiodic. If you turn up the iteration count, you'll see that plot becomes qualitatively monotonous in the long run in either case. So, plotting the entire timeseries is still a bit of a waste of a dimension in our visualization of this system. Perhaps we should sweep across values of <math><mi>r</mi></math> and view some kind of summary of the long-term behavior of the system under that parametrization.</p><p data-provenance="3">todo: the classic logistic histogram sweep :)</p><p data-provenance="3">Now we're getting somewhere. There is a lot going on here. This kind of figure is known as a bifurcation diagram, and the bifurcation diagram of the logistic map has been studied <i data-provenance="4">extensively</i>. There's a good chance you've seen it before; maybe you've even seen a demonstration of how it relates to the Mandelbrot set. It is tempting to attempt to catalogue every interesting fact and feature of the bifurcation diagram, but this is an article about <i data-provenance="4">Lyapunov fractals</i>, so let's stay on task.</p><p data-provenance="3">In the context of our journey toward understanding the Lyapunov fractal, we are interested in a single simple question about each parametrization: is the trajectory stable, or chaotic? In a sense, the bifurcation diagram is telling us <i data-provenance="4">too much</i>. We'd like to put a single number to each parametrization, characterizing just how tidy or untidy a system it defined. We can look at any slice of the bifurcation diagram and eyeball it, but how can we <i data-provenance="4">compute</i> it?</p><p data-provenance="3">Well, one idea would be to simply take the limit of the average of the logarithm of the magnitude of the derivative:</p><div class="math-block"><math><mi>λ</mi><mo>=</mo><munderover><mi>lim</mi><mrow><mi>n</mi><mo>→</mo><mi>∞</mi></mrow><mrow></mrow></munderover><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi>n</mi></mrow></munderover><mi>log</mi><mrow><mo>|</mo><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><msub><mi>f</mi><mi>i</mi></msub><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>|</mo></mrow></math></div><p data-provenance="3">:)</p><p data-provenance="3">Many of the explanations you can find online of the Lyapunov fractal would be happy to just drop this formula on you from on high and move on, but personally I think you'd be justified in demanding a little more explanation than that.</p><p data-provenance="3">The idea from which this measure (the <a data-provenance="4" href="https://en.wikipedia.org/wiki/Lyapunov_exponent">maximal Lyapunov exponent, or MLE</a>) arises is that of defining the quantity we're after as <i data-provenance="4">sensitivity to initial conditions</i>. If we give the system a tiny nudge at the start, how much do we expect that to change the result, hundreds of iterations later? If you return to the previous visualizations and toy with them for a bit, you can see that while the long term behavior of the system is <i data-provenance="4">qualitatively</i> largely independent of <math><msub><mi>x</mi><mn>0</mn></msub></math>, this idea of how sensitive the <i data-provenance="4">specific values</i> at any point late in the sequence are to slight changes in <math><msub><mi>x</mi><mn>0</mn></msub></math> lines up well with our looser intuitive notions of apparent-order-versus-apparent-chaos.</p><p data-provenance="3">So then we just need to quantify this sensitivity. Let's consider just one iteration. How sensitive is <math><msub><mi>x</mi><mn>1</mn></msub><mo>=</mo><mi>f</mi><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></math> to a change in <math><msub><mi>x</mi><mn>0</mn></msub></math>? Well, this is exactly what the differentiation operator <math><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac></math> is for. Speaking a bit loosely, we denote "the rate at which <math><mi>b</mi></math> changes, proportionate to a tiny change in <math><mi>a</mi></math>" as <math><mfrac><mi>d</mi><mrow><mi>d</mi><mi>a</mi></mrow></mfrac><mi>b</mi></math>. Since the quantity we are after is the change in <math><msub><mi>x</mi><mi>n</mi></msub></math> induced by a tiny change in <math><msub><mi>x</mi><mn>0</mn></msub></math>, what we are looking for is <math><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><msub><mi>x</mi><mi>n</mi></msub></math>.</p><p data-provenance="3">Following a common convention, from here on we will denote the derivative of a function with a tick mark, like so: <math><mi>f</mi><mo>′</mo><mo>≔</mo><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mi>f</mi></math>. The logistic map is a polynomial function, and there is a well known straightforward procedure for obtaining the derivatives of polynomials. As we are interested only in this one function, we won't be diving into the methodological details. For <math><mi>f</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo><mi>r</mi><mo>·</mo><mi>x</mi><mo>·</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>x</mi><mo>)</mo></math>, the derivative is <math><mi>f</mi><mo>′</mo><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow><mo>=</mo><mi>r</mi><mo>−</mo><mn>2</mn><mo>·</mo><mi>r</mi><mo>·</mo><mi>x</mi></math></p><p data-provenance="3"> Let's start with the case of <math><msub><mi>x</mi><mn>1</mn></msub></math>. We have <math><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><msub><mi>x</mi><mn>1</mn></msub><mo>=</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow></math>.</p><p data-provenance="3">Now, how about <math><msub><mi>x</mi><mn>2</mn></msub></math>? Well, we have <math><msub><mi>x</mi><mn>2</mn></msub><mo>=</mo><mi>f</mi><mrow><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>)</mo></mrow><mo>=</mo><mi>f</mi><mo>(</mo><mi>f</mi><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>)</mo><mo>)</mo></math> and thus <math><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><msub><mi>x</mi><mn>2</mn></msub><mo>=</mo><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><mi>f</mi><mrow><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>)</mo></mrow><mo>=</mo><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><mi>f</mi><mrow><mo>(</mo><mi>f</mi><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow><mo>)</mo></mrow></math>. We must be more careful than simply replacing <math><mi>f</mi></math> with <math><mi>f</mi><mo>′</mo></math> in a nested case like this, and instead apply something called the <a data-provenance="4" href="">chain rule</a>:</p><div class="math-block"><math><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mi>a</mi><mrow><mo>(</mo><mi>b</mi><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow><mo>)</mo></mrow><mo>=</mo><mi>a</mi><mo>′</mo><mrow><mo>(</mo><mi>b</mi><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow><mo>)</mo></mrow><mo>·</mo><mi>b</mi><mo>′</mo><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow></math></div><p data-provenance="3"> In our case, this evaluates to:</p><div class="math-block"><math><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><mi>f</mi><mrow><mo>(</mo><mi>f</mi><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow><mo>)</mo></mrow><mo>=</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><mi>f</mi><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow><mo>)</mo></mrow><mo>·</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow><mo>=</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>)</mo></mrow><mo>·</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow></math></div><p data-provenance="3"> It is left as an exercise for the reader to prove that the pattern holds:</p><div class="math-block"><math><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><msub><mi>x</mi><mi>n</mi></msub><mo>=</mo><munderover><mo>Π</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>≔</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>)</mo></mrow><mo>·</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>2</mn></mrow></msub><mo>)</mo></mrow><mo>·</mo><mo>…</mo><mo>·</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>)</mo></mrow><mo>·</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>)</mo></mrow></math></div><p data-provenance="3"> Now, we are interested in whether and to what degree this quantity <i data-provenance="4">grows</i> or <i data-provenance="4">shrinks</i> as the number of iterations increases. There happens to be an exceedingly useful mathematical tool for modeling growth and decay, known as the <a data-provenance="4" href="">exponential function</a>, denoted as either <math><mi>exp</mi><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow></math> or <math><msup><mi>e</mi><mi>x</mi></msup></math> <sup data-provenance="4">†</sup>. The exponential of a negative value tends toward zero, while the exponential of a positive value grows.</p><p data-provenance="3">Since the exponential of a real value is always positive, we will have to take the absolute value of our derivative if we want to model it as an exponential. This is fine, as what we really care about is the magnitude. Calling the rate of exponential growth or decay <math><msub><mi>λ</mi><mi>n</mi></msub></math> at iteration <math><mi>n</mi></math>, we have:</p><div class="math-block"><math><msup><mi>e</mi><mrow><mi>n</mi><mo>·</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow></msup><mo>=</mo><mfrac><mi>d</mi><mrow><mi>d</mi><msub><mi>x</mi><mn>0</mn></msub></mrow></mfrac><msub><mi>x</mi><mi>n</mi></msub><mo>=</mo><munderover><mo>Π</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mrow><mo>|</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>|</mo></mrow></math></div><p data-provenance="3"> Now, since the (natural) logarithm is the inverse of the exponential function, we can take the log of both sides and obtain:</p><div class="math-block"><math><msub><mi>λ</mi><mi>n</mi></msub><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><mi>log</mi><munderover><mo>Π</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mrow><mo>|</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>|</mo></mrow></math></div><p data-provenance="3"> Now, this is already a nice formula for <math><msub><mi>λ</mi><mi>n</mi></msub></math>, but if we try to do actual computation with it, the product will be numerically unstable. However it is a well-known and very useful algebraic property of logarithms that the logarithm of a product is a sum of logarithms:</p><div class="math-block"><math><msub><mi>λ</mi><mi>n</mi></msub><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mi>log</mi><mrow><mo>|</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>|</mo></mrow></math></div><p data-provenance="3"> And now if we just ask "what does this <math><msub><mi>λ</mi><mi>n</mi></msub></math> tend toward as <math><mi>n</mi></math> grows?", we have recovered our formula from earlier:</p><div class="math-block"><math><mi>λ</mi><mo>=</mo><munderover><mi>lim</mi><mrow><mi>n</mi><mo>→</mo><mi>∞</mi></mrow><mrow></mrow></munderover><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mi>m</mi></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mi>log</mi><mrow><mo>|</mo><mi>f</mi><mo>′</mo><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>|</mo></mrow></math></div><p data-provenance="3"> You may have noticed that I snuck a variable <math><mi>m</mi></math> in there in place of zero. In practice it is convenient to skip the first several iterations when computing this value, as the system can take a little while to settle into its limiting behavior, and there are some pesky issues with the very first iteration in particular (more on this in the subsection on "Algebraic Curves" in section III).</p><p data-provenance="3">So, now that we've derived the Lyapunov exponent, let's plot it:</p><p data-provenance="3">† When <math><mi>x</mi></math> is a real number, applying the exponential function to it and taking <math><mi>e</mi></math> to the <math><msup><mi>x</mi><mrow><mi>th</mi></mrow></msup></math> power are precisely the same thing. When it is not a real number, <math><msup><mi>e</mi><mi>x</mi></msup></math> is a frequently used shorthand for <math><mi>exp</mi><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow></math> which some, including the author of this post, regard as an abuse of notation.</p><p data-provenance="3">old version:</p><p data-provenance="3">The stability measure employed is the <a data-provenance="4" href="https://en.wikipedia.org/wiki/Lyapunov_exponent">maximal Lyapunov exponent (MLE)</a>, and this is where the fractal gets its name (although, since Aleksandr Lyapunov never lived to see these fractals, they are sometimes called "Markus-Lyapunov fractals" instead). In the case of this discrete system, the idea is to take the average of the logarithm of the magnitude of the derivative. We then take a negative MLE to indicate stability or convergence, while a positive MLE indicates chaos. Often, these cases are colorized separately. The values are unbounded, so some normalization is required.</p><p data-provenance="3">In the original publication by Markus &amp; Hess, the sequence has only two distinct r-values, denoted A and B, and is given as a short string like "AB", "BBABA", &amp;c, which repeats indefinitely. The fractal, then, is a parameter sweep: each pixel's x-coordinate determines its A-value, and the y-coordinate determines B. The pixel's color is determined by measuring the long-term stability of the system under that parametrization.</p><h2 data-provenance="6" style="text-decoration:underline">II. Variations</h2><p data-provenance="3">Usually when one says "Lyapunov fractal", it is in reference to the system just described, based on the logistic map. However, Lyapunov exponents can be computed for many different systems, and similar visualizations of those systems can just as well be called Lyapunov fractals. Indeed, Markus himself would go on to expand on the idea in a 1990 publication, <a data-provenance="4" href="https://doi.org/10.1063/1.4822940">Chaos in Maps with Continuous and Discontinuous Maxima</a>, in which he explored two interesting modifications to the system, one of which was to use a different, discontinuous map:</p><div class="math-block"><math><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>r</mi><mi>n</mi></msub><mo>·</mo><msub><mi>x</mi><mi>n</mi></msub><mo>·</mo><mrow><mo>(</mo><mn>1</mn><mo>-</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow><mtext>if</mtext><msub><mi>x</mi><mi>n</mi></msub><mo>&gt;</mo><mn>0.5</mn></math><math><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>r</mi><mi>n</mi></msub><mo>·</mo><msub><mi>x</mi><mi>n</mi></msub><mo>·</mo><mrow><mo>(</mo><mn>1</mn><mo>-</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow><mo>+</mo><mn>0.25</mn><mrow><mo>(</mo><mi>α</mi><mo>-</mo><mn>1</mn><mo>)</mo></mrow><mrow><mo>(</mo><msub><mi>r</mi><mi>n</mi></msub><mo>-</mo><mn>2</mn><mo>)</mo></mrow><mtext>if</mtext><msub><mi>x</mi><mi>n</mi></msub><mo>≤</mo><mn>0.5</mn></math></div><p data-provenance="3"> Where α is a real parameter, typically just a little less than 1. Note that in the case where α is 1, this reduces to the familiar logistic map.</p><p data-provenance="3">The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's. The exact details of how that variation is implemented are a little bit hard to parse, in my opinion, but I believe I have settled on an implementation which closely matches the results of Markus's paper. TODO describe this explain the parameter</p><p data-provenance="3">A somewhat more common modification is to include a third value, C, corresponding either to a third spatial dimension or time. <a data-provenance="4" href="https://gidden.net/2017/03/09/exploring-lyapunov-space/">Tom Gidden's 2017 blog post</a> provides a more in-depth description of that, and <a data-provenance="4" href="https://www.youtube.com/shorts/KAK6IJMbhwI">this short animation by @desden0va on youtube</a> makes the idea intuitive.</p><h2 data-provenance="6" style="text-decoration:underline">III. Observations</h2><p data-provenance="3">The original paper concerns itself only with A and B values in the range [0,4]. However, there is no technical constraint that prevents us from peeking outside that box. When we do, it becomes visually apparent that this range is not entirely arbitrary (<a data-provenance="4" href="https://en.wikipedia.org/wiki/Logistic_map#Characterization_of_the_logistic_map">the logistic map remains finite there</a>). The crisp edge of this "blessed" square stands out prominently. Nevertheless, there is some interesting structure outside of it. Some of the superstable curves poke out into the void of divergence. A smaller, distorted square exists where A and B are both negative.</p><h3 data-provenance="6" style="text-decoration:underline">Algebraic Curves</h3><p data-provenance="3">Qualitatively, the fractal appears to be structured along a "skeleton" of precise curves, the so-called "superstable" curves, where the Lyapunov exponent diverges to <math><mo>−</mo><mi>∞</mi></math>. We can actually produce exact algebraic descriptions of these curves!</p><p data-provenance="3">Consider the formula for the Lyapunov exponent: <math><munderover><mi>lim</mi><mrow><mi>n</mi><mo>→</mo><mi>∞</mi></mrow><mrow></mrow></munderover><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi>n</mi></mrow></munderover><mi>log</mi><mrow><mo>|</mo><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><msub><mi>f</mi><mi>i</mi></msub><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mo>|</mo></mrow></math></p><p data-provenance="3"> Since <math><mi>log</mi><mrow><mo>|</mo><mi>x</mi><mo>|</mo></mrow></math> diverges to <math><mo>−</mo><mi>∞</mi></math> as x approaches 0, we have that the entire sum must diverge when <math><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><msub><mi>f</mi><mi>n</mi></msub><mrow><mo>(</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow><mo>=</mo><mn>0</mn></math>. Given <math><msub><mi>x</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></math>, we can apply the logistic formula with alternating parameters <math><mi>a</mi></math> and <math><mi>b</mi></math> repeatedly and obtain <math><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><msub><mi>f</mi><mi>n</mi></msub><mrow><mo>(</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow></math> as a multivariate polynomial in <math><mi>a</mi></math> and <math><mi>b</mi></math>.</p><p data-provenance="3">Because <math><msub><mi>x</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></math>, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors <math><msub><mi>c</mi><mi>n</mi></msub></math> so as to produce polynomials with the same zeros but with integer coefficients, the first few curves <math><msub><mi>P</mi><mi>n</mi></msub><mo>=</mo><msub><mi>c</mi><mi>n</mi></msub><mo>·</mo><mfrac><mi>d</mi><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><msub><mi>f</mi><mi>n</mi></msub><mrow><mo>(</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow><mo>=</mo><mn>0</mn></math> are as follows:</p><div class="math-block"><math><msub><mi>P</mi><mn>1</mn></msub><mo>=</mo><mrow><mo>−</mo><mi>a</mi></mrow><mo>+</mo><mn>2</mn><mo>=</mo><mn>0</mn></math><math><msub><mi>P</mi><mn>2</mn></msub><mo>=</mo><msup><mi>a</mi><mn>2</mn></msup><mi>b</mi><mo>−</mo><mn>4</mn><mi>ab</mi><mo>+</mo><mn>8</mn><mo>=</mo><mn>0</mn></math><math><msub><mi>P</mi><mn>3</mn></msub><mo>=</mo><msup><mi>a</mi><mn>5</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>8</mn><msup><mi>a</mi><mn>4</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><mn>16</mn><msup><mi>a</mi><mn>3</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><mn>16</mn><msup><mi>a</mi><mn>3</mn></msup><mi>b</mi><mo>−</mo><mn>64</mn><msup><mi>a</mi><mn>2</mn></msup><mi>b</mi><mo>+</mo><mn>128</mn><mo>=</mo><mn>0</mn></math><math><msub><mi>P</mi><mn>4</mn></msub><mo>=</mo><msup><mi>a</mi><mn>10</mn></msup><msup><mi>b</mi><mn>5</mn></msup><mo>−</mo><mn>16</mn><msup><mi>a</mi><mn>9</mn></msup><msup><mi>b</mi><mn>5</mn></msup><mo>+</mo><mn>96</mn><msup><mi>a</mi><mn>8</mn></msup><msup><mi>b</mi><mn>5</mn></msup><mo>+</mo><mn>32</mn><msup><mi>a</mi><mn>8</mn></msup><msup><mi>b</mi><mn>4</mn></msup><mo>−</mo><mn>256</mn><msup><mi>a</mi><mn>7</mn></msup><msup><mi>b</mi><mn>5</mn></msup><mo>−</mo><mn>384</mn><msup><mi>a</mi><mn>7</mn></msup><msup><mi>b</mi><mn>4</mn></msup><mo>+</mo><mn>256</mn><msup><mi>a</mi><mn>6</mn></msup><msup><mi>b</mi><mn>5</mn></msup><mo>+</mo><mn>1536</mn><msup><mi>a</mi><mn>6</mn></msup><msup><mi>b</mi><mn>4</mn></msup><mo>+</mo><mn>256</mn><msup><mi>a</mi><mn>6</mn></msup><msup><mi>b</mi><mn>3</mn></msup><mo>−</mo><mn>2048</mn><msup><mi>a</mi><mn>5</mn></msup><msup><mi>b</mi><mn>4</mn></msup><mo>−</mo><mn>1792</mn><msup><mi>a</mi><mn>5</mn></msup><msup><mi>b</mi><mn>3</mn></msup><mo>+</mo><mn>2048</mn><msup><mi>a</mi><mn>4</mn></msup><msup><mi>b</mi><mn>3</mn></msup><mo>+</mo><mn>4096</mn><msup><mi>a</mi><mn>3</mn></msup><msup><mi>b</mi><mn>3</mn></msup><mo>+</mo><mn>4096</mn><msup><mi>a</mi><mn>3</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>16384</mn><msup><mi>a</mi><mn>2</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><mn>32768</mn><mo>=</mo><mn>0</mn></math></div><p data-provenance="3"> While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes. I had an LLM agent use SymPy to produce the first ten iterations of polynomials, and while I didn't look at the code at all, the task was straightforward and the plots look correct:</p><div data-provenance="6" class="carousel"><img data-provenance="6" src="/media/lyapunov/full/curve_composite.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d01.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d02.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d03.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d04.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d05.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d06.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d07.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d08.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d09.webp"><img data-provenance="6" src="/media/lyapunov/full/curve_d10.webp"></div><p data-provenance="3">You can see how these curves accumulate and form the "backbone" of the fractal in the interactive renderer by setting "skip" to 1 and "iterations" to 2, and then gradually incrementing the iteration count. The negative-infinite exponents pleasingly trace out exactly these algebraic curves. It's also interesting to note the alternation between two different qualitative types of curve on even and odd iterations. I have not put much thought into that, but I'm sure there's an interesting reason for it.</p><p data-provenance="3">Of course, in the original papers, the first 600 iterations are skipped. Some of the algebraic curves from early on are lost due to this, but others reassert themselves no matter how late the accumulation begins. Indeed even with "skip" set to 1 in the renderer you can see that many of the lines appear to fade away quite quickly as the iteration count grows. In reality the limit does still diverge at every point on any of these curves, it's just that the ones that fade have vanishing influence on nearby points. The curves that very <i data-provenance="4">visibly</i> remain are those that are included in infinitely many later curves. If it is only these "limiting superstable curves" one cares about, however, there is no finite number of iterations we can skip to exclude all the rest. But I don't feel like pursuing that line of thought any further here and now.</p><p data-provenance="3">Anyway, I think this is a pretty neat decomposition of much of the structure of the fractal.</p><h3 data-provenance="6" style="text-decoration:underline">Presets</h3><p data-provenance="3">Presets in the interactive renderer have been set up to approximately reproduce the figures from Markus's 1989 and 1990 papers. The renders are not 100% faithful, but they are best-effort. The papers specify the r-value sequences and the coordinate bounds of each render. They do not specify the starting offset in the sequence, which, as I discovered in the course of implementing the presets, is not always 0. This page's interactive renderer has a variable width and height, so I calculated a center point and zoom value that would approximately match the original bounds. It may be necessary to resize one's window, zoom, and pan around, in order to get a more exact match to what is present in the original papers. Some of the original renders also exhibit anisotropic stretching. My renderer does not at present have the capacity to replicate this effect. The original papers specify the <math><msub><mi>x</mi><mn>0</mn></msub></math> values for many of the figures, but I found that some visual features (for example, in 1989 Fig. 1(a)) could not be reproduced without modifying <math><msub><mi>x</mi><mn>0</mn></msub></math> slightly. I opted to make this modification, prioritizing visual similarity with the original visualization over precise copying of parameters.</p><h2 data-provenance="6" style="text-decoration:underline">Gallery</h2><div data-provenance="6" class="gallery"><img data-provenance="6" src="/media/lyapunov/thumb/0.avif"><img data-provenance="6" src="/media/lyapunov/thumb/1.avif"><img data-provenance="6" src="/media/lyapunov/thumb/2.avif"><img data-provenance="6" src="/media/lyapunov/thumb/3.avif"><img data-provenance="6" src="/media/lyapunov/thumb/4.avif"><img data-provenance="6" src="/media/lyapunov/thumb/5.avif"><p data-provenance="0"><script data-provenance="9">$replace(document.currentScript, "gallery-loader", ...[], "");</script></p></div><h2 data-provenance="6" style="text-decoration:underline">Endnote</h2><p data-provenance="3">Thank you for taking the time to read however much of this you did. Putting this post together has been an effortful undertaking. I hope it has been worth your attention.</p><h3 data-provenance="6" style="text-decoration:underline">TODO</h3><p data-provenance="3">priority goals:
+sane ergonomics of main controls
+explanation of what the controls mean
+main visualizations</p><p data-provenance="3">stretch goals:
+color picker
+math labels
+overlay
+collapsible controls
+archival links to combat link rot</p><p data-provenance="3">postpone to part 2:
+color gradients
+topology
+algebraic curves</p><p data-provenance="3">generally: refactor plotting code, make sure nothing extraneous is getting drawn in the 2d cases</p><p data-provenance="3">color picker input controls</p><p data-provenance="3">finish writeup; other plots building up toward what lyap exp is and why</p><p data-provenance="3">mention "verhulst dynamics" and link:
+https://www.lactamme.polytechnique.fr/Mosaic/descripteurs/Commentaires_EspaceLyapunovComplexe.01.html</p></div></body></html>

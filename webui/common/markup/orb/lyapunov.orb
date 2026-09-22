@@ -139,9 +139,21 @@ h2[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
 $layout/loadwall { Load interactive renderer? (designed for desktop) | gpu/lyapunov | render-container }
 
 
+h2[style=text-decoration:underline]{Outline}
+
+This post endeavors to provide a thorough treatment of the Lyapunov fractal while remaining accessible to a reasonably wide audience. It is broken into three main sections: explaining what the fractal is, shining a light on some frequently overlooked variations of it, and then cataloguing some of its features. I should also mention, in case you missed it, that at the top of the page there is a button you can press to load up a webgpu-based Lyapunov fractal explorer, which some might find to be a more compelling introduction to the fractal than a textual writeup.
+
+We begin by exploring the logistic map with a number of interactive visualizations, and work our way up to defining the Lyapunov exponent as a tool for describing what we observe. Readers who have had prior encounters with calculus will have an easier time following along, but I have aimed to explain some of the essential concepts. Those i{intimately} familiar with it may find much of the explanation in the first section superfluous.
+
+In section II we describe a number of variations on the fractal, with particular focus on those introduced by its inventor which many writeups neglect to mention, but which greatly expand the variety of striking images that can be produced.
+
+The final section is loosest in its structure and purpose; a sort of grab-bag of observations, alongside some explanation of the interactive renderer.
 
 
-h3[style=text-decoration:underline]{Overview}
+
+
+
+h2[style=text-decoration:underline]{I. What is the Lyapunov fractal?}
 
 The a[href=https://en.wikipedia.org/wiki/Lyapunov_fractal]{Lyapunov fractal},
 named after a[href=https://en.wikipedia.org/wiki/Aleksandr_Lyapunov]{Aleksandr Lyapunov}, was
@@ -162,13 +174,13 @@ $math/math {
     then x_{n+1} = r_n · x_n · {(1 - x_n)}
 }
 
-The function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. We won't dwell overly long on the question of why one should care about this formula. There are plenty of answers one might find more or less compelling, but let's just put the cart before the horse and say that the map is interesting because interest in it leads to interesting fractals.
 
-Let's try and get a feel for what this map is, beginning with some simple plots:
+
+The function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. Let's try and get a feel for what this map is, beginning with some simple plots and working our way toward the Lyapunov fractal. First, let's  $math/math {inline auto x_0} the entire unit interval $math/math {inline auto [0,1]}
 
 [class=interactive-plot] { $math/plot { logistic_3d } }
 
-[class=info-box] { In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
+[class=info-box] { ⓘ  In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
 
 
 Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the i{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
@@ -177,11 +189,11 @@ The most important takeaway from that visualization is that, as long as it's not
 
 [class=interactive-plot] { $math/plot { logistic/timeseries } }
 
-We can see here that indeed the long-term qualitative behavior of the system is not greatly impacted by our choice of $math/math { inline auto x_0 }. What stands out now is that there are values of $math/math {inline auto r} for which the long-term behavior is periodic, bouncing between the same several values in a repetitious pattern, and there are other values where it appears more i{chaotic}, albeit still bounded to some range or ranges. If you turn up the iteration count, you'll see that plot becomes qualitatively monotonous in the long run in either case. So, plotting the entire timeseries is still a bit of a waste of a dimension in our visualization of this system. Perhaps we should sweep across values of $math/math {inline auto r} and view some kind of summary of the long-term behavior of the system under that parametrization.
+We can see here that indeed the long-term qualitative behavior of the system is not greatly impacted by our choice of $math/math { inline auto x_0 }. We can see more clearly now the periodic and aperiodic. If you turn up the iteration count, you'll see that plot becomes qualitatively monotonous in the long run in either case. So, plotting the entire timeseries is still a bit of a waste of a dimension in our visualization of this system. Perhaps we should sweep across values of $math/math {inline auto r} and view some kind of summary of the long-term behavior of the system under that parametrization.
 
 todo: the classic logistic histogram sweep :)
 
-Now we're getting somewhere. There is a lot going on here. This kind of figure is known as a bifurcation diagram, and the bifurcation diagram of the logistic map has been studied i{extensively}. There's a good chance you've seen it before, maybe you've even seen a demonstration of how it relates to the Mandelbrot set. It is tempting to attempt to catalogue every interesting fact and feature of the bifurcation diagram, but this is an article about i{Lyapunov fractals}, so let's stay on task.
+Now we're getting somewhere. There is a lot going on here. This kind of figure is known as a bifurcation diagram, and the bifurcation diagram of the logistic map has been studied i{extensively}. There's a good chance you've seen it before; maybe you've even seen a demonstration of how it relates to the Mandelbrot set. It is tempting to attempt to catalogue every interesting fact and feature of the bifurcation diagram, but this is an article about i{Lyapunov fractals}, so let's stay on task.
 
 In the context of our journey toward understanding the Lyapunov fractal, we are interested in a single simple question about each parametrization: is the trajectory stable, or chaotic? In a sense, the bifurcation diagram is telling us i{too much}. We'd like to put a single number to each parametrization, characterizing just how tidy or untidy a system it defined. We can look at any slice of the bifurcation diagram and eyeball it, but how can we i{compute} it?
 
@@ -193,15 +205,64 @@ $math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum
 
 Many of the explanations you can find online of the Lyapunov fractal would be happy to just drop this formula on you from on high and move on, but personally I think you'd be justified in demanding a little more explanation than that.
 
-The idea from which this measure (the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{maximal Lyapunov exponent (MLE)}) arises is that of defining the quantity we're after as i{sensitivity to initial conditions}. If we give the system a tiny nudge at the start, how much do we expect that to change the result, hundreds of iterations later? If you return to the previous visualizations and toy with them for a bit, you can see that while the long term behavior of the system is i{qualitatively} largely independent of $math/math {inline auto x_0}, this idea of how sensitive the i{specific values} at any point late in the sequence are to slight changes in $math/math {inline auto x_0} lines up well with our looser intuitive notions of apparent-order-versus-apparent-chaos.
+The idea from which this measure (the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{maximal Lyapunov exponent, or MLE}) arises is that of defining the quantity we're after as i{sensitivity to initial conditions}. If we give the system a tiny nudge at the start, how much do we expect that to change the result, hundreds of iterations later? If you return to the previous visualizations and toy with them for a bit, you can see that while the long term behavior of the system is i{qualitatively} largely independent of $math/math {inline auto x_0}, this idea of how sensitive the i{specific values} at any point late in the sequence are to slight changes in $math/math {inline auto x_0} lines up well with our looser intuitive notions of apparent-order-versus-apparent-chaos.
 
-So then we just need to quantify this sensitivity. Let's consider just one iteration. How sensitive is $math/math { inline auto x_1 = f(x_0) } to a change in $math/math { inline auto x_0 }? Well, this is exactly what a derivative $math/math {inline auto d/{d x_0} x_1 = d/{d x_0} f(x_0)} tells us.
+So then we just need to quantify this sensitivity. Let's consider just one iteration. How sensitive is $math/math { inline auto x_1 = f(x_0) } to a change in $math/math { inline auto x_0 }? Well, this is exactly what the differentiation operator $math/math{inline auto d/{d x}} is for. Speaking a bit loosely, we denote "the rate at which $math/math{inline auto b} changes, proportionate to a tiny change in $math/math{inline auto a}" as $math/math {inline auto d/{d a} b}. Since the quantity we are after is the change in $math/math {inline auto x_n} induced by a tiny change in $math/math {inline auto x_0}, what we are looking for is $math/math {inline auto d/{d x_0} x_n}.
 
-Now, how about $math/math { inline auto x_2 }? Well, we have $math/math { inline auto x_2 = f(x_1) = f(f(x_1)) } and thus $math/math { inline auto d/{d x_0} x_2 = d/{d x_0} f(x_1) = d/{d x_0} f(f(x_1)) }. This is computed via the chain rule TODO link and continue explanation
+Following a common convention, from here on we will denote the derivative of a function with a tick mark, like so: $math/math { inline auto f' defineeq d/{d x} f }. The logistic map is a polynomial function, and there is a well known straightforward procedure for obtaining the derivatives of polynomials. As we are interested only in this one function, we won't be diving into the methodological details. For $math/math { inline auto f(x) = r dot x dot (1 - x) }, the derivative is $math/math { inline auto f'{(x)} = r - 2 dot r dot x}
 
-In the original paper, the sequence has only two distinct r-values, denoted A and B, and is given as a short string like "AB", "BBABA", &c, which repeats indefinitely. The fractal, then, is a parameter sweep: each pixel's x-coordinate determines its A-value, and the y-coordinate determines B. The pixel's color is determined by measuring the long-term stability of the system under that parametrization.
+Let's start with the case of $math/math { inline auto x_1 }. We have $math/math { inline auto d/{d x_0} x_1 = f'{(x_0)}}.
+
+Now, how about $math/math { inline auto x_2 }? Well, we have $math/math { inline auto x_2 = f{(x_1)} = f(f(x_1)) } and thus $math/math { inline auto d/{d x_0} x_2 = d/{d x_0} f{(x_1)} = d/{d x_0} f{(f{(x_0)})} }. We must be more careful than simply replacing $math/math { inline auto f } with $math/math { inline auto f' } in a nested case like this, and instead apply something called the a[href=]{chain rule}:
+
+$math/math { auto d/{d x} a{(b{(x)})} = a'{(b{(x)})} dot b'{(x)} }
+
+In our case, this evaluates to:
+
+$math/math { auto d/{d x_0} f{(f{(x_0)})} = f'{(f{(x_0)})} dot f'{(x_0)} = f'{(x_1)} dot f'{(x_0)} }
+
+It is left as an exercise for the reader to prove that the pattern holds:
+
+$math/math { auto d/{d x_0} x_n = underover product {i=0} {n-1} end f'{(x_i)} defineeq f'{(x_{n-1})} dot f'{(x_{n-2})} dot ... dot f'{(x_1)} dot f'{(x_0)} }
+
+Now, we are interested in whether and to what degree this quantity i{grows} or i{shrinks} as the number of iterations increases. There happens to be an exceedingly useful mathematical tool for modeling growth and decay, known as the a[href=]{exponential function}, denoted as either $math/math { inline auto exp{(x)} } or $math/math { inline auto e^x } sup{†}. The exponential of a negative value tends toward zero, while the exponential of a positive value grows.
+
+Since the exponential of a real value is always positive, we will have to take the absolute value of our derivative if we want to model it as an exponential. This is fine, as what we really care about is the magnitude. Calling the rate of exponential growth or decay $math/math { inline auto lambda_n } at iteration $math/math { inline auto n }, we have:
+
+$math/math { auto e^{n dot lambda_n} = d/{d x_0} x_n = underover product {i=0} {n-1} end {|f'{(x_i)}|} }
+
+Now, since the (natural) logarithm is the inverse of the exponential function, we can take the log of both sides and obtain:
+
+$math/math { auto lambda_n = 1/n log underover product {i=0} {n-1} end {|f'{(x_i)}|} }
+
+(It is worth noting that the original Markus paper actually uses a base-2 logarithm; this is equivalent to simply applying a constant scaling factor.) Now, this is already a nice formula for $math/math { inline auto lambda_n }, but if we try to do actual computation with it, the product will be numerically unstable. However it is a well-known and very useful algebraic property of logarithms that the logarithm of a product is a sum of logarithms:
+
+$math/math { auto lambda_n = 1/n underover sum {i=0} {n-1} end log {|f'{(x_i)}|} }
+
+Now if we just ask "what does this $math/math { inline auto lambda_n } tend toward as $math/math { inline auto n } grows?", we have recovered our formula from earlier:
+
+$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
+
+You may have noticed that I snuck a variable $math/math { inline auto m } in there in place of zero. In practice it is convenient to skip the first several iterations when computing this value, as the system can take a little while to settle into its limiting behavior, and there are some pesky issues with the very first iteration in particular (more on this in the subsection on "Algebraic Curves" in section III).
+
+So, now that we've derived the Lyapunov exponent, let's plot it:
+
+
+
+† When $math/math { inline auto x } is a real number, applying the exponential function to it and taking $math/math { inline auto e } to the $math/math { inline auto x^{th} } power are precisely the same thing. When it is not a real number, $math/math { inline auto e^x } is a frequently used shorthand for $math/math { inline auto exp{(x)} } which some, including the author of this post, regard as an abuse of notation.
+
+
+old version:
 
 The stability measure employed is the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{maximal Lyapunov exponent (MLE)}, and this is where the fractal gets its name (although, since Aleksandr Lyapunov never lived to see these fractals, they are sometimes called "Markus-Lyapunov fractals" instead). In the case of this discrete system, the idea is to take the average of the logarithm of the magnitude of the derivative. We then take a negative MLE to indicate stability or convergence, while a positive MLE indicates chaos. Often, these cases are colorized separately. The values are unbounded, so some normalization is required.
+
+In the original publication by Markus & Hess, the sequence has only two distinct r-values, denoted A and B, and is given as a short string like "AB", "BBABA", &c, which repeats indefinitely. The fractal, then, is a parameter sweep: each pixel's x-coordinate determines its A-value, and the y-coordinate determines B. The pixel's color is determined by measuring the long-term stability of the system under that parametrization.
+
+
+
+
+
+h2[style=text-decoration:underline]{II. Variations}
 
 Usually when one says "Lyapunov fractal", it is in reference to the system just described, based on the logistic map. However, Lyapunov exponents can be computed for many different systems, and similar visualizations of those systems can just as well be called Lyapunov fractals. Indeed, Markus himself would go on to expand on the idea in a 1990 publication, a[href=https://doi.org/10.1063/1.4822940]{Chaos in Maps with Continuous and Discontinuous Maxima}, in which he explored two interesting modifications to the system, one of which was to use a different, discontinuous map:
 
@@ -216,26 +277,18 @@ $math/math {
 
 Where α is a real parameter, typically just a little less than 1. Note that in the case where α is 1, this reduces to the familiar logistic map.
 
-Note that in the discontinuous case, Markus chose to set the starting x value to 0.499 instead of 0.5. The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's. The exact details of how that variation is implemented are a little bit hard to parse, in my opinion, but I believe I have settled on an implementation which closely matches the results of Markus's paper. TODO describe this explain the parameter
-
-Most explanations of the Lyapunov fractal on the web (at time of writing) don't explore these variations, and I think that's a shame; which is one of the primary reasons I decided to write this whole article in the first place.
+The other idea he introduced was to apply a little (pseudo-)random variation to the sequence of A's and B's. The exact details of how that variation is implemented are a little bit hard to parse, in my opinion, but I believe I have settled on an implementation which closely matches the results of Markus's paper. TODO describe this explain the parameter
 
 A somewhat more common modification is to include a third value, C, corresponding either to a third spatial dimension or time. a[href=https://gidden.net/2017/03/09/exploring-lyapunov-space/]{Tom Gidden's 2017 blog post} provides a more in-depth description of that, and a[href=https://www.youtube.com/shorts/KAK6IJMbhwI]{this short animation by @desden0va on youtube} makes the idea intuitive.
 
-h3[style=text-decoration:underline]{Implementations}
-
-a[href=https://tangled.org/ponder.ooo/sketches/blob/main/lyapunov.py]{The code used to render these fractals} is publicly available. It is written as a a[href=https://tangled.org/ponder.ooo/snakepyt]{snakepyt} sketch, not a normal python script, and is a bit messy, since it's a snapshot of the working copy. However, it's only about 200 lines, and the logic is a fairly straightforward encoding of the methods described here.
 
 
 
-h3[style=text-decoration:underline]{Other Results}
 
-The original paper concerns itself only with A and B values in the range [0,4]. However, there is no technical constraint that prevents us from peeking outside that box. When we do, it becomes visually apparent that this range is not entirely arbitrary (a[href=https://en.wikipedia.org/wiki/Logistic_map#Characterization_of_the_logistic_map]{the logistic map remains finite there}). The crisp edge of this "blessed" square stands out prominently. Nevertheless, there is some interesting structure outside of it. Some of the superstable curves poke out into the void of divergence. A smaller, distorted square exists where A and B are both negative. There are even isolated islands of stability, i{apparently} disconnected from the rest. i{Apparently} is emphasized as this is only a visual assessment of a finite-resolution render.
 
-h3[style=text-decoration:underline]{Presets}
+h2[style=text-decoration:underline]{III. Observations}
 
-Presets in the interactive renderer have been set up to approximately reproduce the figures from Markus's 1989 and 1990 papers. The renders are not 100% faithful, but they are best-effort. The papers specify the r-value sequences and the coordinate bounds of each render. They do not specify the starting offset in the sequence, which, as I discovered in the course of implementing the presets, is not always 0. This page's interactive renderer has a variable width and height, so I calculated a center point and zoom value that would approximately match the original bounds. It may be necessary to resize one's window, zoom, and pan around, in order to get a more exact match to what is present in the original papers. Some of the original renders also exhibit anisotropic stretching. My renderer does not at present have the capacity to replicate this effect. The original papers specify the $math/math {inline auto x_0} values for many of the figures, but I found that some visual features (for example, in 1989 Fig. 1(a)) could not be reproduced without modifying $math/math {inline auto x_0} slightly. I opted to make this modification, prioritizing visual similarity with the original visualization over precise copying of parameters.
-
+The original paper concerns itself only with A and B values in the range [0,4]. However, there is no technical constraint that prevents us from peeking outside that box. When we do, it becomes visually apparent that this range is not entirely arbitrary (a[href=https://en.wikipedia.org/wiki/Logistic_map#Characterization_of_the_logistic_map]{the logistic map remains finite there}). The crisp edge of this "blessed" square stands out prominently. Nevertheless, there is some interesting structure outside of it. Some of the superstable curves poke out into the void of divergence. A smaller, distorted square exists where A and B are both negative.
 
 h3[style=text-decoration:underline]{Algebraic Curves}
 
@@ -243,7 +296,7 @@ Qualitatively, the fractal appears to be structured along a "skeleton" of precis
 
 Consider the formula for the Lyapunov exponent: $math/math { inline auto underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|d/{d x} f_i{(x_i)}|} }
 
-Since $math/math { inline auto log{|x|} } diverges to $math/math { inline auto -inf } as x approaches 0, we have that the entire sum must diverge when $math/math { inline auto d/{d x} f_n{(x_n)} = 0 }. Given $math/math { inline auto x_0 = 1/2} we can apply the logistic formula with alternating parameters $math/math {inline auto a} and $math/math {inline auto b} repeatedly and obtain $math/math { inline auto d/{d x} f_n{(x_n)} } as a multivariate polynomial in $math/math {inline auto a} and $math/math {inline auto b}. I'd go as far as to suggest that the set of points where the Lyapunov exponent diverges toward negative infinity is precisely the union of the zero sets of all these polynomials. I suggest it instead of asserting it because I suspect that a proof might require irritatingly subtle considerations.
+Since $math/math { inline auto log{|x|} } diverges to $math/math { inline auto -inf } as x approaches 0, we have that the entire sum must diverge when $math/math { inline auto d/{d x} f_n{(x_n)} = 0 }. Given $math/math { inline auto x_0 = 1/2}, we can apply the logistic formula with alternating parameters $math/math {inline auto a} and $math/math {inline auto b} repeatedly and obtain $math/math { inline auto d/{d x} f_n{(x_n)} } as a multivariate polynomial in $math/math {inline auto a} and $math/math {inline auto b}.
 
 Because $math/math { inline auto x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors $math/math { inline auto c_n } so as to produce polynomials with the same zeros but with integer coefficients, the first few curves $math/math { inline auto P_n = c_n dot d/{d x} f_n{(x_n)} = 0 } are as follows:
 
@@ -256,7 +309,7 @@ P_3 = a^5b^2 - 8 a^4b^2 + 16 a^3 b^2 + 16 a^3 b - 64 a^2 b + 128 = 0
 P_4 = a^10b^5 - 16a^9b^5 + 96a^8b^5 + 32a^8b^4 - 256a^7b^5 - 384a^7b^4 + 256a^6b^5 + 1536a^6b^4 + 256a^6b^3 - 2048a^5b^4 - 1792a^5b^3 + 2048a^4b^3 + 4096a^3b^3 + 4096a^3b^2 - 16384a^2b^2 + 32768 = 0
 }
 
-While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes. I had an LLM agent use sympy to produce the first ten iterations of polynomials, and while I didn't look at the code at all, the task was straightforward and the plots look correct:
+While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes. I had an LLM agent use SymPy to produce the first ten iterations of polynomials, and while I didn't look at the code at all, the task was straightforward and the plots look correct:
 
 [class=carousel] {
     img[src=/media/lyapunov/full/curve_composite.webp] {}
@@ -278,7 +331,15 @@ Of course, in the original papers, the first 600 iterations are skipped. Some of
 
 Anyway, I think this is a pretty neat decomposition of much of the structure of the fractal.
 
-h3[style=text-decoration:underline]{Gallery}
+h3[style=text-decoration:underline]{Presets}
+
+Presets in the interactive renderer have been set up to approximately reproduce the figures from Markus's 1989 and 1990 papers. The renders are not 100% faithful, but they are best-effort. The papers specify the r-value sequences and the coordinate bounds of each render. They do not specify the starting offset in the sequence, which, as I discovered in the course of implementing the presets, is not always 0. This page's interactive renderer has a variable width and height, so I calculated a center point and zoom value that would approximately match the original bounds. It may be necessary to resize one's window, zoom, and pan around, in order to get a more exact match to what is present in the original papers. Some of the original renders also exhibit anisotropic stretching. My renderer does not at present have the capacity to replicate this effect. The original papers specify the $math/math {inline auto x_0} values for many of the figures, but I found that some visual features (for example, in 1989 Fig. 1(a)) could not be reproduced without modifying $math/math {inline auto x_0} slightly. I opted to make this modification, prioritizing visual similarity with the original visualization over precise copying of parameters.
+
+
+
+
+
+h2[style=text-decoration:underline]{Gallery}
 
 [class=gallery] {
     img[src=/media/lyapunov/thumb/0.avif] {}
@@ -290,6 +351,19 @@ h3[style=text-decoration:underline]{Gallery}
 
     $gallery-loader {}
 }
+
+
+
+
+
+
+
+
+h2[style=text-decoration:underline]{Endnote}
+
+Thank you for taking the time to read however much of this you did. Putting this post together has been an effortful undertaking. I hope it has been worth your attention.
+
+
 
 
 

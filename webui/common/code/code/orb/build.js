@@ -5,7 +5,7 @@ const BREAK = "builtin_break";
 // elements that are themselves inline
 const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q"];
 // elements whose innards are meant to be inline
-const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i"];
+const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
