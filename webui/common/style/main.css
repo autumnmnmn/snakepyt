@@ -101,6 +101,10 @@ msup > :last-child {
     --panel-margin: 0.5rem;
 }
 
+sup, sub {
+    font-size: revert;
+}
+
 body {
     height: 100vh;
     width: 100vw;
@@ -143,10 +147,10 @@ button.inverted {
 
 p {
     color: var(--main-solid);
-    line-height: 1.5rem;
-    margin-bottom: 1rem;
-    margin-top: 1rem;
-    max-width: 65rem;
+    line-height: 1.5em;
+    margin-bottom: 1em;
+    margin-top: 1em;
+    max-width: 65em;
 }
 
 a {

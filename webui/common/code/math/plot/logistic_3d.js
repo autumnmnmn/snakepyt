@@ -47,6 +47,8 @@ export async function main(svg) {
     let endpoints = true;
     let render_points = true;
 
+    let iteration = 0;
+
     const logistic_map = x => r * x * (1 - x);
     const discontinuous_map = x => {
         return x > 0.5 ?
@@ -191,7 +193,7 @@ export async function main(svg) {
         };
     };
 
-    const draw_grid = (layout) => {
+    const draw_grid = async (layout) => {
         const { space, grid_group } = layout;
 
         const x_axis = space.line(
@@ -199,15 +201,27 @@ export async function main(svg) {
             v3.of(bounds_max.x + overhang.x, 0, 0),
             "axis"
         );
+        const x_label = space.math(
+            v3.of(bounds_max.x + overhang.x + 0.1, 0, 0),
+            (await $mod("math/math", "inline auto x_0")).dom[0]
+        );
         const y_axis = space.line(
             v3.of(0, bounds_min.y - overhang.y, 0),
             v3.of(0, bounds_max.y + overhang.y, 0),
             "axis"
         );
+        const y_label = space.math(
+            v3.of(0, bounds_max.y + overhang.y + 0.1, 0),
+            (await $mod("math/math", `inline auto x_${iteration}`)).dom[0]
+        );
         const z_axis = space.line(
             v3.of(0, 0, bounds_min.z - overhang.z),
             v3.of(0, 0, bounds_max.z + overhang.z),
             "axis 3d"
+        );
+        const z_label = space.math(
+            v3.of(0, 0, bounds_max.z + overhang.z + 0.1),
+            (await $mod("math/math", `inline auto x_${iteration + 1}`)).dom[0]
         );
         const x_guides_xy = x_ticks.map(x_val =>
             space.line(
@@ -239,7 +253,9 @@ export async function main(svg) {
         );
 
         grid_group.replaceChildren(
-            x_axis, y_axis, z_axis,
+            x_axis, x_label,
+            y_axis, y_label,
+            z_axis, z_label,
             ...x_guides_xy, ...y_guides_xy,
             ...x_guides_xz, ...z_guides_xz
         );
@@ -356,8 +372,9 @@ export async function main(svg) {
             action: (state) => {
                 x_data = y_data;
                 y_data = z_data;
+                iteration = iteration + 1;
                 recompute_data();
-                redraw_paths();
+                redraw_all();
             }
         },
         {
@@ -366,8 +383,9 @@ export async function main(svg) {
             action: (state) => {
                 x_data = init_x_data;
                 y_data = x_data;
+                iteration = 0;
                 recompute_data();
-                redraw_paths();
+                redraw_all();
             }
         },
         {
@@ -382,8 +400,9 @@ export async function main(svg) {
                 init_x_data = linspace(0, 1, resolution).map(smoothstep);
                 x_data = init_x_data;
                 y_data = x_data;
+                iteration = 0;
                 recompute_data();
-                redraw_paths();
+                redraw_all();
             }
         },
         {

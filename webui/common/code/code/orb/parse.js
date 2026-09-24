@@ -1,10 +1,13 @@
 
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
+const NOSPACE = "$nospace";
 
 const cache = {};
 
 const invalidTagCharacters = new Set("{}()<>,;:");
+
+const verbatimTags = new Set(["code", "$", "$css"]);
 
 // TODO debug bracket escaping issues
 
@@ -54,6 +57,30 @@ function parseSource(input, startIndex = 0) {
     let newlineCount = 0;
 
     const scanLimit = input.length;
+
+    const emitDirectiveIfPending = () => {
+        if (tagStart === null || argStart !== null) return false;
+        if (input.substring(tagStart, tagEnd + 1) !== NOSPACE) return false; // TODO more general directives set
+        if (preContentStart !== null) {
+            nodes.push({
+                tag: {symbol: TEXT, start: null, end: null},
+                content: {start: preContentStart, end: preContentEnd},
+                args: {start: null, end: null},
+                origin: "text_before_directive"
+            });
+            preContentStart = null;
+            preContentEnd = null;
+        }
+        nodes.push({
+            tag: {symbol: NOSPACE, start: tagStart, end: tagEnd},
+            content: {start: null, end: null},
+            args: {start: null, end: null},
+            origin: "directive"
+        });
+        tagStart = null;
+        tagEnd = null;
+        return true;
+    };
 
     while (scanPosition < scanLimit) {
         const char = input[scanPosition];
@@ -146,6 +173,7 @@ function parseSource(input, startIndex = 0) {
         const takingArgs = argStart !== null && argEnd === null;
 
         if (!takingArgs && isWhitespace) {
+            emitDirectiveIfPending();
             if (char === "\n") {
                 newlineCount += 1;
                 if (newlineCount === 2) {
@@ -229,14 +257,16 @@ function parseSource(input, startIndex = 0) {
 
     // Finish the current node if it has content
     if (preContentStart !== null || tagStart !== null) {
-        const start = Math.min(preContentStart ?? Infinity, tagStart ?? Infinity);
-        const end = Math.max(preContentEnd ?? -Infinity, tagEnd ?? -Infinity);
-        nodes.push({
-            tag: {symbol: TEXT, start: null, end: null},
-            content: { start: start, end: end },
-            args: {start: null, end: null},
-            origin: "trailing_text"
-        });
+        if (!emitDirectiveIfPending()) {
+            const start = Math.min(preContentStart ?? Infinity, tagStart ?? Infinity);
+            const end = Math.max(preContentEnd ?? -Infinity, tagEnd ?? -Infinity);
+            nodes.push({
+                tag: {symbol: TEXT, start: null, end: null},
+                content: { start: start, end: end },
+                args: {start: null, end: null},
+                origin: "trailing_text"
+            });
+        }
     }
 
     return { nodes, scanPosition };
@@ -267,7 +297,7 @@ function findClosingBracket(input, startIndex) {
 }
 
 function shouldParseContent(tag) {
-    return tag !== "$" && tag !== "$css";
+    return !verbatimTags.has(tag);
 }
 
 function dumpNodes(nodes, input) {

@@ -1,6 +1,7 @@
 
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
+const NOSPACE = "$nospace";
 
 // elements that are themselves inline
 const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q"];
@@ -12,7 +13,16 @@ const namespacedElements = {
 
 const DEBUG = true;
 
-const spaceAfter = /[\w,;.:]/;
+const spaceAfter = /[\w,;.:†]/;
+
+function verbatimText(source, node) {
+    let text = source
+        .substring(node.content.start, node.content.end)
+        .replace(/\\([{}])/g, "$1");
+    if (text.startsWith("\n")) text = text.substring(1);
+    if (text.endsWith("\n")) text = text.substring(0, text.length - 1);
+    return text;
+}
 
 export async function build(nodes, source, inline=false, namespace=null) {
     let segment = inline ? document.createDocumentFragment() : document.createElement("p");
@@ -72,7 +82,9 @@ export async function build(nodes, source, inline=false, namespace=null) {
             }
             pendingSpace = false;
             const inlineContents = inlineChildrenElements.includes(tag);
-            const children = await build(node.content.nodes, source, inlineContents, namespace);
+            const children = node.content.nodes === undefined ?
+                [document.createTextNode(verbatimText(source, node))] :
+                await build(node.content.nodes, source, inlineContents, namespace);
             tagElement.append(...children);
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
@@ -98,7 +110,9 @@ export async function build(nodes, source, inline=false, namespace=null) {
                     tagElement.setAttribute(split[0].trim(), split[1]);
                 }
                 const inlineContents = inlineChildrenElements.includes(tag);
-                const children = await build(node.content.nodes, source, inlineContents, namespace);
+                const children = node.content.nodes === undefined ?
+                    [document.createTextNode(verbatimText(source, node))] :
+                    await build(node.content.nodes, source, inlineContents, namespace);
                 tagElement.append(...children);
                 domNodes.push(tagElement);
             }
@@ -112,6 +126,12 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         const modNameStr = tag.substring(1);
+
+        if (tag === NOSPACE) {
+            pendingSpace = false;
+            inlineEnded = false;
+            continue;
+        }
 
         if (tag === "$") {
             const span = $element("span");
