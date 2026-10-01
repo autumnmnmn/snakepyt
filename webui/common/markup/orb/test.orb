@@ -15,6 +15,10 @@ foo $math/inline { auto x_n } bar
     $math/plot { logistic_discontinuous }
 }
 
+[style=width:2000px;height:550px;] {
+    $math/plot { experimental_plot }
+}
+
 abc a[href=foo]{test 123} def
 
 abc a[href=foo]{test (123)} def

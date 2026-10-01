@@ -13,7 +13,6 @@ export class Complex {
      * @param {number} th - Theta
      */
     constructor(isCart, cartValid, polarValid, re, im, r, th) {
-        // Monomorphic Shape: 7 properties, strictly ordered, never added/deleted.
         this.isCart = isCart;
         this.cartValid = cartValid;
         this.polarValid = polarValid;
@@ -54,10 +53,14 @@ export class Complex {
     get x() { return this.re; }
     get y() { return this.im; }
 
+    /* atan2 distinguishes -0 from +0, and atan2(-0, -1) is -pi — off
+    the principal branch (-pi, pi]. the + 0 normalizes signed zero so
+    the negative real axis reads +pi. */
+
     get r() {
         if (!this.polarValid) {
             this._r = Math.sqrt(this._re * this._re + this._im * this._im);
-            this._th = Math.atan2(this._im, this._re);
+            this._th = Math.atan2(this._im + 0, this._re + 0);
             this.polarValid = true;
         }
         return this._r;
@@ -66,7 +69,7 @@ export class Complex {
     get theta() {
         if (!this.polarValid) {
             this._r = Math.sqrt(this._re * this._re + this._im * this._im);
-            this._th = Math.atan2(this._im, this._re);
+            this._th = Math.atan2(this._im + 0, this._re + 0);
             this.polarValid = true;
         }
         return this._th;
@@ -144,7 +147,6 @@ export class Complex {
     add(other) {
         const tr = this.re + other.re;
         const ti = this.im + other.im;
-        // Lazily retains `this.isCart` preference without forcing eager polar calculation
         return new Complex(this.isCart, true, false, tr, ti, 0, 0);
     }
 
@@ -155,7 +157,6 @@ export class Complex {
     }
 
     mul(other) {
-        // Fast path: If both already have valid polar coords, entirely bypass trig & algebra
         if (this.polarValid && other.polarValid) {
             const nr = this._r * other._r;
             const nth = this._th + other._th;
@@ -168,6 +169,85 @@ export class Complex {
         const ni = tr * oi + ti * or;
 
         return new Complex(this.isCart, true, false, nr, ni, 0, 0);
+    }
+
+    scale(s) {
+        return new Complex(this.isCart, true, false, s * this.re, s * this.im, 0, 0);
+    }
+
+    neg() {
+        return Complex.cart(-this.re, -this.im);
+    }
+
+    conj() {
+        return Complex.cart(this.re, -this.im);
+    }
+
+    inv() {
+        const d = this.re * this.re + this.im * this.im;
+        return Complex.cart(this.re / d, -this.im / d);
+    }
+
+    div(other) {
+        const d = other.re * other.re + other.im * other.im;
+        return Complex.cart(
+            (this.re * other.re + this.im * other.im) / d,
+            (this.im * other.re - this.re * other.im) / d
+        );
+    }
+
+    exp() {
+        return Complex.polar(Math.exp(this.re), this.im);
+    }
+
+    // principal branch: log(r) + i*theta, theta in (-pi, pi]
+    log() {
+        return Complex.cart(Math.log(this.r), this.theta);
+    }
+
+    pow(other) {
+        const w = other instanceof Complex ? other : Complex.cart(other, 0);
+        return this.log().mul(w).exp();
+    }
+
+    sqrt() {
+        return Complex.polar(Math.sqrt(this.r), this.theta / 2);
+    }
+
+    sin() {
+        return Complex.cart(
+            Math.sin(this.re) * Math.cosh(this.im),
+            Math.cos(this.re) * Math.sinh(this.im)
+        );
+    }
+
+    cos() {
+        return Complex.cart(
+            Math.cos(this.re) * Math.cosh(this.im),
+            -Math.sin(this.re) * Math.sinh(this.im)
+        );
+    }
+
+    tan() {
+        return this.sin().div(this.cos());
+    }
+
+    sinh() {
+        return Complex.cart(
+            Math.sinh(this.re) * Math.cos(this.im),
+            Math.cosh(this.re) * Math.sin(this.im)
+        );
+    }
+
+    cosh() {
+        return Complex.cart(
+            Math.cosh(this.re) * Math.cos(this.im),
+            Math.sinh(this.re) * Math.sin(this.im)
+        );
+    }
+
+    tanh() {
+        return this.sinh().div(this.cosh());
     }
 
     // ========= Screen Projection =========== //
@@ -183,7 +263,6 @@ export class Complex {
         const coords_x = c * cr - s * ci;
         const coords_y = s * cr + c * ci;
 
-        // Algebraic truth: The aspect ratio perfectly cancels out here
         const scaleFactor = dims.y / scale;
 
         const px = (coords_x) * scaleFactor + dims.x * 0.5;
@@ -203,7 +282,6 @@ export class Complex {
         const coords_x = c * zx - s * zy;
         const coords_y = s * zx + c * zy;
 
-        // Reverse calculation of the identical mathematical truth
         const inverseScale = scale / dims.y;
 
         const cx = (coords_x) * inverseScale + center.re;
@@ -215,144 +293,4 @@ export class Complex {
 
 export const cartesian = Complex.cart;
 export const polar = Complex.polar;
-
-/*
-// ========= Cartesian =========== //
-
-function c_cart_constructor(re, im) {
-    return { re, im };
-}
-
-function c_cart_copy(z) {
-    return { re: z.re, im: z.im };
-}
-
-function c_cart_dot(a, b) {
-    return Math.sqrt(a.re * b.re + a.im * b.im);
-}
-
-function c_cart_sub(a, b) {
-    return {
-        re: a.re - b.re,
-        im: a.im - b.im
-    };
-}
-
-function c_cart_mul(a, b) {
-    return {
-        re: a.re * b.re - a.im * b.im,
-        im: a.re * b.im + a.im * b.re
-    };
-}
-
-function c_cart_add(a, b) {
-    return {
-        re: a.re + b.re,
-        im: a.im + b.im
-    };
-}
-
-function c_cart_mag(z) {
-    return c_cart_dot(z, z);
-}
-
-function c_cart_mag_squared(z) {
-    return z.re * z.re + z.im * z.im;
-}
-
-function c_cart_angle(z) {
-    return Math.atan2(z.im, z.re);
-}
-
-function c_cart_to_polar(z) {
-    return {
-        r: c_cart_mag(z),
-        theta: c_cart_angle(z)
-    };
-}
-
-function c_cart_to_pixel(z, dims, center, rotation, scale) {
-    const aspect = dims.x / dims.y;
-    const angle = -$tau * rotation;
-    const c = Math.cos(angle);
-    const s = Math.sin(angle);
-    const coords = c_cart_sub(z, center);
-    const coords_x = c * coords.re - s * coords.im;
-    const coords_y = s * coords.re + c * coords.im;
-
-    const px = (coords_x) * dims.x / (scale * aspect) + dims.x * 0.5;
-    const py = (coords_y) * dims.y / scale + dims.y * 0.5;
-    return {
-        x: px,
-        y: py
-    };
-}
-
-
-import { v2 } from "/code/math/vector.js";
-import "/code/math/constants.js";
-
-function c_cart_from_pixel(z, dims, center, rotation, scale) {
-    const aspect = dims.x / dims.y;
-    const coords = v2.sub(z, v2.scale(dims, 0.5));
-    const angle = $tau * rotation;
-    const c = Math.cos(angle);
-    const s = Math.sin(angle);
-    const coords_x = c * coords.x - s * coords.y;
-    const coords_y = s * coords.x + c * coords.y;
-    const cx = (coords_x) * scale * aspect / dims.x + center.re;
-    const cy = (coords_y) * scale / dims.y + center.im;
-    return {
-        re: cx,
-        im: cy
-    };
-}
-
-// ========= Polar =========== //
-
-function c_polar_constructor(r, theta) {
-    return { r, theta };
-}
-
-function c_polar_re(z) {
-    return z.r * Math.cos(z.theta);
-}
-
-function c_polar_im(z) {
-    return z.r * Math.sin(z.theta);
-}
-
-function c_polar_to_cart(z) {
-    return {
-        re: c_polar_re(z),
-        im: c_polar_im(z)
-    };
-}
-
-
-export const cartesian = {
-    of: c_cart_constructor,
-    dot: c_cart_dot,
-    add: c_cart_add,
-    sub: c_cart_sub,
-    mul: c_cart_mul,
-    mag: c_cart_mag,
-    magSq: c_cart_mag_squared,
-    mod: c_cart_mag,
-    angle: c_cart_angle,
-    arg: c_cart_angle,
-    toPolar: c_cart_to_polar,
-    toPixel: c_cart_to_pixel,
-    fromPixel: c_cart_from_pixel,
-    copy: c_cart_copy
-};
-
-export const polar = {
-    of: c_polar_constructor,
-    im: c_polar_im,
-    y: c_polar_im,
-    re: c_polar_re,
-    x: c_polar_re
-}
-*/
 

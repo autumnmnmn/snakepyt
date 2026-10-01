@@ -136,6 +136,14 @@ $css {
         padding: 0;
         margin: 0;
     }
+
+    code {
+        display: block;
+        overflow-x: auto;
+        width: 100%;
+        border-left: 3px double var(--main-faded);
+        padding-left: 1em;
+    }
 }
 
 [id=lightbox| onclick=this.classList.remove('open')] {
@@ -157,13 +165,23 @@ h2[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
 $layout/loadwall { Load interactive renderer? (designed for desktop) | gpu/lyapunov | render-container }
 
 
+[style=height: 100px]{}
+[style=height: 100px]{}
+
+$math/math { inline auto {(-1)}^i = e^{-tau/2} kindaeq 0.0432139182637722497744177371717280112757281098106330829807196874 }
+
+
+[style=height: 100px]{}
+[style=height: 100px]{}
+
+
 h2[style=text-decoration:underline]{Outline & Table of Contents}
 
 This post endeavors to provide a thorough treatment of what is most commonly called the Lyapunov fractal while remaining accessible to a reasonably wide audience. It is broken into four main sections: explaining what the fractal is at a high level, providing a lengthier exposition aimed at a wider audience, shining a light on some frequently overlooked variations of the fractal, and then cataloguing some of its features. I should also mention, in case you missed it, that at the top of the page there is a button you can press to load up a webgpu-based Lyapunov fractal explorer, which some might find to be a more compelling introduction to the fractal than a textual writeup.
 
 a[href=#section_i]{Section I, The Lyapunov fractal in brief} provides a short encyclopedic account of the fractal and its history.
 
-a[href=#section_ii]{Section II, The Lyapunov fractal in depth} guides readers of a mixed background on a liesurely stroll from more basic mathematical concepts toward the Lyapunov fractal. We begin by exploring the logistic map with a number of interactive visualizations, and gradually work our way up to defining the Lyapunov exponent as a tool for describing what we observe. Readers who have had prior encounters with calculus will have an easier time following along, but I have aimed to explain many of the essential concepts. This section may hold less interest for those already greatly learned in mathematics.
+a[href=#section_ii]{Section II, The Lyapunov fractal in depth} guides readers of a mixed background on a leisurely stroll from more basic mathematical concepts toward the Lyapunov fractal. We begin by exploring the logistic map with a number of interactive visualizations, and gradually work our way up to defining the Lyapunov exponent as a tool for describing what we observe. Readers who have had prior encounters with calculus will have an easier time following along, but I have aimed to explain many of the essential concepts. This section may hold less interest for those already greatly learned in mathematics.
 
 a[href=#section_iii]{Section III, Variations} describes a number of variations on the fractal, with particular focus on those introduced by its inventor which many writeups neglect to mention, but which greatly expand the variety of striking images that can be produced.
 
@@ -181,7 +199,7 @@ a[href=https://onlinelibrary.wiley.com/doi/10.1002/anie.200390466]{Benno Hess} i
 paper a[href=https://doi.org/10.1016/0097-8493(89)90019-8]{Lyapunov exponents of the logistic
 map with periodic forcing} (a[href=https://sci-hub.ru/10.1016/0097-8493(89)90019-8]{pirate link}).
 
-The fractal is a visualization of the iterated a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} with a periodically varying parameter $math/math {inline auto r} taking on two values $math/math {inline auto r_A}, $math/math {inline auto r_B} according to a rule specified as a string of i{A}s and i{B}s. For instance the string "ABAABB" corresponds to the sequence $math/math {inline auto r_A r_B r_A r_A r_B r_B}, which repeats ad infinitum. The a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{Lyapunov exponent} $math/math{inline auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} } is computed for each such parametrization, and then these exponents are mapped to a color gradient. We take a negative exponent to indicate stability (more precisely, convergence of perturbed trajectories), while a positive exponent indicates chaos (more precisely, divergence of perturbed trajectories). Often, these cases are colorized according to distinct schemes. The values are unbounded $nospace a[href=#section_i_foot_i|id=section_i_back_i]{sup{†}}, so some normalization is required.
+The fractal is a visualization of the iterated a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} with a periodically varying parameter $math/math {inline auto r} taking on two values $math/math {inline auto r_A, r_B} according to a rule specified as a string of i{A} $nospace s and i{B} $nospace s. For instance the string "ABAABB" corresponds to the sequence $math/math {inline auto r_A, r_B, r_A, r_A, r_B, r_B,...} which repeats ad infinitum. The a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{Lyapunov exponent} $math/math{inline auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} } is computed for each such parametrization, and then these exponents are mapped to a color gradient. We take a negative exponent to indicate stability (more precisely, convergence of perturbed trajectories), while a positive exponent indicates chaos (more precisely, divergence of perturbed trajectories). Often, these cases are colorized according to distinct schemes. The values are unbounded $nospace a[href=#section_i_foot_i|id=section_i_back_i]{sup{†}}, so some normalization is required.
 
 The Lyapunov exponent is where the Lyapunov fractal gets its traditional name. Since Aleksandr Lyapunov never lived to see these fractals, they are sometimes called "Markus-Lyapunov fractals" instead. Markus himself, however, in his 2007 book a[href=https://archive.org/details/chartsforpredict0000mark/]{Charts for Prediction and Chance} $nospace a[href=#section_i_foot_ii|id=section_i_back_ii]{sup{††}}, prefers the term "λ-diagrams", as λ is the traditional symbol used for Lyapunov exponents and strictly speaking not i{every} such diagram is a fractal in a rigorous sense.
 
@@ -200,7 +218,7 @@ def get_r(iteration):
 def rolling_average(current_average, next_value, iteration):
     if is_nan_or_inf(current_average):
         return current_average
-    next_average = current_average + (next_value - current_average) / iteration;
+    next_average = current_average + (next_value - current_average) / iteration
     return next_average
 
 def colorize(lyapunov_exponent):
