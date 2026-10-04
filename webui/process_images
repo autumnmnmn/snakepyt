@@ -2,44 +2,157 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SRC_DIR="${1:?usage: $0 <image-dir>}"
-DST_DIR="${2:?usage: $0 <image-dir>}"
+TRAMPLE=0
+
+usage() {
+    cat <<EOF
+usage: $(basename "$0") [--trample] <source>... <destination-dir>
+
+  each <source> may be:
+    - a .png file
+    - a directory (every .png inside it is used)
+    - a glob pattern, quoted or unquoted
+
+  images whose outputs already exist in <destination-dir> are skipped;
+  --trample regenerates them anyway.
+
+examples:
+  $(basename "$0") ~/path/or/glob/of/source/images/foo_* ./path/of/destination/dir
+  $(basename "$0") --trample '~/path/or/glob/of/source/images/foo_*' ./out
+EOF
+}
+
+positionals=()
+for arg in "$@"; do
+    case $arg in
+        --trample)  TRAMPLE=1 ;;
+        -h|--help)  usage; exit 0 ;;
+        *)          positionals+=("$arg") ;;
+    esac
+done
+
+if [[ ${#positionals[@]} -lt 2 ]]; then
+    usage >&2
+    exit 1
+fi
+
+n=${#positionals[@]}
+DST_DIR=${positionals[n-1]}
+specs=("${positionals[@]:0:$((n - 1))}")
+
+images=()
+
+add_image() {
+    local f=$1
+    case $f in
+        *.png)
+            if [[ -f $f ]]; then
+                images+=("$f")
+            else
+                echo "warning: not a regular file, ignoring: $f" >&2
+            fi
+            ;;
+        *)
+            echo "warning: not a .png, ignoring: $f" >&2
+            ;;
+    esac
+}
+
+add_dir() {
+    local dir=$1 f found=0
+    for f in "$dir"/*.png; do
+        [[ -e $f ]] || continue
+        found=1
+        add_image "$f"
+    done
+    (( found )) || echo "warning: no .png files in $dir" >&2
+}
+
+add_pattern() {
+    local pat=$1 line found=0
+    while IFS= read -r line; do
+        found=1
+        add_image "$line"
+    done < <(compgen -G "$pat")
+    (( found )) || echo "warning: no matches for: $pat" >&2
+}
+
+for spec in "${specs[@]}"; do
+    spec=${spec/#~/$HOME}
+    if   [[ -d $spec ]]; then add_dir "$spec"
+    elif [[ -f $spec ]]; then add_image "$spec"
+    else                      add_pattern "$spec"
+    fi
+done
+
+if [[ ${#images[@]} -eq 0 ]]; then
+    echo "error: no source images found" >&2
+    exit 1
+fi
 
 mkdir -p "$DST_DIR/full" "$DST_DIR/lightbox" "$DST_DIR/card" "$DST_DIR/thumb"
 
-for png in "$SRC_DIR"/*.png; do
-    [[ -e "$png" ]] || { echo "no pngs found"; exit 1; }
-    base=$(basename "$png" .png)
+already_processed() {
+    local base=$1 out
+    for out in "full/$base.webp" "lightbox/$base.webp" "card/$base.avif" "thumb/$base.avif"; do
+        [[ -e "$DST_DIR/$out" ]] || return 1
+    done
+}
 
-    echo "processing $base..."
+gen() {
+    local dst=$1
+    shift
+    if [[ $TRAMPLE -eq 0 && -e $dst ]]; then
+        echo "    already exists, keeping: $dst"
+        return 0
+    fi
+    magick "$@" "$dst"
+}
+
+process_image() {
+    local src=$1 base=$2
 
     # full: lossless webp, largest dim capped at 2560
-    magick "$png" \
+    gen "$DST_DIR/full/$base.webp" "$src" \
         -resize '2560x2560>' \
-        -define webp:lossless=true \
-        "$DST_DIR/full/$base.webp"
+        -define webp:lossless=true
 
-    # full: lossless webp, largest dim capped at 2048
-    magick "$png" \
+    # lightbox: lossless webp, largest dim capped at 2048
+    gen "$DST_DIR/lightbox/$base.webp" "$src" \
         -resize '2048x2048>' \
-        -define webp:lossless=true \
-        "$DST_DIR/lightbox/$base.webp"
+        -define webp:lossless=true
 
     # card: shrink so smallest dim = 1024, then center-crop to 1024x1024
-    magick "$png" \
+    gen "$DST_DIR/card/$base.avif" "$src" \
         -resize '1024x1024^' \
         -gravity Center \
         -extent 1024x1024 \
-        -quality 60 \
-        "$DST_DIR/card/$base.avif"
+        -quality 60
 
     # thumb: 128x128, same logic
-    magick "$png" \
+    gen "$DST_DIR/thumb/$base.avif" "$src" \
         -resize '128x128^' \
         -gravity Center \
         -extent 128x128 \
-        -quality 60 \
-        "$DST_DIR/thumb/$base.avif"
+        -quality 60
+}
 
+processed=0
+skipped=0
+
+for src in "${images[@]}"; do
+    base=$(basename "$src" .png)
+
+    if [[ $TRAMPLE -eq 0 ]] && already_processed "$base"; then
+        echo "skipping $base (already processed; --trample to redo)"
+        skipped=$((skipped + 1))
+        continue
+    fi
+
+    echo "processing $base..."
+    process_image "$src" "$base"
+    processed=$((processed + 1))
 done
+
+echo "done: $processed processed, $skipped skipped"
 

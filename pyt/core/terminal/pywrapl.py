@@ -1,4 +1,5 @@
 
+import os
 import sys
 
 _VERSION = [
@@ -180,7 +181,7 @@ def _wrapped_repl(local, log, on_version_mismatch="error"):
 
 
 
-def repl(local, log, on_version_mismatch="error"):
+def repl(local, log, on_version_mismatch="error", cwd=None):
     """
     Wrapped _pyrepl with a fallback to code.interact
     """
@@ -188,6 +189,10 @@ def repl(local, log, on_version_mismatch="error"):
     exit_repl = _ReplExitSentinel()
     local["exit"] = exit_repl
     local["quit"] = exit_repl
+
+    original_cwd = os.getcwd() if cwd is not None else None
+    if cwd is not None:
+        os.chdir(os.fspath(cwd))
 
     old_hook = sys.displayhook
 
@@ -210,4 +215,6 @@ def repl(local, log, on_version_mismatch="error"):
         code.interact(local=local, banner="", exitmsg="", local_exit=True)
     finally:
         sys.displayhook = old_hook
+        if original_cwd is not None:
+            os.chdir(original_cwd) # can throw
 

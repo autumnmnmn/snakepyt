@@ -164,8 +164,8 @@ export async function main(svg) {
             high = center + 0.5;
         }
         const pad = 0.1 * (high - low);
-        bounds_min = v3.of(low - pad, low - pad, low - pad);
-        bounds_max = v3.of(high + pad, high + pad, high + pad);
+        //bounds_min = v3.of(low - pad, low - pad, low - pad);
+        //bounds_max = v3.of(high + pad, high + pad, high + pad);
         const extent = (high + pad) - (low - pad);
         overhang = v3.of(0.05 * extent, 0.05 * extent, 0.05 * extent);
         ticks = tick_range(low - pad, high + pad, nice_step(extent / 8));

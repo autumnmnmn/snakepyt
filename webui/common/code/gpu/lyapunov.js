@@ -214,7 +214,7 @@ sequence BA
                     if (value === "1989_1_a") {
                         setCenter(3.8425, 3.8425);
                         params.zoom = 18;
-                        params.x_0 = 0.3338;
+                        params.x_0 = 0.35;
                         updateSequence("AB", panelState.sequence.set, panelState, false);
 
                         blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#632b0a"));
@@ -227,7 +227,7 @@ sequence BA
                     else if (value === "1989_1_b") {
                         setCenter(3.8425, 3.8425);
                         params.zoom = 40;
-                        params.x_0 = 0.3338;
+                        params.x_0 = 0.35;
                         updateSequence("AB", panelState.sequence.set, panelState, false);
 
                         blitParams.neg_color = new Color(NonlinearSRGB.fromHex("#632b0a"));

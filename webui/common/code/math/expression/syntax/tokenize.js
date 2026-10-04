@@ -1,14 +1,26 @@
 /* tokenize
 
 source text to tokens. punctuation is this module's own; the operator
-spellings come from the function definitions (definitions.js): a
+spellings come from the function definitions (operations/): a
 binary operator's token type is its function's name, and a prefix-only
 operator no binary claims ("!") takes its function's name too. a
 spelling shared by a binary and a prefix operator ("-" is minus and
 negate) tokenizes as the binary's type; ast.js maps it to the prefix
-node when it appears in prefix position. */
+node when it appears in prefix position.
 
-import { definitions } from "./definitions.js";
+beyond expressions, the tokenizer knows the definition syntax's own
+marks: := ; { }, and // line comments, which it swallows whole. "//"
+is claimed before the operator table sees "/", so a // b is a
+comment, not a misplaced division — write a / b with spaces like
+everyone else. a number literal eats its decimal point whole, so
+`2.{ x := 3 }` reads as the number 2. followed by a brace — which the
+parser reads as a with on 2 (and fill refuses it: a number has no
+variables to replace). an "i" directly after a number literal makes
+it imaginary (2i, 2.5i, 1e3i), claimed only when it does not begin
+an identifier (2if stays the number 2 followed by "if"). */
+
+import { definitions } from "../operations/index.js";
+import { locateError } from "./locate.js";
 
 const isWhitespace = /\s/;
 const isDigit = /[0-9]/;
@@ -23,17 +35,21 @@ const punctuation = {
     ")": "right_paren",
     "|": "vertical_bar",
     ",": "comma",
+    ":=": "define",
+    ";": "semicolon",
+    "{": "left_brace",
+    "}": "right_brace",
 };
 
 const operatorTokens = {};
 
-for (const definition of definitions) {
+for (const definition of Object.values(definitions)) {
     if (definition.syntax?.binary) {
         operatorTokens[definition.syntax.symbol] = definition.name;
     }
 }
 
-for (const definition of definitions) {
+for (const definition of Object.values(definitions)) {
     if (
         definition.syntax?.prefix &&
         !(definition.syntax.symbol in operatorTokens)
@@ -56,6 +72,14 @@ export function symbolForOperator(type) {
 }
 
 export function tokenize(source) {
+    try {
+        return tokenizeText(source);
+    } catch (error) {
+        throw locateError(error, source);
+    }
+}
+
+function tokenizeText(source) {
     const tokens = [];
 
     let index = 0;
@@ -65,6 +89,15 @@ export function tokenize(source) {
 
         if (isWhitespace.test(char)) {
             index++;
+            continue;
+        }
+
+        // a line comment runs to the end of the line
+        if (char === "/" && source[index + 1] === "/") {
+            while (index < source.length && source[index] !== "\n") {
+                index++;
+            }
+
             continue;
         }
 
@@ -104,10 +137,24 @@ export function tokenize(source) {
                 }
             }
 
+            /* an "i" directly after the literal makes it imaginary —
+            claimed only when it does not begin an identifier (2if
+            stays the number 2 followed by "if") */
+            let imaginary = false;
+
+            if (
+                source[index] === "i" &&
+                !isIdentifierChar.test(source[index + 1] ?? "")
+            ) {
+                imaginary = true;
+                index++;
+            }
+
             tokens.push({
                 type: "number",
                 index: start,
-                length: index - start
+                length: index - start,
+                ...(imaginary ? { imaginary: true } : {}),
             });
 
             continue;

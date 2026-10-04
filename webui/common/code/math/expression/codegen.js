@@ -4,12 +4,13 @@ renders a semantic tree to an expression string in a target language:
 wgsl for shaders, and "math" — input for the $math/math module, which
 renders the tree as mathml.
 
-how a call renders is its function's own data (definitions.js): a
+how a call renders is its function's own data (operations/): a
 per-target `template` — a string with {0}, {1}, ... argument
-placeholders, like "({0} + {1})" or "pow({0}, {1})" — and a call
-whose function has no template for the target renders as a plain
-`name(arg, ...)` call in wgsl, or `name{(arg, ...)}` in math. the
-n-ary canonical forms carry an `expand` tag and re-nest into binary
+placeholders, like "({0} + {1})" or "pow({0}, {1})" — resolved for the
+call's types and stamped on the callee at construction (typedCallNode).
+a call whose function has no template for the target renders as a plain
+`name(arg, ...)` call in wgsl, or `name{(arg, ...)}` in math. the n-ary
+canonical forms carry an `expand` tag and re-nest into binary operator
 chains before rendering (expandCanonical below). for the math target,
 a function's `mathClass` (binding class) and `mathParens` (operand
 positions that parenthesize) decide where visible parens go.
@@ -21,20 +22,27 @@ rendering anything themselves. visible parens are added only where a
 child would otherwise bind more loosely than its position, so canonical
 trees render with next to no parens.
 
+literals render through their own type (types/), and an explicit
+conversion (a convert node) renders through its target type — wgsl gets
+its constructors (vec2f(x, 0.0) and the like), while math leaves the
+operand's rendering untouched: a scalar among vectors reads fine.
+
 variables are caller-mapped: `variables` may be an object of
 name → replacement source or a function (name) => string | undefined, and
 any name left unmapped renders as itself — the identity fallback.
-`functions` is an object of name → template overriding the template a
-function carries, for when the same tree must be spelled differently in
-different shaders or posts. `domain` is the value domain the tree was
-filled in (default float): it supplies literal rendering for non-double
-values (domain.renderNumber) and the exponent probes of canonical
-product expansion. */
+a boolean-typed variable is assumed to be a 0/1 u32 (the shaders'
+$bool uniform convention) and renders as `name != 0u`. `functions` is
+an object of name → template overriding the template a function
+carries, for when the same tree must be spelled differently in
+different shaders or posts. */
 
-import { floatDomain } from "./autodiff.js";
-import { callNode, numberNode } from "./nodes.js";
+import { arithmetic } from "./operations/arithmetic.js";
+import { comparison } from "./operations/comparison.js";
+import { products } from "./operations/products.js";
+import { numberNode } from "./semantics/nodes.js";
+import { childrenOf, treesEqual } from "./semantics/trees.js";
 import { inverseOf } from "./canonicalize.js";
-import { analyzeTypes } from "./types.js";
+import { boolType, floatType, isMatrix, isTensor, isVector, numberType, octonionType, typeOf, typedCallNode, valueApply } from "./types/index.js";
 
 function applyTemplate(template, name, args, nodeIndex) {
     return template.replace(/\{(\d+)\}/g, (placeholder, index) => {
@@ -56,36 +64,81 @@ function mapVariables(variables) {
         : (name) => variables?.[name];
 }
 
-export function formatFloat(value) {
-    if (!Number.isFinite(value)) {
-        throw new Error(`Cannot render the non-finite number ${value} as wgsl`);
+/* wgsl natively has only the float tensors up to size 4 (vecNf and
+matCxRf, N/C/R in 2..4) and bool vectors (vecN<bool>): a complex
+tensor's arithmetic renders through the entries' scalar templates,
+which the vec2f representation does not support, and higher tensors
+have no representation yet. nor is there a wgsl octonion. checked up
+front over the atoms, the only place either can enter. (the exact
+integers and rationals lower to f32 literals; quaternions render as
+vec4f.) */
+
+function assertWgslTypes(node) {
+    const check = (type, index) => {
+        if (type === octonionType) {
+            throw new Error(
+                `Cannot render an octonion as wgsl: ` +
+                    `there is no wgsl representation at index ${index}`
+            );
+        }
+
+        if (isTensor(type)) {
+            const native =
+                (isVector(type) &&
+                    type.size >= 2 &&
+                    type.size <= 4 &&
+                    (type.entry === floatType || type.entry === boolType)) ||
+                (isMatrix(type) &&
+                    type.rows >= 2 &&
+                    type.rows <= 4 &&
+                    type.cols >= 2 &&
+                    type.cols <= 4 &&
+                    type.entry === floatType);
+
+            if (!native) {
+                throw new Error(
+                    `Cannot render ${type.name} as wgsl: only float vectors ` +
+                        "and matrices and bool vectors of sizes 2 through 4 " +
+                        `have a wgsl representation yet at index ${index}`
+                );
+            }
+        }
+    };
+
+    switch (node.type) {
+        case "number":
+            check(numberType(node), node.index);
+            return;
+
+        case "variable":
+            check(node.valueType ?? floatType, node.index);
+            return;
+
+        case "convert":
+            check(node.target, node.index);
+            break;
+
+        case "instance":
+            check(node.valueType, node.index);
+            break;
     }
 
-    if (!Number.isFinite(Math.fround(value))) {
+    for (const child of childrenOf(node)) {
+        assertWgslTypes(child);
+    }
+}
+
+export function toWgsl(tree, { variables, functions } = {}) {
+    const mapVariable = mapVariables(variables);
+
+    if (typeOf(tree) === boolType) {
         throw new Error(
-            `Cannot render ${value} as a wgsl f32 literal: out of range`
+            "The expression as a whole must be a number, " +
+                `but it is a boolean at index ${tree.index}`
         );
     }
 
-    let text = String(value);
-
-    if (!/[.eE]/.test(text)) {
-        text += ".0";
-    }
-
-    return value < 0 ? `(${text})` : text;
-}
-
-/* wgsl is strictly typed: analyzeTypes (types.js) validates the
-boolean/float rules — throwing on a boolean anywhere a number belongs
-or a variable used as both — and returns the variables used only as
-booleans. those are assumed to be 0/1 u32s (the $bool uniform
-convention) and render as `name != 0u`. */
-
-export function toWgsl(tree, { variables, functions, domain = floatDomain } = {}) {
-    const mapVariable = mapVariables(variables);
-
-    const booleanVariables = analyzeTypes(tree);
+    assertWgslTypes(tree);
 
     function renderCall(callee, args) {
         const template = functions?.[callee.name] ?? callee.template?.wgsl;
@@ -100,14 +153,24 @@ export function toWgsl(tree, { variables, functions, domain = floatDomain } = {}
     function render(node) {
         switch (node.type) {
             case "number":
-                return domain.renderNumber?.wgsl
-                    ? domain.renderNumber.wgsl(node)
-                    : formatFloat(node.value);
+                return numberType(node).renderNumber.wgsl(node);
+
+            case "instance":
+                throw new Error(
+                    `Cannot render the recursive instance of '${node.of.name}' ` +
+                        `as wgsl: unroll it first at index ${node.index}`
+                );
+
+            case "diff":
+                throw new Error(
+                    `Cannot render a deferred diff as wgsl at index ${node.index}: ` +
+                        "bind its wrt and f first"
+                );
 
             case "variable": {
                 const mapped = mapVariable(node.name) ?? node.name;
 
-                return booleanVariables.has(node.name)
+                return node.valueType === boolType
                     ? `(${mapped} != 0u)`
                     : mapped;
             }
@@ -118,8 +181,17 @@ export function toWgsl(tree, { variables, functions, domain = floatDomain } = {}
                         `as a wgsl value at index ${node.index}`
                 );
 
+            case "convert":
+                return node.target.renderConvert.wgsl(
+                    render(node.operand),
+                    typeOf(node.operand)
+                );
+
+            case "cases":
+                return render(expandCases(node));
+
             case "call": {
-                const expanded = expandCanonical(node, domain);
+                const expanded = expandCanonical(node);
 
                 return renderCall(
                     expanded.callee,
@@ -138,69 +210,51 @@ export function toWgsl(tree, { variables, functions, domain = floatDomain } = {}
     return render(tree);
 }
 
-/* named constants (pi, ...) stay symbolic — auto mode maps the greek
-names — and scientific notation becomes a mantissa times a power of
-ten, since the module has no exponent literal. */
-
-export function formatMathNumber(node) {
-    if (node.name !== undefined) {
-        return node.name;
-    }
-
-    const value = node.value;
-
-    if (Number.isNaN(value)) {
-        throw new Error(`Cannot render NaN as math at index ${node.index}`);
-    }
-
-    if (!Number.isFinite(value)) {
-        return value > 0 ? "inf" : "-inf";
-    }
-
-    const text = String(value);
-
-    if (!/[eE]/.test(text)) {
-        return text;
-    }
-
-    const [mantissa, exponent] = text.split(/[eE]/);
-
-    return `${mantissa} dot 10^{${Number(exponent)}}`;
-}
-
 /* canonical sum/product nodes re-nest into binary chains for
 rendering: a sum folds into plus/minus by term sign, a product into a
 multiply chain over a single divide by the inverted factors' multiply
-chain. the binary templates and paren rules then apply as usual. */
+chain — each product family through its own operations (multiply/divide
+for scalars, the pointwise pair for vectors). the binary templates and
+paren rules then apply as usual. */
 
-function sumToBinary(node, domain) {
+function sumToBinary(node) {
     const [first, ...rest] = node.arguments;
 
     let result = first;
 
     for (const term of rest) {
         if (term.type === "call" && term.callee.name === "negate") {
-            result = callNode(domain.builtins.minus, [result, term.arguments[0]], node.index);
-        } else if (term.type === "number" && domain.asReal(term.value) < 0) {
-            result = callNode(
-                domain.builtins.minus,
-                [result, numberNode(domain.ops.negate(term.value), term.index)],
+            result = typedCallNode(
+                arithmetic.minus,
+                [result, term.arguments[0]],
+                node.index
+            );
+        } else if (
+            term.type === "number" &&
+            (numberType(term).asReal(term.value) ?? 0) < 0
+        ) {
+            result = typedCallNode(
+                arithmetic.minus,
+                [
+                    result,
+                    numberNode(valueApply(arithmetic.negate, term.value), term.index),
+                ],
                 node.index
             );
         } else {
-            result = callNode(domain.builtins.plus, [result, term], node.index);
+            result = typedCallNode(arithmetic.plus, [result, term], node.index);
         }
     }
 
     return result;
 }
 
-function productToBinary(node, domain) {
+function productToBinary(node, times, divide) {
     const numerator = [];
     const denominator = [];
 
     for (const factor of node.arguments) {
-        const inverse = inverseOf(factor, domain);
+        const inverse = inverseOf(factor);
 
         if (!inverse) {
             numerator.push(factor);
@@ -208,8 +262,8 @@ function productToBinary(node, domain) {
             denominator.push(
                 inverse.exponent === 1
                     ? inverse.base
-                    : callNode(
-                          domain.builtins.power,
+                    : typedCallNode(
+                          arithmetic.power,
                           [inverse.base, numberNode(inverse.exponent, factor.index)],
                           factor.index
                       )
@@ -219,7 +273,7 @@ function productToBinary(node, domain) {
 
     const chain = (factors) =>
         factors.reduce((result, factor) =>
-            callNode(domain.builtins.multiply, [result, factor], node.index)
+            typedCallNode(times, [result, factor], node.index)
         );
 
     const numeratorChain = numerator.length
@@ -227,20 +281,70 @@ function productToBinary(node, domain) {
         : numberNode(1, node.index);
 
     return denominator.length
-        ? callNode(
-              domain.builtins.divide,
+        ? typedCallNode(
+              divide,
               [numeratorChain, chain(denominator)],
               node.index
           )
         : numeratorChain;
 }
 
-function expandCanonical(node, domain) {
+/* a cases block renders as nested selects, folding from the LEFT:
+the first case is the fallthrough and its condition never renders —
+in well-formed use exactly one case holds (the block throws otherwise,
+and a shader cannot throw). the two-case block whose conditions are a
+condition and its negation — the ternary's shape — renders as one
+select on the positive condition. */
+
+const isNotOf = (maybeNegation, condition) =>
+    maybeNegation.type === "call" &&
+    maybeNegation.callee.name === "not" &&
+    treesEqual(maybeNegation.arguments[0], condition);
+
+function expandCases(node) {
+    if (node.cases.length === 2) {
+        const [first, second] = node.cases;
+
+        const [positive, negative] = isNotOf(second.condition, first.condition)
+            ? [first, second]
+            : isNotOf(first.condition, second.condition)
+              ? [second, first]
+              : [];
+
+        if (positive) {
+            return typedCallNode(
+                comparison.select,
+                [positive.condition, positive.body, negative.body],
+                node.index
+            );
+        }
+    }
+
+    let result = node.cases[0].body;
+
+    for (const { condition, body } of node.cases.slice(1)) {
+        result = typedCallNode(
+            comparison.select,
+            [condition, body, result],
+            node.index
+        );
+    }
+
+    return result;
+}
+
+function expandCanonical(node) {
     switch (node.callee.expand) {
         case "sum":
-            return sumToBinary(node, domain);
+            return sumToBinary(node);
         case "product":
-            return productToBinary(node, domain);
+            return productToBinary(node, products.multiply, products.divide);
+        case "pointwiseProduct":
+            return productToBinary(
+                node,
+                products.pointwiseMultiply,
+                products.pointwiseDivide
+            );
         default:
             return node;
     }
@@ -249,11 +353,16 @@ function expandCanonical(node, domain) {
 /* the binding class of a node's rendered form: its function's
 mathClass, with "pass" (unary plus) transparent and anything else an
 atom. negative numbers count as negations: as a power base, -2^2
-would misread as -(2^2). */
+would misread as -(2^2). a conversion is transparent: it renders as
+its operand. */
 
 function mathClass(node) {
     if (node.type === "number") {
-        return node.value < 0 ? "negate" : "atom";
+        return numberType(node).splitSign(node.value).sign < 0 ? "negate" : "atom";
+    }
+
+    if (node.type === "convert") {
+        return mathClass(node.operand);
     }
 
     if (node.type !== "call") {
@@ -270,11 +379,11 @@ auto" for the usual in-text case, "auto" for a display block, or "" for
 bare content to embed in a larger hand-written block — e.g.
 `inline auto f'{(x)} = ${toMath(df, { header: "" })}`. */
 
-export function toMath(tree, { variables, functions, header = "inline auto", domain = floatDomain } = {}) {
+export function toMath(tree, { variables, functions, header = "inline auto" } = {}) {
     const mapVariable = mapVariables(variables);
 
     function renderCall(node) {
-        const expanded = expandCanonical(node, domain);
+        const expanded = expandCanonical(node);
 
         const parens = expanded.callee.mathParens;
 
@@ -306,9 +415,19 @@ export function toMath(tree, { variables, functions, header = "inline auto", dom
     function render(node) {
         switch (node.type) {
             case "number":
-                return domain.renderNumber?.math
-                    ? domain.renderNumber.math(node)
-                    : formatMathNumber(node);
+                return numberType(node).renderNumber.math(node);
+
+            case "instance":
+                throw new Error(
+                    `Cannot render the recursive instance of '${node.of.name}' ` +
+                        `as math: unroll it first at index ${node.index}`
+                );
+
+            case "diff":
+                throw new Error(
+                    `Cannot render a deferred diff as math at index ${node.index}: ` +
+                        "bind its wrt and f first"
+                );
 
             case "variable":
                 return mapVariable(node.name) ?? node.name;
@@ -318,6 +437,12 @@ export function toMath(tree, { variables, functions, header = "inline auto", dom
                     `Cannot render the bare function '${node.name}' ` +
                         `as a math value at index ${node.index}`
                 );
+
+            case "convert":
+                return render(node.operand);
+
+            case "cases":
+                return render(expandCases(node));
 
             case "call":
                 return renderCall(node);

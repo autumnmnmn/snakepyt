@@ -1,4 +1,8 @@
 
+import time
+
+from typing import NamedTuple
+
 class AttrDict(dict):
     def __getattr__(self, key):
         try:
@@ -75,5 +79,43 @@ def extra_exception_data(e):
         and not callable(getattr(e, key, None))
     }
 
+# The Canonical Ponder Timestamp Format
 
+# The Ponder Timestamp Format is "%d.%m.%Y_t%H.%M.%S"
+# it is OPTIONAL to split this into the daystamp format "%d.%m.%Y" when recording only a date,
+# the moment format "t%H.%M.%S" when recording only a time of day,
+# or to decompose a timestamp in such a way for the purposes of collating multiple moments into
+# a single date directory in a filesystem.
+# This format MUST be used for all records of time,
+# UNLESS there is a situational necessity to account for:
+# - Relativity
+# - Sub-second precision
+# - Extremely distant times (e.g. millions of years)
+# - Time "Zones" and "Daylight Savings" Bullshit
+
+DAYSTAMP_FORMAT = "%d.%m.%Y"
+MOMENT_FORMAT = "t%H.%M.%S"
+TIMESTAMP_FORMAT = f"{DAYSTAMP_FORMAT}_{MOMENT_FORMAT}"
+
+def daystamp() -> str:
+    return time.strftime(DAYSTAMP_FORMAT)
+
+
+def moment() -> str:
+    return time.strftime(MOMENT_FORMAT)
+
+class Timestamps(NamedTuple):
+    daily: str
+    moment: str
+
+def timestamps(now=None):
+    now = time.localtime() if now is None else now
+    return Timestamps(
+        time.strftime(DAYSTAMP_FORMAT, now),
+        time.strftime(MOMENT_FORMAT, now),
+    )
+
+def timestamp() -> str:
+    now = time.localtime()
+    return time.strftime(TIMESTAMP_FORMAT, now)
 

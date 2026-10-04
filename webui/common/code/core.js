@@ -166,6 +166,10 @@ window.$actualize = (maybeFunction) => {
 
 window.$toHell = $div("hell");
 
+window.$dev = async () => {
+    window.expr = await import("/code/math/expression/core.js");
+};
+
 document.body.appendChild($toHell);
 
 Object.defineProperty(Array.prototype, "$asyncMap", {

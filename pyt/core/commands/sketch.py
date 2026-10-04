@@ -132,27 +132,17 @@ def _run(session, args):
 
     sketch.__dict__.update(session.injected_state())
 
-    pyt_out = session.env.OUT
+    run_dir = session.run_dir(sketch_name)
 
-    if not pyt_out:
-        session.log("no output directory has been specified.\nset via --out flag, or session.env.OUT in your ~/.config/pytrc.py, or by setting the PYT_OUT environment variable", mode="error")
-        session.log("aborting.", mode="error")
-        return
-
-    daily = time.strftime("%d.%m.%Y")
-    moment = time.strftime("t%H.%M.%S")
-
-    run_dir = Path(os.path.join(pyt_out, sketch_name, daily, moment))
     sketch.__dict__["run_dir"] = run_dir
-    run_dir.mkdir(parents=True, exist_ok=True)
 
     shutil.copy(sketch.__file__, run_dir / f"{sketch_name}.py")
 
+    original_cwd = os.getcwd()
+
+    os.chdir(run_dir)
+
     sketch.__dict__["args"] = remainder
-
-
-    with open(run_dir / f".snakepyt", "w") as metadata:
-        metadata.write(f"snakepyt version {session.snakepyt_version[0]}.{session.snakepyt_version[1]}\n")
 
     if hasattr(sketch, "main"):
         if hasattr(sketch, "final"):
@@ -164,6 +154,7 @@ def _run(session, args):
             failures, runs = run(session, sketch.main, None, (), sketch.__dict__, log, sources, finalizer)
         except KeyboardInterrupt:
             log.blank().log("aborted", mode="info").blank()
+            os.chdir(original_cwd)
             return
     else:
         log("sketch has no main function", mode="error", indent=4)

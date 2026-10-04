@@ -59,6 +59,11 @@
 
     out vec4 fragColor;
 
+    float c_avg(float prev, float val, float n) {
+        float next = prev + (val - prev) / n;
+        return next;
+    }
+
     void main() {
         vec2 uv = gl_FragCoord.xy / u_resolution;
         vec2 r_vals = u_center + (uv - 0.5) * u_zoom;
@@ -76,15 +81,15 @@
             float deriv = r * (1.0 - 2.0 * x);
 
             if (iter > u_skip) {
-                lyapunov += log(abs(deriv) + 1e-8);
+                lyapunov = c_avg(lyapunov, log(abs(deriv) + 1e-8), float(iter - u_skip));
                 valid_iters++;
             }
             x = x_next;
         }
 
-        if (valid_iters > 0) {
-            lyapunov /= float(valid_iters);
-        }
+        //if (valid_iters > 0) {
+        //    lyapunov /= float(valid_iters);
+        //}
 
         fragColor = vec4(lyapunov, 0.0, 0.0, 1.0); // Output computed value to cache texture
     }
@@ -114,7 +119,7 @@
             z = lyapunov * u_zScaleNeg;
         }
 
-        vec3 newPos = vec3(position.x, position.y, position.z + z);
+        vec3 newPos = vec3(position.x, position.y, z);
 
         vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
         gl_Position = projectionMatrix * mvPosition;
@@ -409,7 +414,7 @@
 
             const points = new THREE.Points(baseGeometry, material);
             points.rotation.x = -Math.PI / 2;
-            points.position.y = offset * 0.005; 
+            //points.position.y = offset * 0.005; 
             points.frustumCulled = false; // Displaced entirely via vertex logic limits generic culling
             
             // Respect visibility toggles
@@ -493,7 +498,7 @@
         gui.add(params, 'x0', 0.0, 1.0).onChange(onComputeParamsChange);
 
         const viewFolder = gui.addFolder('Camera & Parameter Mapping');
-        viewFolder.add(params, 'zoom', 0.1, 8.0).onChange(onComputeParamsChange);
+        viewFolder.add(params, 'zoom', 0.01, 16.0).onChange(onComputeParamsChange);
         viewFolder.add(params, 'centerX', 0.0, 4.0).onChange(onComputeParamsChange);
         viewFolder.add(params, 'centerY', 0.0, 4.0).onChange(onComputeParamsChange);
         viewFolder.add(params, 'zScale', 0.01, 20.0).onChange(onDisplayParamsChange);

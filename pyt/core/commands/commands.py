@@ -168,35 +168,38 @@ def _python_subprocess(session):
 
     log = session.log
 
-    log("switching to python!", mode="info")
+    run_dir = session.run_dir("live_session")
+
+    log(f"switching to python! (in {ac.file_link(run_dir)})", mode="info")
 
     if session.env.PYTHON_PATH != None:
         try:
-            subprocess.run([session.env.PYTHON_PATH, "-q"])
+            subprocess.run([session.env.PYTHON_PATH, "-q"], cwd=run_dir)
         except FileNotFoundError:
             link = ac.link(f"file://{session.env.PYTHON_PATH}", "preferred python")
             log(f"your {link} didn't load. trying system python :/", mode="warning")
             subprocess.run(["python", "-q"])
     else:
-        subprocess.run(["python", "-q"])
+        subprocess.run(["python", "-q"], cwd=run_dir)
 
     log("wb bestie!")
 
 def _python_stateful(session):
     log = session.log
-    log("entering python mode. persistent state is available", mode="info")
+    log("entering python mode", mode="info")
 
     state = dict(session.persistent_state)
     state["session"] = session
     state["print"] = log.tag("python")
     state["_print"] = print
+    state["run_dir"] = session.run_dir("live_session")
 
     state.update(session.injected_state())
 
     from pyt.core.terminal.pywrapl import repl
 
     # TODO on_version_mismatch from pytrc
-    repl(local=state, log=log, on_version_mismatch="warning")
+    repl(local=state, log=log, on_version_mismatch="warning", cwd=state["run_dir"])
 
     log(f"back to snakepyt {session.persona.smile()}")
 

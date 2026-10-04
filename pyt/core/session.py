@@ -1,10 +1,11 @@
 
 import os
 import sys
+import time
 
 from pathlib import Path
 
-from pyt.core import AttrDict, lsnap
+from pyt.core import AttrDict, lsnap, timestamps
 from pyt.core.terminal import persona
 from pyt.core.terminal import Logger, TerminalLogger
 from pyt.core.terminal.ansi import codes as ac
@@ -159,6 +160,23 @@ class PytSession:
                 behavior(self, remainder)
                 return True
         return False
+
+    def run_dir(self, run_name):
+        if not self.env.OUT:
+            self.log("no output directory has been specified.\nset via --out flag, or session.env.OUT in your ~/.config/pytrc.py, or by setting the PYT_OUT environment variable", mode="error")
+            self.log("aborting.", mode="error")
+            return # TODO this should be a raise
+
+        now = time.localtime()
+        daily, moment = timestamps(now)
+
+        run_dir = Path(os.path.join(self.env.OUT, run_name, daily, moment))
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        with open(run_dir / f".snakepyt", "w") as metadata:
+            metadata.write(f"snakepyt version {self.snakepyt_version[0]}.{self.snakepyt_version[1]}\n")
+
+        return run_dir
 
     def handle_message(self, message, log = None):
         self.log = log or self.log
