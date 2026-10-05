@@ -1,19 +1,261 @@
 
-.screenreader {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+/* - - - - - - - - - - - -
+
+     General Resets
+
+ - - - - - - - - - - - - */
+
+:root {
+    font-size: 1em;
+    line-height: 0;
 }
+
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+
+    box-sizing: border-box;
+
+    font-family: var(--main-font);
+    font-size: inherit;
+
+    --panel-margin: 0.5rem;
+}
+
+sup, sub {
+    font-size: revert;
+}
+
+/* - - - - - - - - - - - -
+
+  Default Element Styles
+
+ - - - - - - - - - - - - */
+
+body {
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--main-background);
+    color: var(--main-solid);
+    line-height: 1.5rem;
+}
+
+article {
+    padding-left: 1em;
+    padding-right: 1em;
+
+    height: 100%;
+    overflow-y: scroll;
+}
+
+article section {
+    margin-top: 2em;
+}
+
+h1 {
+    display: block;
+    margin: auto;
+    width: fit-content;
+
+    font-size: 1.5em;
+    margin-top: 1em;
+    overflow: visible;
+}
+
+h2 {
+    text-decoration: underline;
+    font-weight: 500;
+    text-decoration-color: var(--main-midtone);
+}
+
+hgroup p {
+    display: block;
+    margin: auto;
+    width: fit-content;
+
+    padding-top: 0.125em;
+    font-size: 0.7em;
+}
+
+nav.contents ol {
+    max-width: 65em;
+}
+
+nav.contents ol li {
+    margin-left: 4em;
+    overflow: visible;
+    padding-top: 0.6em;
+}
+
+details.footnotes aside {
+    border-left: 3px double var(--main-faded);
+    padding-left: 1em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    font-size: 90%;
+    margin-top: 1em;
+
+    scroll-margin-top: calc(min(25em, 25vh));
+}
+
+details.footnotes aside p {
+    margin: 0;
+}
+
+span.noted {
+    scroll-margin-top: calc(min(25em, 25vh));
+}
+
+pre {
+    font-family: var(--code-font);
+}
+
+code {
+    padding-top: 0.75em;
+    border-left: 3px solid var(--main-faded);
+}
+
+details summary {
+    user-select: none;
+    cursor: pointer;
+    padding-left: 1em;
+    padding-right: 1em;
+    width: fit-content;
+}
+
+details[open] summary {
+    border-bottom: 1px solid var(--main-faded);
+}
+
+details hr {
+    width: 65em;
+    border-bottom: 1px solid var(--main-faded);
+}
+
+button {
+    background-color: var(--main-background);
+    color: var(--main-solid);
+    font-family: var(--main-font);
+    border: 1px solid var(--main-faded);
+    border-radius: 2px;
+    padding: 0.1rem 0.5rem;
+    min-height: 1rem;
+    line-height: 1rem;
+    cursor: pointer;
+}
+
+button.inverted {
+    background-color: var(--main-solid);
+    color: var(--main-solid-content);
+    font-family: var(--main-font);
+    border-radius: 2px;
+    padding: 0.1rem 0.5rem;
+    min-height: 1rem;
+    line-height: 1rem;
+    cursor: pointer;
+}
+
+p {
+    color: var(--main-solid);
+    line-height: 1.5em;
+    margin-bottom: 1em;
+    margin-top: 1em;
+    max-width: 65em;
+}
+
+a {
+    color: var(--main-solid);
+    text-decoration-color: var(--main-visited);
+}
+
+a:visited {
+    color: var(--main-visited);
+}
+
+input {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid var(--main-solid);
+    background-color: transparent;
+    color: var(--main-solid);
+}
+
+input:focus {
+    outline: none;
+    background-color: var(--main-faded);
+}
+
+select {
+    border-bottom: 1px solid var(--main-faded);
+    border-radius: 0;
+    padding: 0;
+    background-color: var(--main-background);
+    color: var(--main-solid);
+    cursor: pointer;
+}
+
+select:focus {
+    border-radius: 0;
+    background-color: var(--main-faded);
+    border-bottom: 1px solid var(--main-solid);
+    outline: none;
+}
+
+option {
+    background-color: var(--main-background);
+}
+
+label {
+    cursor: text;
+}
+
+@supports (scrollbar-width: auto) {
+    * {
+        scrollbar-color: var(--main-solid) var(--main-background);
+        scrollbar-width: thin;
+    }
+}
+
+@supports selector(::-webkit-scrollbar) {
+    *::-webkit-scrollbar-thumb {
+        background: var(--main-solid);
+    }
+    *::-webkit-scrollbar-track {
+        background: var(--main-background);
+    }
+    *::-webkit-scrollbar {
+        max-width: var(--scrollbar-width-legacy);
+        max-height: var(--scrollbar-width-legacy);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+:target {
+    background-color: var(--main-faded);
+}
+
+/* - - - - - - - - - - - -
+
+        MathML
+
+ - - - - - - - - - - - - */
 
 math {
     font-size: 1.3rem;
     overflow: visible;
+    math-style: normal;
 }
 
 math * {
@@ -77,40 +319,15 @@ msup > :last-child {
     font-size: 0.8rem;
 }
 
-:root {
-    font-size: 1em;
-    line-height: 0;
-}
+/* - - - - - - - - - - - -
+
+     General Classes
+
+ - - - - - - - - - - - - */
 
 .full {
     width: 100%;
     height: 100%;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    overflow: hidden;
-
-    box-sizing: border-box;
-
-    font-family: var(--main-font);
-    font-size: inherit;
-
-    --panel-margin: 0.5rem;
-}
-
-sup, sub {
-    font-size: revert;
-}
-
-body {
-    height: 100vh;
-    width: 100vw;
-    background-color: var(--main-background);
-    color: var(--main-solid);
-    line-height: 1.5rem;
 }
 
 .target {
@@ -118,144 +335,28 @@ body {
     width: 100%;
 }
 
-pre {
-    font-family: var(--code-font);
-}
-
-button {
-    background-color: var(--main-background);
-    color: var(--main-solid);
-    font-family: var(--main-font);
-    border: 1px solid var(--main-faded);
-    border-radius: 2px;
-    padding: 0.1rem 0.5rem;
-    min-height: 1rem;
-    line-height: 1rem;
-    cursor: pointer;
-}
-
-button.inverted {
-    background-color: var(--main-solid);
-    color: var(--main-solid-content);
-    font-family: var(--main-font);
-    border-radius: 2px;
-    padding: 0.1rem 0.5rem;
-    min-height: 1rem;
-    line-height: 1rem;
-    cursor: pointer;
-}
-
-p {
-    color: var(--main-solid);
-    line-height: 1.5em;
-    margin-bottom: 1em;
-    margin-top: 1em;
-    max-width: 65em;
-}
-
-a {
-    color: var(--main-solid);
-}
-
-a:visited {
-    color: var(--main-visited);
-}
-
-input {
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid var(--main-solid);
-    background-color: transparent;
-    color: var(--main-solid);
-}
-
-input:focus {
-    outline: none;
-    background-color: var(--main-faded);
-}
-
-select {
-    border-bottom: 1px solid var(--main-faded);
-    border-radius: 0;
-    padding: 0;
-    background-color: var(--main-background);
-    color: var(--main-solid);
-    cursor: pointer;
-}
-
-select:focus {
-    border-radius: 0;
-    background-color: var(--main-faded);
-    border-bottom: 1px solid var(--main-solid);
-    outline: none;
-}
-
-option {
-    background-color: var(--main-background);
-}
-
-label {
-    cursor: text;
-}
-
-.nothing_old {
-    position: absolute;
-    font-family: var(--code-font);
-    color: var(--main-solid);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    animation: spin 4s infinite linear;
-    animation-delay: 2.5s;
-}
-
-.theme-toggle {
-    position: absolute;
-    bottom: 2em;
-    right: 2em;
-    border: none;
-    border-radius: 50%;
-    width: 4em;
-    height: 4em;
-    background-color: var(--main-solid);
-    cursor: pointer;
-}
-
-@keyframes spin {
-    from {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
-
-@supports (scrollbar-width: auto) {
-    * {
-        scrollbar-color: var(--main-solid) var(--main-background);
-        scrollbar-width: thin;
-    }
-}
-
-@supports selector(::-webkit-scrollbar) {
-    *::-webkit-scrollbar-thumb {
-        background: var(--main-solid);
-    }
-    *::-webkit-scrollbar-track {
-        background: var(--main-background);
-    }
-    *::-webkit-scrollbar {
-        max-width: var(--scrollbar-width-legacy);
-        max-height: var(--scrollbar-width-legacy);
-    }
-}
-
 .hell {
     position: absolute;
     top: -99999px;
     left: -99999px;
     overflow: hidden;
+}
+
+.screenreader {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.center {
+    display: block;
+    margin: auto;
+    width: fit-content;
 }
 

@@ -42,7 +42,7 @@ export async function debugParse(uri) {
     dumpNodes(parsed.nodes, parsed.source);
 }
 
-function parseSource(input, startIndex = 0) {
+export function parseSource(input, startIndex = 0) {
     const nodes = [];
     let scanPosition = startIndex;
     let escapeNext = false;

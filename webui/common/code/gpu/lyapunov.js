@@ -603,9 +603,9 @@ sequence BA
     function render(targetContext = context, dims = null) {
 
         if (!canRender) {
-            console.warn("Cannot render; aborting render.");
-            console.trace();
-            return;
+            return
+            //console.warn("Cannot render; aborting render.");
+            //console.trace();
         }
 
         dims = dims || v2.of(width, height);

@@ -10,6 +10,7 @@
     --faded-background: #F0EAF0A0;
     --main-solid: #112233;
     --main-transparent: #112233DD;
+    --main-midtone: #11223389;
     --main-faded: #11223344;
     --main-visited: #112233;
     --main-solid-content: #DDDDDD;
@@ -56,6 +57,7 @@
     --faded-background: #112233A0;
     --main-solid: #EEDDEE;
     --main-transparent: #EEDDEEDD;
+    --main-midtone: #EEDDEE89;
     --main-faded: #EEDDEE44;
     --main-visited: #998899;
     --main-solid-content: #333333;

@@ -1,0 +1,27 @@
+
+$theme {}
+
+$title { Notes on MathML }
+
+$og_description { Notes on typesetting mathematics in the browser }
+
+[class=blog-content]{
+
+h1[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] { Notes on MathML }
+
+h2[class=center | style=font-size: 0.7rem; ]{⸺ how to render beautiful math in the browser ⸺}
+
+
+
+math-style: normal;
+
+font-size: math;
+
+font-family
+
+the only font that i have found to produce adequate typesetting in browser mathml is Latin Modern Math. i have a fairly strict policy, in developing this site of mine, of not pulling in external dependencies beyond what is provided by the browser itself. the one exemption i have granted myself to this, at time of writing, is that my site serves Latin Modern Math as a .woff2; the mathematical typesetting cannot be brought up to my standards without it.
+
+
+}
+
+

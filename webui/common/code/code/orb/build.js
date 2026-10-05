@@ -1,12 +1,15 @@
 
+import * as parserModule from "/code/code/orb/parse.js";
+import { asciiModernRomanNumeral as roman } from "/code/math/roman.js";
+
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
 const NOSPACE = "$nospace";
 
 // elements that are themselves inline
-const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q"];
+const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q", "cite", "em", "strong"];
 // elements whose innards are meant to be inline
-const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub"];
+const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
@@ -14,6 +17,10 @@ const namespacedElements = {
 const DEBUG = true;
 
 const spaceAfter = /[\w,;.:†]/;
+
+const pendingFootnotes = [];
+let noteGroup = 0;
+let noteIndex = 0;
 
 function verbatimText(source, node) {
     let text = source
@@ -146,8 +153,95 @@ export async function build(nodes, source, inline=false, namespace=null) {
             continue;
         }
 
+        if (tag.substring(1) === "comment") {
+            continue;
+        }
+
         if (tag.substring(1) === "css") {
             $css(source.substring(node.content.start, node.content.end), true);
+            continue;
+        }
+
+        if (tag.substring(1) === "noted") {
+            let content = source.substring(node.content.start, node.content.end);
+            console.log("here");
+            console.log(content);
+
+            content = content.split("$note");
+
+            const noteSource = content.pop().trim();
+            const noted = content.join("$note");
+
+            if (pendingSpace) {
+                segment.appendChild(document.createTextNode(" "));
+            }
+
+            const groupNumeral = roman(noteGroup + 1).toLowerCase();
+
+            const notedElement = $element("span");
+            notedElement.classList = "noted";
+
+            const parsedContent = parserModule.parseSource(noted);
+            await (async () => {
+                const notedContent = await build(parsedContent.nodes, noted, true);
+                notedElement.append(...notedContent);
+            })();
+
+            noteIndex += 1;
+            const noteNumeral = roman(noteIndex).toLowerCase();
+            notedElement.id = `footnote_backref_${groupNumeral}_${noteNumeral}`;
+
+            const link = $element("a");
+            link.href = `#footnote_${groupNumeral}_${noteNumeral}`
+            link.textContent = `${noteNumeral}`;
+
+            segment.append(notedElement, $element("sup").$with(link));
+
+            const parsedNote = parserModule.parseSource(noteSource);
+            const notePromise = build(parsedNote.nodes, noteSource, true);
+
+            pendingFootnotes.push(notePromise);
+
+            inlineEnded = true;
+            pendingSpace = true;
+
+            continue;
+        }
+
+        if (tag.substring(1) === "footnotes") {
+            let content = source.substring(node.content.start, node.content.end);
+
+            const header = $element("summary");
+            header.textContent = content;
+
+            const section = $element("details").$with(header);
+            section.classList = "footnotes";
+
+            const groupNumeral = roman(noteGroup + 1).toLowerCase();
+            noteGroup += 1;
+
+            for (const [index, notePromise] of pendingFootnotes.entries()) {
+                const noteNumeral = roman(index + 1).toLowerCase();
+
+                const note = $element("aside");
+                note.id = `footnote_${groupNumeral}_${noteNumeral}`;
+
+                const backlink = $element("a");
+                backlink.href = `#footnote_backref_${groupNumeral}_${noteNumeral}`;
+                backlink.textContent = noteNumeral;
+
+                (async () => {
+                    note.append(...(await notePromise));
+                })();
+
+                section.appendChild(note.$with(
+                    $element("sup").$with(backlink),
+                    document.createTextNode(" ")
+                ));
+            }
+
+            segment.appendChild(section);
+
             continue;
         }
 

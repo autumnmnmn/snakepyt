@@ -1,4 +1,7 @@
 
+import * as parserModule from "/code/code/orb/parse.js";
+import * as buildModule from "/code/code/orb/build.js";
+
 function printNodes(nodes, source, depth = 0) {
   const indent = '  '.repeat(depth)
   for (const node of nodes) {
@@ -15,9 +18,6 @@ function printNodes(nodes, source, depth = 0) {
 }
 
 export async function main(orb) {
-    const parserModule = await import(`/code/code/orb/parse.js`);
-    const buildModule = await import(`/code/code/orb/build.js`);
-
     const parsed = await parserModule.parse(orb);
 
     //printNodes(parsed.nodes, parsed.source);

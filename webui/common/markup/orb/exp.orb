@@ -1,0 +1,20 @@
+
+$theme {}
+
+$title { Exponentiation }
+
+$og_description { Opinion | Exponentiation is not about e }
+
+[class=blog-content]{
+
+h1[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] { Exponentiation is not about $math/math{ inline auto e } }
+
+h2[class=center | style=font-size: 0.7rem; ]{⸺ ooo ⸺}
+
+
+
+
+
+}
+
+
