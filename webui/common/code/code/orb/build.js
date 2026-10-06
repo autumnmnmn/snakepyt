@@ -9,7 +9,7 @@ const NOSPACE = "$nospace";
 // elements that are themselves inline
 const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q", "cite", "em", "strong"];
 // elements whose innards are meant to be inline
-const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary"];
+const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary", "aside"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
@@ -104,7 +104,7 @@ export async function build(nodes, source, inline=false, namespace=null) {
 
         if (tag[0] !== "$") {
             if (segment.childNodes.length > 0) {
-                if (!inline) segment.$contextMenu = { items: [], override: true };
+                if (!inline) segment.$contextMenu = { override: true };
                 domNodes.push(segment);
                 segment = inline ? document.createDocumentFragment() : document.createElement("p");
                 if (DEBUG && !inline) { segment.dataset.provenance = "5" }
@@ -148,12 +148,31 @@ export async function build(nodes, source, inline=false, namespace=null) {
                 span.setAttribute(split[0].trim(), split[1]);
             }
             span.innerText = source.substring(node.content.start, node.content.end);
-            span.$contextMenu = { items: [], override: true };
-            domNodes.push(span);
+            span.$contextMenu = { override: true };
+
+            if (pendingSpace) {
+                segment.appendChild(document.createTextNode(" "));
+            }
+            segment.appendChild(span);
+            pendingSpace = true;
+            inlineEnded = true;
             continue;
         }
 
         if (tag.substring(1) === "comment") {
+            continue;
+        }
+
+        if (tag.substring(1) === "scare") {
+            if (pendingSpace) {
+                segment.appendChild(document.createTextNode(" "));
+            }
+            segment.appendChild(document.createTextNode("“"));
+            // TODO properly parse the innards of this...
+            segment.appendChild(document.createTextNode(source.substring(node.content.start, node.content.end)));
+            segment.appendChild(document.createTextNode("”"));
+            pendingSpace = true;
+            inlineEnded = true;
             continue;
         }
 
@@ -164,8 +183,6 @@ export async function build(nodes, source, inline=false, namespace=null) {
 
         if (tag.substring(1) === "noted") {
             let content = source.substring(node.content.start, node.content.end);
-            console.log("here");
-            console.log(content);
 
             content = content.split("$note");
 

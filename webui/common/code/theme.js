@@ -12,12 +12,31 @@ function checkForParentTheme(element, theme) {
     return false;
 }
 
+function checkForParentFont(element, font) {
+    let parent = element.parentElement;
+    while (parent) {
+        const parentFont = parent.dataset.font;
+
+        if (parentFont) return parentFont !== font;
+
+        parent = parent.parentElement;
+    }
+
+    return false;
+}
+
 function getOppositeTheme(theme) {
     if (theme === "blackboard") return "whiteboard";
     if (theme === "whiteboard") return "blackboard";
     //if (theme === "volcano") return "glacier";
     //if (theme === "glacier") return "blackboard";
     return theme;
+}
+
+function getOppositeFont(font) {
+    if (font === "mono") return "serif";
+    if (font === "serif") return "mono";
+    return font;
 }
 
 export function applyTheme(target, initialTheme = null) {
@@ -46,6 +65,32 @@ export function applyTheme(target, initialTheme = null) {
     return { replace: false };
 }
 
+export function applyFont(target, initialFont = null) {
+    const storedFont = localStorage.getItem("font");
+
+    let font = storedFont || "mono";
+
+    if (initialFont === "toggle") {
+        font = getOppositeFont(font);
+    } else {
+        font = initialFont || font;
+    }
+
+    target.dataset.font = font;
+
+    if (target === document.body) {
+        localStorage.setItem("font", font);
+    }
+
+    if (checkForParentFont(target, font)) {
+        target.dataset.fontChanged = "";
+    } else {
+        delete target.dataset.fontChanged;
+    }
+
+    return { replace: false };
+}
+
 $css(`
 
 .theme-panel {
@@ -56,6 +101,7 @@ $css(`
     flex-direction: column;
     gap: 0.2rem;
     z-index: 1;
+    font-size: 1rem;
 }
 
 .theme-panel button {
@@ -69,6 +115,7 @@ $css(`
     padding-right: 0;
     padding-top: 0;
     padding-bottom: 0;
+    user-select: none;
 }
 
 [data-theme="whiteboard"] .theme-panel .button-wrapper.whiteboard {
@@ -101,10 +148,15 @@ export async function main(spec, panelState) {
         //"glacier"
     ];
 
+    const fonts = [
+        "mono",
+        "serif"
+    ];
+
     const buttons = [];
 
     themes.forEach(theme => {
-        const buttonWrapper = $div(`button-wrapper ${theme}`);
+        const buttonWrapper = $div(`button-wrapper`);
 
         const button = document.createElement("button");
         button.innerText = theme[0].toUpperCase();
@@ -114,6 +166,20 @@ export async function main(spec, panelState) {
             applyTheme(document.body, theme);
         });
         button.dataset.theme = theme;
+        buttons.push(buttonWrapper.$with(button));
+    });
+
+    fonts.forEach(font => {
+        const buttonWrapper = $div(`button-wrapper`);
+
+        const button = document.createElement("button");
+        button.innerText = font[0].toUpperCase();
+        button.setAttribute("aria-label", font);
+        button.title = `set font: ${font}`;
+        button.addEventListener("click", () => {
+            applyFont(document.body, font);
+        });
+        button.dataset.font = font;
         buttons.push(buttonWrapper.$with(button));
     });
 

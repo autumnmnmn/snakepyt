@@ -40,6 +40,7 @@ body {
     background-color: var(--main-background);
     color: var(--main-solid);
     line-height: 1.5rem;
+    font-size: var(--font-base);
 }
 
 article {
@@ -62,31 +63,48 @@ h1 {
     font-size: 1.5em;
     margin-top: 1em;
     overflow: visible;
+    font-weight: 800;
 }
 
 h2 {
     text-decoration: underline;
-    font-weight: 500;
+    font-weight: 800;
     text-decoration-color: var(--main-midtone);
+    scroll-margin-top: 1em;
 }
 
-hgroup p {
+hgroup.main-title p {
     display: block;
     margin: auto;
     width: fit-content;
 
     padding-top: 0.125em;
+    padding-bottom: 0.125em;
     font-size: 0.7em;
 }
 
-nav.contents ol {
-    max-width: 65em;
+hgroup h2, hgroup p {
+    display: inline;
 }
 
-nav.contents ol li {
-    margin-left: 4em;
+hgroup p {
+    padding-left: 1em;
+    font-size: 0.8em;
+}
+
+nav#contents {
+    scroll-margin-top: calc(min(25em, 25vh));
+}
+
+nav#contents ol {
+    max-width: var(--content-width);
+}
+
+nav#contents ol li {
+    margin-left: 5ch;
     overflow: visible;
-    padding-top: 0.6em;
+    margin-top: 0.6em;
+    margin-bottom: 0.6em;
 }
 
 details.footnotes aside {
@@ -115,6 +133,12 @@ pre {
 code {
     padding-top: 0.75em;
     border-left: 3px solid var(--main-faded);
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+    padding-left: 1em;
+    font-family: var(--code-font);
+    font-size: 1rem;
 }
 
 details summary {
@@ -126,11 +150,6 @@ details summary {
 }
 
 details[open] summary {
-    border-bottom: 1px solid var(--main-faded);
-}
-
-details hr {
-    width: 65em;
     border-bottom: 1px solid var(--main-faded);
 }
 
@@ -162,7 +181,7 @@ p {
     line-height: 1.5em;
     margin-bottom: 1em;
     margin-top: 1em;
-    max-width: 65em;
+    max-width: var(--content-width);
 }
 
 a {
@@ -242,8 +261,16 @@ label {
     }
 }
 
+
 :target {
-    background-color: var(--main-faded);
+    animation: target-flash 0.5s ease-out;
+    background-color: var(--main-ghostly);
+}
+
+@keyframes target-flash {
+    0%   { background-color: transparent; }
+    50%  { background-color: var(--main-faded); }
+    100% { background-color: var(--main-ghostly); }
 }
 
 /* - - - - - - - - - - - -
@@ -358,5 +385,22 @@ msup > :last-child {
     display: block;
     margin: auto;
     width: fit-content;
+}
+
+aside.info-box {
+    margin: auto;
+    margin-top: 1em;
+    border: 1px solid var(--main-solid);
+    background-color: var(--main-faded);
+    padding-left: 1em;
+    padding-right: 1em;
+    max-width: var(--content-width);
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+aside.info-box::before {
+    content: "ⓘ";
+    padding-right: 0.5em;
 }
 

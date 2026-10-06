@@ -35,12 +35,10 @@
             }
             else
             {
-                document.$contextMenu = document.$contextMenu ?? { items: [] };
-
-                document.$contextMenu.items.push(["bake", () => {
+                document.$bake = () => {
                     params.set("bake", "");
                     location.search = params.toString();
-                }]);
+                };
             }
 
             if (orb) {
