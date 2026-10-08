@@ -19,7 +19,7 @@ $css(`
     }
 `);
 
-export async function main(argumentString) {
+export async function main(module, containerClass, argumentString) {
     const backdrop = $div("loadwall");
 
     const status = $div("status");
@@ -37,11 +37,8 @@ export async function main(argumentString) {
     // TODO unique id generation helper in core.js
     // then associate the label here w/ the button
 
-    const args = argumentString.split("|").map(arg => arg.trim());
 
-    const text = args[0];
-    const module = args[1];
-    const containerClass = args[2];
+    const text = argumentString;
 
     const container = $div(containerClass);
 

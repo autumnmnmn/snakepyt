@@ -68,7 +68,7 @@ export function applyTheme(target, initialTheme = null) {
 export function applyFont(target, initialFont = null) {
     const storedFont = localStorage.getItem("font");
 
-    let font = storedFont || "mono";
+    let font = storedFont || "serif";
 
     if (initialFont === "toggle") {
         font = getOppositeFont(font);
@@ -169,6 +169,8 @@ export async function main(spec, panelState) {
         buttons.push(buttonWrapper.$with(button));
     });
 
+    // TODO make this just one button, w/ innerText "F", styled as opposite of present font,
+    // behavior is just to toggle the font
     fonts.forEach(font => {
         const buttonWrapper = $div(`button-wrapper`);
 

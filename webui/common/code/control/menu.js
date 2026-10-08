@@ -110,6 +110,7 @@ var menuTarget = document.body;
 
 const backdrop = document.createElement("div");
 backdrop.className = "context-backdrop";
+backdrop.dataset.font = "mono";
 
 const menu = document.createElement("div");
 menu.$ = {};

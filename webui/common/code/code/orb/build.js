@@ -9,7 +9,7 @@ const NOSPACE = "$nospace";
 // elements that are themselves inline
 const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q", "cite", "em", "strong"];
 // elements whose innards are meant to be inline
-const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary", "aside"];
+const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary", "aside", "abbr"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
@@ -18,7 +18,7 @@ const DEBUG = true;
 
 const spaceAfter = /[\w,;.:†]/;
 
-const pendingFootnotes = [];
+let pendingFootnotes = [];
 let noteGroup = 0;
 let noteIndex = 0;
 
@@ -30,6 +30,8 @@ function verbatimText(source, node) {
     if (text.endsWith("\n")) text = text.substring(0, text.length - 1);
     return text;
 }
+
+export function unplacedNotes() { return pendingFootnotes };
 
 export async function build(nodes, source, inline=false, namespace=null) {
     let segment = inline ? document.createDocumentFragment() : document.createElement("p");
@@ -237,7 +239,11 @@ export async function build(nodes, source, inline=false, namespace=null) {
             const groupNumeral = roman(noteGroup + 1).toLowerCase();
             noteGroup += 1;
 
-            for (const [index, notePromise] of pendingFootnotes.entries()) {
+            const notes = pendingFootnotes;
+            pendingFootnotes = [];
+            noteIndex = 0;
+
+            for (const [index, notePromise] of notes.entries()) {
                 const noteNumeral = roman(index + 1).toLowerCase();
 
                 const note = $element("aside");
@@ -258,6 +264,8 @@ export async function build(nodes, source, inline=false, namespace=null) {
             }
 
             segment.appendChild(section);
+
+
 
             continue;
         }

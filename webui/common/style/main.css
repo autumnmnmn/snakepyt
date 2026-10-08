@@ -53,6 +53,7 @@ article {
 
 article section {
     margin-top: 2em;
+    overflow: visible;
 }
 
 h1 {
@@ -71,6 +72,15 @@ h2 {
     font-weight: 800;
     text-decoration-color: var(--main-midtone);
     scroll-margin-top: 1em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+    border-radius: 0.25em;
+}
+
+hgroup {
+    overflow: visible;
 }
 
 hgroup.main-title p {
@@ -94,10 +104,14 @@ hgroup p {
 
 nav#contents {
     scroll-margin-top: calc(min(25em, 25vh));
+    width: fit-content;
+    padding-right: 1em;
 }
 
 nav#contents ol {
     max-width: var(--content-width);
+    list-style: none;
+    counter-reset: roman;
 }
 
 nav#contents ol li {
@@ -105,6 +119,18 @@ nav#contents ol li {
     overflow: visible;
     margin-top: 0.6em;
     margin-bottom: 0.6em;
+}
+
+nav#contents ol li:not(.numberless) {
+    counter-increment: roman;
+}
+
+nav#contents ol li:not(.numberless)::marker {
+    content: counter(roman, upper-roman) ". ";
+}
+
+nav#contents ol li.numberless::marker {
+    content: "❖ ";
 }
 
 details.footnotes aside {

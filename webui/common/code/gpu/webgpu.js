@@ -41,6 +41,9 @@ async function gpuInit() {
     });
     // todo ensure device
 
+    device.lost.then(info => console.error("device lost:", info.reason, info.message));
+    device.onuncapturederror = (e) => console.error("GPU validation error:", e.error.message);
+
     const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
     function getOffscreenContext(dims) {

@@ -7,6 +7,12 @@ fi
 
 mkdir sites/_deploy/content
 
+cat > sites/_deploy/content/_headers <<'EOF'
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+EOF
+
 src="$(pwd)/$TARGET/content"
 find "$src" -path "$src/media/*/input" -prune -o -type f -print0 | while IFS= read -r -d '' f; do
   rel="${f#"$src/"}"

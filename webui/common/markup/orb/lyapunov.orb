@@ -116,26 +116,32 @@ hgroup[class=main-title] {
     ⸺ ooo ⸺
 }
 
-$layout/loadwall { Load interactive renderer? (designed for desktop) | gpu/lyapunov | render-container }
+$layout/loadwall[gpu/lyapunov|render-container] { Load interactive renderer? (designed for desktop) }
 
-h2{Outline & Table of Contents}
+
+section {
+
+h2[id=outline]{ Outline & Table of Contents }
 
 This post endeavors to provide a thorough treatment of what is most commonly called the Lyapunov fractal while remaining accessible to a reasonably wide audience. It is broken into four main sections. I should also mention, in case you missed it, that at the top of the page there is a button you can press to load up a webgpu-based Lyapunov fractal explorer, which some might find to be a more compelling introduction to the fractal than a textual writeup.
 
 nav[id=contents] { ol[type=I] {
+    li[class=numberless] { a[href=#outline] { Outline } }
+
     li{ a[href=#section_i]{The Logistic Lyapunov Fractal} br{} A short encyclopedic account of the fractal and its history. }
 
     li{ a[href=#section_ii]{Understanding the Lyapunov Exponent} br{} Guides readers of a mixed background on a leisurely stroll from more basic mathematical concepts toward the Lyapunov fractal. We begin by exploring the logistic map with a number of interactive visualizations, and gradually work our way up to defining the Lyapunov exponent as a tool for describing what we observe. Readers who have had prior encounters with calculus will have an easier time following along, but I have aimed to explain many of the essential concepts. This section may hold less interest for those already greatly learned in mathematics. }
 
-    li{ a[href=#section_iii]{The General λ-Diagram and its Variations} br{} Describes a number of variations on the fractal, with particular focus on those introduced by its inventor which many writeups neglect to mention, but which greatly expand the variety of striking images that can be produced. }
+    li{ a[href=#section_iii]{Cyclic Permutations} br{} We consider ways of visualizing cyclic permutations of the forcing sequence. }
 
     li{ a[href=#section_iv]{Observations of the Logistic λ-Diagram} br{} The final section is loosest in its structure and purpose; a sort of grab-bag of facts and features of the fractal, alongside some explanation of the interactive renderer. }
 
-    li{ a[href=#gallery]{Gallery} }
+    li[class=numberless] { a[href=#gallery] { Gallery } }
 
+    li[class=numberless] { a[href=#endnote] { Endnote } }
 }}
 
-
+}
 
 
 
@@ -212,8 +218,6 @@ $footnotes { Section I Footnotes }
 
 }
 
- TODO throw when there's unplaced footnotes
-
 
 
 
@@ -251,7 +255,7 @@ aside[class=info-box] { In interactive plots, the bounds of the sliders have bee
 
 Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the em{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
 
-The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from almost any $nospace a[href=#section_ii_foot_i|id=section_ii_back_i]{sup{†}} x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { inline auto x_0 } and plot its behavior for many timesteps:
+The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from $noted{ almost any $note There do exist other exceptional initial conditions. Try out $math/math { inline auto x_0 = 0.75, r = 4 }, for instance. The set of periodic initial conditions in otherwise-chaotic parametrizations is an interesting object of study that merits a mention even if it's outside the scope of this post. } x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { inline auto x_0 } and plot its behavior for many timesteps:
 
 [class=interactive-plot] { $math/plot { logistic/timeseries } }
 
@@ -291,7 +295,7 @@ It is left as an exercise for the reader to prove that the pattern holds:
 
 $math/math { auto d/{d x_0} x_n = underover product {i=0} {n-1} end f'{(x_i)} defineeq f'{(x_{n-1})} dot f'{(x_{n-2})} dot ... dot f'{(x_1)} dot f'{(x_0)} }
 
-Now, we are interested in whether and to what degree this quantity em{grows} or em{shrinks} as the number of iterations increases. There happens to be an exceedingly useful mathematical tool for modeling growth and decay, known as the a[href=]{exponential function}, denoted as either $math/math { inline auto exp{(x)} } or $math/math { inline auto e^x } $nospace a[href=#section_ii_foot_ii|id=section_ii_back_ii]{sup{††}}. The exponential of a negative value tends toward zero, while the exponential of a positive value grows.
+Now, we are interested in whether and to what degree this quantity em{grows} or em{shrinks} as the number of iterations increases. There happens to be an exceedingly useful mathematical tool for modeling growth and decay, known as $noted { the a[href=]{exponential function}, denoted as either $note When $math/math { inline auto x } is a real number, applying the exponential function to it and taking $math/math { inline auto e } to the $math/math { inline auto x^{th} } power are precisely the same thing. When it is not a real number, $math/math { inline auto e^x } is a frequently used shorthand for $math/math { inline auto exp{(x)} } which some, including the author of this post, regard as an abuse of notation. } $math/math { inline auto exp{(x)} } or $math/math { inline auto e^x } . The exponential of a negative value tends toward zero, while the exponential of a positive value grows.
 
 Since the exponential of a real value is always positive, we will have to take the absolute value of our derivative if we want to model it as an exponential. This is fine, as what we really care about is the magnitude. Calling the rate of exponential growth or decay $math/math { inline auto lambda_n } at iteration $math/math { inline auto n }, we have:
 
@@ -313,16 +317,6 @@ You may have noticed that I snuck a variable $math/math { inline auto m } in the
 
 So, now that we've derived the Lyapunov exponent, let's plot it:
 
-h3 { Section II footnotes }
-
-[class=footnote|id=section_ii_foot_i] {
-sup{†} There do exist other exceptional initial conditions. Try out $math/math { inline auto x_0 = 0.75, r = 4 }, for instance. The set of periodic initial conditions in otherwise-chaotic parametrizations is an interesting object of study that merits a mention even if it's outside the scope of this post. a[href=#section_ii_back_i]{↩}
-}
-
-[class=footnote|id=section_ii_foot_ii] {
-sup{††} When $math/math { inline auto x } is a real number, applying the exponential function to it and taking $math/math { inline auto e } to the $math/math { inline auto x^{th} } power are precisely the same thing. When it is not a real number, $math/math { inline auto e^x } is a frequently used shorthand for $math/math { inline auto exp{(x)} } which some, including the author of this post, regard as an abuse of notation. a[href=#section_ii_back_ii]{↩}
-}
-
 $footnotes { Section II Footnotes }
 
 }
@@ -340,7 +334,7 @@ section{
 
 hgroup{
     h2[id=section_iii]{
-                                § III. The General λ-Diagram and its Variations
+                                § III. Cyclic Permutations
     }
     a[href=#contents]{ ↩ contents }
 }
@@ -437,7 +431,7 @@ Presets in the interactive renderer have been set up to approximately reproduce 
 section{
 hgroup{
     h2[id=gallery]{
-                                § V. Gallery
+                                Gallery
     }
     a[href=#contents]{ ↩ contents }
 }
@@ -454,11 +448,13 @@ hgroup{
 }
 }
 
+section {
 
-h2{Endnote}
+h2[id=endnote]{Endnote}
 
 Thank you for taking the time to read however much of this you did. Putting this post together has been an effortful undertaking. I hope it has been worth your attention.
 
+}
 
 
 }

@@ -33,6 +33,7 @@ customElements.define("nothing-", class extends HTMLElement {});
 
 export async function main() {
     const backdrop = $element("nothing-");
+    backdrop.dataset.font = "mono";
     //const backdrop = $div("nothing");
 
     backdrop.$ = {

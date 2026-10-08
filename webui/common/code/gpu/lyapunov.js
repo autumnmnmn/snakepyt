@@ -6,6 +6,7 @@ $css(`
         position: relative;
         display: flex;
         flex-direction: row;
+        font-size: var(--font-base);
     }
 
     .lyapunov-webgpu .overlay {
@@ -58,7 +59,15 @@ import { Color, NonlinearSRGB } from "/code/math/color.js";
 export async function main() {
     let canRender = false;
 
+    let dirty = false;
+    const concurrencyBuffer = new SharedArrayBuffer(4);
+    const framesInFlight = new Int32Array(concurrencyBuffer);
+    Atomics.store(framesInFlight, 0, 0);
+
+    const maxFramesInFlight = 2;
+
     const topmost = $div("lyapunov-webgpu topmost");
+    topmost.dataset.font = "mono";
 
     const renderStack = $div("full");
     //let topmost = renderStack;
@@ -599,8 +608,7 @@ sequence BA
     observers.resize = new ResizeObserver(resize);
     observers.resize.observe(canvas);
 
-
-    function render(targetContext = context, dims = null) {
+    async function render(targetContext = context, dims = null) {
 
         if (!canRender) {
             return
@@ -608,41 +616,69 @@ sequence BA
             //console.trace();
         }
 
-        dims = dims || v2.of(width, height);
+        dirty = true;
 
-        const uniforms = compShader.bufferDefinitions["0,0"];
-        uniforms.updateBuffers();
-        const blitUniforms = blitShader.bufferDefinitions["0,0"];
-        blitUniforms.updateBuffers();
+        while (true) {
+            const frames = Atomics.load(framesInFlight, 0);
 
-        const commandEncoder = $gpu.device.createCommandEncoder();
+            if (frames > maxFramesInFlight) {
+                //console.log("discard frame");
+                return;
+            }
 
-        const computePass = commandEncoder.beginComputePass();
-        computePass.setPipeline(computePipeline);
-        computePass.setBindGroup(0, computeBindGroup);
-        computePass.dispatchWorkgroups(
-            Math.ceil(dims.x / 16),
-            Math.ceil(dims.y / 16),
-            1
-        );
-        computePass.end();
+            const old = Atomics.compareExchange(framesInFlight, 0, frames, frames+1);
 
-        const renderPass = commandEncoder.beginRenderPass({
-            colorAttachments: [
-                {
-                    view: targetContext.getCurrentTexture().createView(),
-                    loadOp: "clear",
-                    storeOp: "store"
-                }
-            ]
-        });
+            if (old === frames) {
+                break;
+            }
+        }
 
-        renderPass.setPipeline(renderPipeline);
-        renderPass.setBindGroup(0, renderBindGroup);
-        renderPass.draw(6); // 1 quad -> 2 tris
-        renderPass.end();
+        try {
+            dims = dims || v2.of(width, height);
 
-        $gpu.device.queue.submit([commandEncoder.finish()]);
+            const uniforms = compShader.bufferDefinitions["0,0"];
+            uniforms.updateBuffers();
+            const blitUniforms = blitShader.bufferDefinitions["0,0"];
+            blitUniforms.updateBuffers();
+
+            dirty = false;
+
+            const commandEncoder = $gpu.device.createCommandEncoder();
+
+            const computePass = commandEncoder.beginComputePass();
+            computePass.setPipeline(computePipeline);
+            computePass.setBindGroup(0, computeBindGroup);
+            computePass.dispatchWorkgroups(
+                Math.ceil(dims.x / 16),
+                Math.ceil(dims.y / 16),
+                1
+            );
+            computePass.end();
+
+            const renderPass = commandEncoder.beginRenderPass({
+                colorAttachments: [
+                    {
+                        view: targetContext.getCurrentTexture().createView(),
+                        loadOp: "clear",
+                        storeOp: "store"
+                    }
+                ]
+            });
+
+            renderPass.setPipeline(renderPipeline);
+            renderPass.setBindGroup(0, renderBindGroup);
+            renderPass.draw(6); // 1 quad -> 2 tris
+            renderPass.end();
+
+            $gpu.device.queue.submit([commandEncoder.finish()]);
+
+            await $gpu.device.queue.onSubmittedWorkDone();
+        }
+        finally { Atomics.sub(framesInFlight, 0, 1); }
+
+        if (dirty) {
+            render();
+        }
     }
 
     topmost.$contextMenu = {

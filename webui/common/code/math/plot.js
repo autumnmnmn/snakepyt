@@ -163,6 +163,44 @@ export const svg_space = (project=identity, scale=identity) => {
             return element;
         },
 
+        rectangle: (point1, point2, point3 = null, _class = null) => {
+            if (typeof point3 === "string") {
+                _class = point3;
+                point3 = null;
+            }
+
+            let corners;
+
+            if (point3 === null) {
+                // two opposite corners → axis-aligned rectangle
+                corners = [
+                    point1,
+                    { ...point2, y: point1.y },
+                    point2,
+                    { ...point1, y: point2.y },
+                ];
+            } else {
+                // three consecutive corners → any orientation / any plane
+                // point2 is the shared corner, the fourth is point1 + point3 - point2
+                const opposite = {};
+                for (const key in point1) {
+                    opposite[key] = point1[key] + point3[key] - point2[key];
+                }
+                corners = [point1, point2, point3, opposite];
+            }
+
+            const element = $svgElement("polygon");
+
+            element.setAttribute("points", corners.map(p => {
+                const proj = project(p);
+                return `${proj.x},${proj.y}`;
+            }).join(" "));
+
+            if (_class) element.setAttribute("class", _class);
+
+            return element;
+        },
+
         path: (makeCommands, _class=null) => {
             const element = $svgElement("path");
 

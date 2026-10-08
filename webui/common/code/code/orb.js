@@ -24,6 +24,11 @@ export async function main(orb) {
 
     const domNodes = await buildModule.build(parsed.nodes, parsed.source);
 
+    if (buildModule.unplacedNotes().length !== 0) {
+        console.error("Unplaced footnotes!");
+        console.log(buildModule.unplacedNotes());
+    }
+
     return { dom: domNodes, replace: true };
 }
 

@@ -19,13 +19,13 @@
 *[data-font=serif] {
     --main-font: var(--math-font);
     --content-width: 50em;
-    --font-base: 1.25em;
+    --font-base: 1.25rem;
 }
 
 *[data-font=mono] {
     --main-font: var(--code-font);
     --content-width: 65em;
-    --font-base: 1em;
+    --font-base: 1rem;
 }
 
 *[data-theme=whiteboard] {
