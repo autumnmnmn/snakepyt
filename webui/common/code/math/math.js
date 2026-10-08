@@ -171,7 +171,7 @@ const autoOps = {
     "empty": "∅",
     "diff": "∂",
     "sum": "∑",
-    "product": "Π",
+    "product": "∏",
     "...": "…",
     "'": "′"
 };

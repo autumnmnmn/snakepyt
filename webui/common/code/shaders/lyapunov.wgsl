@@ -11,7 +11,7 @@ struct Uniforms /* buffer 0 0 */ {
     seq_mask: u32, // hard 0 to hard 4294967295 = 5
     seq_len: u32, // hard 1 to hard 32 = 2
     seq_offset: u32, // hard 0 to hard 31 = 0 $depend(offset_mode=single)
-    offset_mode: u32, // hard 0 to hard 3 = 0 $select(single, minimum, maximum, average, experiment)
+    offset_mode: u32, // hard 0 to hard 3 = 0 $select(single, minimum, maximum, average, count_distinct)
     do_discont: u32, // hard 0 to hard 1 = 0 $bool $test
     discont_alpha: f32, // 0 to 1 = 0.907 $depend(do_discont)
     do_tent: u32, // hard 0 to hard 1 = 0 $bool
@@ -19,6 +19,7 @@ struct Uniforms /* buffer 0 0 */ {
     stochasticity: u32, // hard 0 to 1 = 0 $bool
     stochastic_modulus: u32, // 1 to 200 = 100 $depend(stochasticity)
     rotation: f32, // 0 to 1 = 0
+    epsilon: f32, // 0 to 0.01 = 0.0001 $depend(offset_mode=count_distinct)
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -92,7 +93,6 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     }
 
     var val: f32;
-    var eps = 0.01;
 
     if (uniforms.offset_mode == 0) {
         val = lyapunov[0];
@@ -120,7 +120,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         for (var i = 0u; i < uniforms.seq_len; i++) {
             if (x[i] == 0.0) { continue; }
             for (var j = i+1; j < uniforms.seq_len; j++) {
-                if (abs(lyapunov[j] - lyapunov[i]) < eps) {
+                if (abs(lyapunov[j] - lyapunov[i]) < uniforms.epsilon) {
                     x[j] = 0.0;
                 }
             }

@@ -5,22 +5,118 @@ $title { Notes on MathML }
 
 $og_description { Notes on typesetting mathematics in the browser }
 
-[class=blog-content]{
+$css {
 
-h1[class=center | style=font-size: 1.5rem; margin-top: 1rem; overflow: visible; ] { Notes on MathML }
+.badmath * {
+    font-family: revert !important;
+    math-style: revert !important;
+}
 
-h2[class=center | style=font-size: 0.7rem; ]{⸺ how to render beautiful math in the browser ⸺}
+}
+
+article {
+
+hgroup[class=main-title] {
+    h1 { Notes on MathML }
+
+    the browser will render math well but only if you ask nicely
+
+    hr{}
+}
 
 
+note up front: much of what's here esp. regarding behavior of different browsers is non-exhaustive and subject to change
 
-math-style: normal;
+note browser mathml is em{presentation} mathml, not em{content} mathml. when seeking out resources on mathml it is important to make sure you are reading about the appropriate kind of mathml.
 
-font-size: math;
+
+pre { code {
+
+} }
+
+
+To create mathml elements, you cannot just use document.createElement. MathML is not HTML, it is its own kind of markup, which can be nested inside HTML. To be more exact, it has its own i{namespace}. If you use document.createElement("math"), you will get an element that looks like a "math" node but does not render correctly. You must instead use document.createElementNS("http://www.w3.org/1998/Math/MathML", "math"). The same is true for all descendent elements of the base math element.
+
+$math/math { auto x + y }
+
+details { summary { Fixed Code }
+pre { code {
+
+function mathElement(tag) {
+    return document.createElementNS("http://www.w3.org/1998/Math/MathML", tag);
+}
+
+const math = mathElement("math");
+const mrow = mathElement("mrow");
+const x = mathElement("mi");
+const plus = mathElement("mo");
+const y = mathElement("mi");
+
+x.textContent = "x";
+plus.textContent = "+";
+y.textContent = "y";
+
+mrow.append(x,plus,y);
+math.appendChild(mrow);
+
+// ... then attach math element to the document somewhere
+
+} }
+
+}
+
+
+br {}
+
+Essential CSS styles:
+
+pre { code {
+/* the root element of a mathml subtree in the dom */
+math {
+    math-style: normal;
+    overflow: visible;
+    font-size: 1em; /* `inherit` will work on some browsers but not others! */
+}
+
+/* any element descended from a math element */
+math * {
+    overflow: visible;
+    font-size: math; /* let the rest of the mathml nodes size themselves according to their own special rules */
+    font-family: var(--math-font);
+}
+} }
 
 font-family
 
-the only font that i have found to produce adequate typesetting in browser mathml is Latin Modern Math. i have a fairly strict policy, in developing this site of mine, of not pulling in external dependencies beyond what is provided by the browser itself. the one exemption i have granted myself to this, at time of writing, is that my site serves Latin Modern Math as a .woff2; the mathematical typesetting cannot be brought up to my standards without it.
+the only font that i have found to produce adequate typesetting in browser mathml is Latin Modern Math. I have not tested every font exhaustively, of course
 
+[class=badmath]{
+$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
+}
+
+$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
+
+
+
+characters
+
+in math, we use capital sigma and capital pi to represent sums and products, writing additional content below and above the letter to denote what objects or indices we are summing the following expression across.
+
+in mathml, we represent this with the i{munderover} element. munderover should have three children, the first is what will have elements above and below it, the second is what goes below it, and the third is what goes above. so we can simply make <mo>Σ</mo> or <mo>Π</mo> the first element of our munderover, right?
+
+$math/math { auto underover Σ {i=0} n end x = underover Π {j=1} m end y }
+
+Wrong. It looks horrendous. And that's because the Σ and Π characters there are em{Greek letters} instead of em{math symbols}. A sane reader might object, saying $scare{but ponder, the Greek letters Σ and Π em{are} math symbols!} But to a computer, they simply are not. The characters I just used are from the a[href=https://en.wikipedia.org/wiki/Greek_and_Coptic]{Greek and Coptic Unicode Block}, whereas for mathml to properly understand our intent and render our math nicely, we must use the symbols ∑ and ∏ from the a[href=https://en.wikipedia.org/wiki/Mathematical_Operators_(Unicode_block)]{Mathematical Operators Unicode Block}.
+
+
+$math/math { auto underover ∑ {i=0} n end x = underover ∏ {j=1} m end y }
+
+Much better.
+
+
+make sure parentheses &c are enclosed in a mrow!
+
+}
 
 }
 

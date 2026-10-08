@@ -53,7 +53,6 @@ $css(`
 }
 
 .toggle .status {
-    color: var(--main-faded);
     padding-left: 0.5rem;
 }
 

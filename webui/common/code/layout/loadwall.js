@@ -1,18 +1,26 @@
 
 $css(`
+    .loadwall {
+
+    }
+
     .loadwall .box {
-        padding-top: 1rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
+        padding-top: 1em;
+        padding-left: 2em;
+        padding-right: 2em;
+        padding-bottom: 1em;
         border: 1px solid var(--main-solid);
         background-color: var(--main-faded);
+    }
+
+    .loadwall .box :not(:first-child) {
+        margin-top: 1em;
     }
 
     .loadwall * {
         display: block;
         margin: auto;
         width: fit-content;
-        margin-bottom: 0.5rem;
     }
 
     .loadwall .status {
@@ -24,7 +32,7 @@ export async function main(module, containerClass, argumentString) {
 
     const status = $div("status");
     status.textContent = "";
-    status.display = "none";
+    status.style.display = "none";
 
     const box = $div("box");
 
