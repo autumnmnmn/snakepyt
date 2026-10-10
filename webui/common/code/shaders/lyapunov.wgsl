@@ -40,10 +40,6 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var r_vals = ${pixel_mapping}(id.xy, uniforms.center_low, uniforms.center_high, vec2u(uniforms.width, uniforms.height), uniforms.rotation, uniforms.zoom);
 
-    var theta = uniforms.rotation * 3.14159265 * 2.0;
-    var c = cos(theta);
-    var s = sin(theta);
-    //r_vals = mat2x2f(c,s,-s,c) * r_vals;
 
     var x: array<f32, 32>;
     for (var i = 0u; i < 32u; i++) {
@@ -59,10 +55,10 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     for (var iter = 0u; iter < uniforms.iterations; iter = iter + 1u) {
         var final_offset = select(uniforms.seq_len,0,uniforms.offset_mode == 0u);
         for (var offset = 0u; offset <= final_offset; offset = offset + 1u) {
-            let rng_seed = pcg_hash(px + pcg_hash(py << 1)) ^ pcg_hash(iter) ^ pcg_hash(bitcast<u32>(r_vals.x) + pcg_hash(bitcast<u32>(r_vals.y) << 1));
             // todo nan and inf checks
             var cond = ((uniforms.seq_mask >> ((iter + offset + uniforms.seq_offset) % uniforms.seq_len)) & 1u) != 0u;
             if (uniforms.stochasticity == 1) {
+                let rng_seed = pcg_hash(px + pcg_hash(py << 1)) ^ pcg_hash(iter) ^ pcg_hash(bitcast<u32>(r_vals.x) + pcg_hash(bitcast<u32>(r_vals.y) << 1));
                 flipped = select(flipped, !flipped, rng_seed % uniforms.stochastic_modulus == 0);
             }
             if (flipped) {

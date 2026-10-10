@@ -24,11 +24,16 @@
     --panel-margin: 0.5rem;
 
     scroll-margin-top: calc(min(25em, 25vh));
+
 }
 
 sup, sub {
     font-size: revert;
+    line-height: 0;
+    overflow: visible;
 }
+
+
 
 /* - - - - - - - - - - - -
 
@@ -70,15 +75,19 @@ h1 {
 }
 
 h2 {
-    text-decoration: underline;
     font-weight: 800;
-    text-decoration-color: var(--main-midtone);
     scroll-margin-top: 1em;
     padding-top: 0.25em;
     padding-bottom: 0.25em;
     padding-left: 0.25em;
     padding-right: 0.25em;
     border-radius: 0.25em;
+
+
+    text-decoration: underline;
+    text-decoration-color: var(--main-midtone);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
 }
 
 /*
@@ -92,7 +101,7 @@ hgroup {
     overflow: visible;
 }
 
-hgroup.main-title p {
+hgroup:has(h1) p {
     display: block;
     margin: auto;
     width: fit-content;
@@ -114,7 +123,7 @@ hgroup p {
     font-size: 0.8em;
 }
 
-hgroup.main-title hr {
+hgroup:has(h1) hr {
     position: relative;
     overflow: visible;
     border-bottom: 1px solid var(--main-solid);
@@ -124,7 +133,7 @@ hgroup.main-title hr {
     margin-bottom: 0.5em;
 }
 
-hgroup.main-title hr::after {
+hgroup:has(h1) hr::after {
     font-size: 0.8em;
     font-weight: 800;
     content: "ooo";
@@ -253,11 +262,30 @@ p {
 
 a {
     color: var(--main-solid);
-    text-decoration-color: var(--main-visited);
+    text-decoration-color: var(--main-solid);
+
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
 }
 
 a:visited {
-    color: var(--main-visited);
+    text-decoration-color: var(--main-visited);
+}
+
+sup a {
+    text-decoration-color: var(--main-faded);
+    position: relative;
+}
+
+/* hitslop */
+sup a::before {
+    content: "";
+    width: calc(max(1em, 200%));
+    height: 120%;
+    transform: translate(-25%, 0%);
+    top: 0;
+    left: 0;
+    position: absolute;
 }
 
 input {
@@ -296,6 +324,41 @@ option {
 
 label {
     cursor: text;
+}
+
+table {
+    margin-top: 1em;
+    border-collapse: collapse;
+}
+
+td:not(:first-child) {
+    padding-left: 1em;
+}
+
+td:first-child, th:first-child {
+    padding-left: 0.5em;
+}
+
+th:not(:first-child) {
+    padding-left: 1em;
+}
+
+td, th {
+    padding-right: 0.5em;
+}
+
+tr td {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+tbody tr:not(:first-child) td {
+    border-top: 1px solid var(--main-faded);
+}
+
+thead th {
+    border-bottom: 3px double var(--main-solid);
+    text-align: left;
 }
 
 @supports (scrollbar-width: auto) {
@@ -350,6 +413,7 @@ math {
     font-size: var(--math-size);
     overflow: visible;
     math-style: normal;
+    white-space: nowrap;
 }
 
 math * {
@@ -400,7 +464,7 @@ mtext:not(:first-child) {
 
 
 msub > :last-child {
-    padding-top: 0.45em;
+    /*padding-top: 0.45em;*/
 }
 
 @supports (-moz-appearance: none) {

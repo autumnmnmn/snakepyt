@@ -115,7 +115,7 @@ svg[style=height:0;width:0;margin:0;padding:0;display:block] {
 
 article{
 
-hgroup[class=main-title] {
+hgroup {
     h1 { Notes on λ-Diagrams }
 
     also called i{Lyapunov Fractals}
@@ -130,18 +130,18 @@ $layout/loadwall[gpu/lyapunov|render-container] { Load interactive renderer? (de
 }
 
 
-h2[id=outline|style=margin-top:1em]{ Outline & Table of Contents }
-
-This post endeavors to provide a thorough treatment of what is most commonly called the Lyapunov fractal while remaining accessible to a reasonably wide audience. It is broken into four main sections. I should also mention, in case you missed it, that at the top of the page there is a button you can press to load up a webgpu-based Lyapunov fractal explorer, which some might find to be a more compelling introduction to the fractal than a textual writeup.
+h2[id=outline|style=margin-top:1em]{ Contents }
 
 nav[id=contents] { ol[type=I] {
-    li[class=numberless] { a[href=#explorer] { Interactive Renderer } }
+    li[class=numberless] { a[href=#explorer] { Interactive Renderer } br {}
+    A WebGPU-based fractal explorer for the logistic Lyapunov fractals, which some might find to be a more compelling introduction to the λ-diagrams than a textual writeup.
+    }
 
-    li{ a[href=#section_i]{ Mario Markus's λ-Diagrams } br{} A short encyclopedic account of the λ-Diagram and its history. }
+    li{ a[href=#section_i]{ Mario Markus's λ-Diagrams } br{} An account of the λ-Diagram and its history. }
 
-    li{ a[href=#section_ii]{Understanding the Lyapunov Exponent} br{} Guides readers of a mixed background on a leisurely stroll from more basic mathematical concepts toward the Lyapunov fractal. We begin by exploring the logistic map with a number of interactive visualizations, and gradually work our way up to defining the Lyapunov exponent as a tool for describing what we observe. Readers who have had prior encounters with calculus will have an easier time following along, but I have aimed to explain many of the essential concepts. This section may hold less interest for those already greatly learned in mathematics. }
+    li{ a[href=#section_ii]{ Understanding Lyapunov Exponents } br{} A guided exploration of the logistic map, building up toward the idea of the Lyapunov exponent, intended to help readers of a mixed background understand the mathematical meaning of these diagrams. }
 
-    li{ a[href=#section_iii]{ Sequence Offsets } br{} We consider ways of visualizing cyclic permutations of the forcing sequence. }
+    li{ a[href=#section_iii]{ Sequence Offsets } br{} We consider ways of visualizing the effect of offsetting the starting index of the forcing sequence. }
 
     li{ a[href=#section_iv]{Observations of the Logistic AB λ-Diagram} br{} The final section is loosest in its structure and purpose; a sort of grab-bag of facts and features of the fractal, alongside some explanation of the interactive renderer. }
 
@@ -162,19 +162,21 @@ hgroup{
     a[href=#contents]{ ↩ contents }
 }
 
-The a[href=https://en.wikipedia.org/wiki/Lyapunov_fractal]{Lyapunov fractal},
-named after a[href=https://en.wikipedia.org/wiki/Aleksandr_Lyapunov]{Aleksandr Lyapunov}, was
+The a[href=https://en.wikipedia.org/wiki/Lyapunov_fractal]{Lyapunov fractal} was
 introduced by a[href=https://en.wikipedia.org/wiki/Mario_Markus]{Mario Markus} under the supervision of
 a[href=https://onlinelibrary.wiley.com/doi/10.1002/anie.200390466]{Benno Hess} in the 1989
 paper cite{a[href=https://doi.org/10.1016/0097-8493(89)90019-8]{Lyapunov exponents of the logistic
-map with periodic forcing}} (a[href=https://sci-hub.ru/10.1016/0097-8493(89)90019-8]{pirate link}).
+map with periodic forcing}}. It is a visualization of the iterated a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} $math/math { inline auto f_n{(x)} = r_n dot x dot {(1 - x)}} with a periodically varying parameter $math/math {inline auto r_n} taking on two values $math/math {inline auto a, b} according to a rule specified as a string of i{A} $nospace s and i{B} $nospace s. For instance the string i{ABA} corresponds to the sequence $math/math {inline auto r_0 = a, r_1 = b, r_2 = a, r_3 = a, r_4 = b, r_5 = a,...} which repeats ad infinitum. The values of $math/math{inline auto a} and $math/math{inline auto b} vary with the pixel coordinates within the diagrams. Starting typically from $math/math{inline auto x_0 = 0.5}, the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{Lyapunov exponent} $math/math { inline auto lambda } is computed for each such parametrization:
 
-The fractal is a visualization of the iterated a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} with a periodically varying parameter $math/math {inline auto r} taking on two values $math/math {inline auto r_A, r_B} according to a rule specified as a string of i{A} $nospace s and i{B} $nospace s. For instance the string i{ABAABB} corresponds to the sequence $math/math {inline auto r_A, r_B, r_A, r_A, r_B, r_B,...} which repeats ad infinitum. The a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{Lyapunov exponent} $math/math{inline auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} } is computed for each such parametrization, and then these exponents are mapped to a color gradient. We take a negative exponent to indicate stability (more precisely, convergence of perturbed trajectories), while a positive exponent indicates chaos (more precisely, divergence of perturbed trajectories). Often, these cases are colorized according to distinct schemes. $noted { The values are unbounded $note Unbounded below, at least. Inside the parameter range $math/math {inline auto [0,4] cross [0,4] } the Lyapunov exponent takes on a maximum value of $math/math {inline auto lambda = log 2 }, at $math/math {inline auto r_A = r_B = 4} }, so some normalization is required.
+$math/math{auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} }
 
-The Lyapunov exponent is where the Lyapunov fractal gets its traditional name. Since Aleksandr Lyapunov never lived to see these fractals, they are sometimes called $scare{Markus-Lyapunov fractals} instead. $noted { Markus himself, however, in his 2007 book $noted { cite{a[href=https://archive.org/details/chartsforpredict0000mark/]{Charts for Prediction and Chance}} $note Subtitled i{Dazzling Diagrams on Your PC}, a truly marvelous volume replete with technical insights, a large number of gorgeous renders, and Markus's own rendering software on a CD-ROM. You can view a number of the images from it on a[href=https://www.mariomarkus.com/hp4.html]{Markus's website}. I highly recommend taking a look; the images are at the bottom of the linked page. }, prefers the term $scare{λ-diagrams}, as λ is the traditional symbol used for Lyapunov exponents and strictly speaking not em{every} such diagram is a fractal in a rigorous sense. $note Chapter 10, cite{Are the λ-Diagrams Fractals?} Page 213, in my copy. }
+These exponents are then mapped to a color gradient. A negative exponent to indicates convergence of perturbed trajectories, while a positive exponent indicates divergence of perturbed trajectories. $noted { Speaking less precisely $note See a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent#Perron_effects_of_largest_Lyapunov_exponent_sign_inversion]{ the discussion of Perron's counterexample on the Lyapunov exponent's Wikipedia page} for details on why em{stability vs chaos} is an imprecise characterization. }, this can be interpreted as em{stability vs. chaos}. Often, these cases are colorized according to distinct schemes. $noted { The values are unbounded $note Unbounded below, at least. Inside the parameter range $math/math {inline auto [0,4] cross [0,4] } the Lyapunov exponent takes on a maximum value which, in the case of the classic i{AB} fractal, is $math/math {inline auto lambda = log 2 }, at $math/math {inline auto a = b = 4}. }, so some normalization is required.
 
-Most writeups about the $scare{Lyapunov fractal} focus entirely on those based on the logistic map. However, the concept of computing the Lyapunov exponent is much more general. In his 1990 publication cite{a[href=https://doi.org/10.1063/1.4822940]{Chaos in Maps with Continuous and Discontinuous Maxima}}, Markus also explored a different, discontinuous map:
 
+The Lyapunov exponent is where the Lyapunov fractal gets its traditional name. Since a[href=https://en.wikipedia.org/wiki/Aleksandr_Lyapunov]{Aleksandr Lyapunov} never lived to see these fractals, they are sometimes called $scare{Markus-Lyapunov fractals} instead. $noted { Markus himself, however, in his 2007 book $noted { cite{a[href=https://archive.org/details/chartsforpredict0000mark/]{Charts for Prediction and Chance}}, $note Subtitled i{Dazzling Diagrams on Your PC}, a truly marvelous volume replete with technical insights, a large number of gorgeous renders, and Markus's own rendering software on a CD-ROM. You can view a number of the images from it on a[href=https://www.mariomarkus.com/hp4.html]{Markus's website}. I highly recommend taking a look; the images are at the bottom of the linked page. } uses the term $scare{λ-diagrams}, as λ is the traditional symbol used for Lyapunov exponents and strictly speaking not em{every} such diagram is a fractal in a rigorous sense. $note Chapter 10, cite{Are the λ-Diagrams Fractals?} Page 213, in my copy. } Ultimately it's a subjective matter, but I regard i{Charts} as the most authoritative source on the nomenclature.
+
+At time of writing, most of the information one can find on the internet about the $scare{Lyapunov fractal} focuses exclusively on the variants based on the logistic map. This is a tragedy, as the concept of Lyapunov exponent is much more general, and so the full aesthetic range of these diagrams often goes overlooked.  As early as his 1990 publication cite{a[href=https://doi.org/10.1063/1.4822940]{Chaos in Maps with Continuous and Discontinuous Maxima}}, Markus explores $noted{a different, discontinuous modification $note
+The discontinuous logistic map is defined piecewise as follows:
 $math/math {
     ident alpha:~ x r n
     text if:~
@@ -183,15 +185,13 @@ $math/math {
     x_{n+1} = r_n · x_n · {(1 - x_n)} if x_n > 0.5
     x_{n+1} = r_n · x_n · {(1 - x_n)} + 0.25 {(alpha - 1)} {(r_n - 2)} if x_n leq 0.5
 }
+Wherein α is a real parameter, typically just a little less than 1. }
+of the logistic map, but it's in i{Charts} that he really takes the concept and runs with it, applying the visualization technique across more than 39 different dynamical systems.
 
-Where α is a real parameter, typically just a little less than 1. Note that in the case where α is 1, this reduces to the familiar continuous logistic map.
+The λ-diagrams sit in the overlap between art and science. While they can be appreciated with or without care for their $scare{meaning}, to engage with the underlying math is to experience their beauty more fully; and while these and related techniques can help us understand the dynamics of real physical phenomena, it would be sad to appreciate them em{solely} for their utility.
 
-
-
-The initial condition is usually set to $math/math { inline auto x_0 = 1/2 }. To spell out the computation a little more verbosely, here is some a[href=https://en.wikipedia.org/wiki/Python_(programming_language)]{pseudocode}:
-
-details { summary { Lyapunov Exponent Pseudocode }
-pre { code {
+details { summary { Pseudocode, Logistic AB λ-Diagram }
+pre { code[id=pseudocode] {
 sequence = "AB"
 x_0 = 0.5
 max_iterations = 4000
@@ -255,28 +255,25 @@ hgroup{
     a[href=#contents]{ ↩ contents }
 }
 
-The fractal is a visualization of the behavior of the following iterative formula:
+Behold the Lyapunov exponent:
 
-$math/math {
-    ident r x n A B R:ℝ S s m:M i
-    op ( ) + - = · in:∈ ll:{ rr:} %:mod , ...
-    text given:"given a sequence of real numbers" where:~ let:~ and:~ values:~ then:"then"
-    in
-    given ll r_0 , r_1 , r_2 , ... r_n rr
-    let x_0 = 0.5 ,
-    then x_{n+1} = r_n · x_n · {(1 - x_n)}
-}
+$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|d/{d x} f_i{(x_i)}|} }
 
-
-
-The function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}} is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. Let's try and get a feel for what this map is, beginning with some simple plots and working our way toward the Lyapunov fractal. First, let's  $math/math {inline auto x_0} the entire unit interval $math/math {inline auto [0,1]}
+It's my intent that by the end of this section most readers will find this formula to be a perfectly straightforward answer to a perfectly natural question; but to start our journey it's helpful to take a look at the kind of system the Lyapunov exponent is meant to help us understand. One such example, the function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}}, is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. Let's take a look at how this function behaves across the unit interval $math/math {inline auto [0,1]}:
 
 [class=interactive-plot] { $math/plot { logistic_3d } }
 
 aside[class=info-box] { In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
 
+Playing around with the parameters a bit, one can observe a number of basic facts:
 
-Playing around with the parameters a bit, one can observe a number of basic facts: Since 0 and 1 get mapped to 0 regardless of the value of r, those make for uninteresting starting values. For small values of r, the unit interval (excluding the endpoints) converges on a single value. As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values -- the em{same} two values, across the whole interval. As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and ceases to be a useful visualization.
+ul {
+li { For r from 0 to 4, the unit interval is mapped back into itself, so no matter how many times we apply the map, we don't have to worry about anything outside that range. }
+li { Since $math/math { inline auto f(0) = 0 } and $math/math { inline auto f(1) = 0 }, those make for uninteresting starting values. }
+li { For small values of r, the unit interval (excluding the endpoints) converges on a single value. }
+li { As r increases, at some point there's a change, and each point on the interval eventually finds itself bouncing between two values, but when that happens those are the em{same} two values, across the whole interval. }
+li { As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and this ceases to be a useful visualization. }
+}
 
 The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from $noted{ almost any $note There do exist other exceptional initial conditions. Try out $math/math { inline auto x_0 = 0.75, r = 4 }, for instance. The set of periodic initial conditions in otherwise-chaotic parametrizations is an interesting object of study that merits a mention even if it's outside the scope of this post. } x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { inline auto x_0 } and plot its behavior for many timesteps:
 
@@ -292,7 +289,6 @@ In the context of our journey toward understanding the Lyapunov fractal, we are 
 
 Well, one idea would be to simply take the limit of the average of the logarithm of the magnitude of the derivative:
 
-$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|d/{d x} f_i{(x_i)}|} }
 
 :)
 

@@ -8,6 +8,7 @@ $css(`
         height: 100%;
         user-select: none;
         outline: none;
+        touch-action: none;
     }
 `);
 

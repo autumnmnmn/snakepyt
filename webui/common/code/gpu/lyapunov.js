@@ -16,6 +16,18 @@ $css(`
         top: 0;
         left: 0;
         pointer-events: none;
+
+        color: white;
+        mix-blend-mode: difference;
+    }
+
+    .lyapunov-webgpu .overlay .coords {
+        position: absolute;
+        top: 0.4em;
+        left: 4em;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        border-radius: 0.25em;
     }
 
     .lyapunov-webgpu .color-detector {
@@ -29,6 +41,24 @@ $css(`
         height: 100%;
         background-color: var(--main-background);
         flex-shrink: 0;
+    }
+
+    .lyapunov-webgpu .toggle-overlay {
+        position: relative;
+        top: 0.1em;
+        left: 0.1em;
+        border: none;
+        width: fit-content;
+        padding-left: 0.1em;
+        padding-right: 0.1em;
+        font-size: 2em;
+        line-height: 0.5em;
+        padding-top: 0.1em;
+        padding-bottom: 0.22em;
+
+        background-color: transparent;
+        color: white;
+        mix-blend-mode: difference;
     }
 
     @media (max-width: 768px) {
@@ -372,14 +402,27 @@ sequence BA
         }
     });
 
-    const overlay = $svgElement("svg");
-    overlay.classList = "full overlay";
+    const overlay = $div("full overlay");
 
-    overlay.setAttribute("aria-label",
-        "Overlay visualizing the trajectory \
-         starting from the point under the cursor.")
+    const svgRoot = $svgElement("svg");
+    svgRoot.classList = "full";
 
-    renderStack.appendChild(overlay);
+    const coords = $div("coords");
+
+    renderStack.appendChild(
+        overlay.$with(
+            svgRoot,
+            coords
+        )
+    );
+
+    const toggleOverlay = $element("button");
+    toggleOverlay.classList = "toggle-overlay";
+    toggleOverlay.textContent = "▦";
+    toggleOverlay.title = "toggle overlay";
+
+    renderStack.appendChild(toggleOverlay);
+
 
     const controlContainer = $div("control-container").$with(...controls.dom);
     controlContainer.style.display = "block";
@@ -693,7 +736,12 @@ sequence BA
         ]
     };
 
-    canvasModule.addNavigation("2d", params, render);
+    canvasModule.addNavigation("2d", params, () => {
+        render();
+    },
+    e => {
+        coords.textContent = `cursor: ${e.cMouse.re.toFixed(6)}, ${e.cMouse.im.toFixed(6)}`;
+    });
 
     topmost.$with(controlContainer, renderStack);
 

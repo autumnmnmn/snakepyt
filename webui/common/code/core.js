@@ -52,7 +52,12 @@ window.$replace = async function(target, moduleName, ...args) {
 
         fragment.append(...result.dom);
 
-        grandParent.insertBefore(fragment, parent.nextSibling);
+        if (parent.localName === "p") {
+            grandParent.insertBefore(fragment, parent.nextSibling);
+        }
+        else {
+            parent.insertBefore(fragment, target);
+        }
 
         target.remove();
 

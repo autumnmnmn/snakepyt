@@ -8,7 +8,7 @@ const defaults = { };
 
 const dpr = window.devicePixelRatio || 1;
 
-function add2dNavigationListeners(canvas, params, afterNavigate) {
+function add2dNavigationListeners(canvas, params, afterNavigate, onHover) {
     let isDragging = false;
     let lastMouse = v2.of(0,0);
 
@@ -17,19 +17,23 @@ function add2dNavigationListeners(canvas, params, afterNavigate) {
         isDragging = true;
         lastMouse = v2.fromMouse(e, canvas).scale(dpr);
         canvas.style.cursor = "all-scroll";
+        canvas.setPointerCapture(e.pointerId);
     });
 
     canvas.addEventListener("pointermove", (e) => {
-        if (!isDragging) return;
-
         const pMouse = v2.fromMouse(e, canvas).scale(dpr);
 
         const dims = v2.of(canvas.width, canvas.height);
         const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
+
         const scale = 1.0 / params.zoom;
         const angle = $tau * params.rotation;
 
-        const cMouse = Complex.fromPixel(pMouse, dims, center, scale);
+        const cMouse = Complex.fromPixel(pMouse, dims, center, angle, scale);
+
+        if (onHover) onHover({pMouse, cMouse});
+
+        if (!isDragging) return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -140,10 +144,10 @@ export async function main(spec) {
 
     context.configure({ device: $gpu.device, format: $gpu.canvasFormat });
 
-    function addNavigation(mode, params, afterNavigate) {
+    function addNavigation(mode, params, afterNavigate, onHover) {
         if (mode === "2d") {
             canvas.style.cursor = "crosshair";
-            add2dNavigationListeners(canvas, params, afterNavigate);
+            add2dNavigationListeners(canvas, params, afterNavigate, onHover);
         }
     }
 
