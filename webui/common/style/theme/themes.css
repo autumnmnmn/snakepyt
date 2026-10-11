@@ -13,8 +13,9 @@
 
 * {
     --code-font: "Source Code Pro", 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-    --math-font: "Latin Modern Math", "STIX Two Math", "Cambria Math", "Latin Modern Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
+    --math-font: "Latin Modern Math", "STIX Two Math", "Cambria Math", "STIX Math", "Noto Serif", "DejaVu Serif", serif;
 }
+
 
 *[data-font=serif] {
     --main-font: var(--math-font);
@@ -28,6 +29,12 @@
     --content-width: 65em;
     --font-base: 1rem;
     --math-size: 1.3em;
+}
+
+* {
+    color-scheme: light dark;
+
+    /* TODO scriptless theming refactor */
 }
 
 *[data-theme=whiteboard] {

@@ -123,10 +123,14 @@ hgroup {
     hr {}
 }
 
-div[id=explorer|style=margin-top:1em;border-radius:0.25em;] {
+div[id=explorer|class=dynamic|style=margin-top:1em;border-radius:0.25em;] {
 
 $layout/loadwall[gpu/lyapunov|render-container] { Load interactive renderer? (designed for desktop) }
 
+}
+
+noscript[class=info-box] {
+    It looks like you have scripts turned off. Just so you know, there's an interactive WebGPU-based fractal explorer you're missing out on, and a few other interactive visualizations throughout the article where you'll see a handful of screenshots instead.
 }
 
 
@@ -261,9 +265,13 @@ $math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum
 
 It's my intent that by the end of this section most readers will find this formula to be a perfectly straightforward answer to a perfectly natural question; but to start our journey it's helpful to take a look at the kind of system the Lyapunov exponent is meant to help us understand. One such example, the function $math/math { inline auto f{(x)} = r dot x dot {(1 - x)}}, is known as the a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map}. Let's take a look at how this function behaves across the unit interval $math/math {inline auto [0,1]}:
 
-[class=interactive-plot] { $math/plot { logistic_3d } }
+[class=dynamic interactive-plot] { $math/plot { logistic_3d } }
 
-aside[class=info-box] { In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
+aside[class=dynamic info-box] { In interactive plots, the bounds of the sliders have been set somewhat conservatively, for the sake of readers who may be using low-end devices. However, most of these limits are not enforced for the textual input elements. You may push your device to its limits, at your own peril. }
+
+noscript[class=info-box] {
+    TODO add a gallery of screenshots showcasing the plots
+}
 
 Playing around with the parameters a bit, one can observe a number of basic facts:
 
@@ -277,7 +285,11 @@ li { As r increases further, there are more values to bounce between, and by the
 
 The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from $noted{ almost any $note There do exist other exceptional initial conditions. Try out $math/math { inline auto x_0 = 0.75, r = 4 }, for instance. The set of periodic initial conditions in otherwise-chaotic parametrizations is an interesting object of study that merits a mention even if it's outside the scope of this post. } x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { inline auto x_0 } and plot its behavior for many timesteps:
 
-[class=interactive-plot] { $math/plot { logistic/timeseries } }
+[class=dynamic interactive-plot] { $math/plot { logistic/timeseries } }
+
+noscript[class=info-box] {
+    TODO add a gallery of screenshots showcasing the plots
+}
 
 We can see here that indeed the long-term qualitative behavior of the system is not greatly impacted by our choice of $math/math { inline auto x_0 }. We can see more clearly now the periodic and aperiodic. If you turn up the iteration count, you'll see that plot becomes qualitatively monotonous in the long run in either case. So, plotting the entire timeseries is still a bit of a waste of a dimension in our visualization of this system. Perhaps we should sweep across values of $math/math {inline auto r} and view some kind of summary of the long-term behavior of the system under that parametrization.
 
@@ -457,6 +469,8 @@ hgroup{
     $gallery-loader {}
 }
 }
+
+TODO scriptless gallery improvements
 
 section {
 

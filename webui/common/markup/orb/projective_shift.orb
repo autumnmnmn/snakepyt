@@ -1,4 +1,13 @@
 
+$theme {}
+
+$title { Projective Shift Maps }
+
+$og_description { Investigating a class of functions I think are neat }
+
+$css {
+
+}
 
 div[
     style=
@@ -39,5 +48,11 @@ div[
     i{p.s. you can use the input boxes to exceed the bounds of the sliders}
 
     i{p.p.s. you can save the canvas as an image in the right click menu}
+
+
+see also:
+https://link.springer.com/article/10.1140/epjs/s11734-022-00440-w
+
+some figures strikingly similar to what's shown in this paper can be achieved by setting squoosh_x ~ 0.6
 }
 

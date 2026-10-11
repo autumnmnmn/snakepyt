@@ -8,3 +8,5 @@ import { applyTheme, applyFont } from '/code/theme.js';
 applyTheme(document.body);
 applyFont(document.body);
 
+document.body.dataset.dynamic = true;
+

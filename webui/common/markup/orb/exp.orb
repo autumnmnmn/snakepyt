@@ -14,11 +14,10 @@ hgroup {
 }
 
 
-foo
-
 $math/math { auto underover {{}_a △_b} {} c end }
 
-bar
+
+
 
 }
 

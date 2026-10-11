@@ -53,8 +53,8 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     var diverged_at: u32 = 0;
 
     for (var iter = 0u; iter < uniforms.iterations; iter = iter + 1u) {
-        var final_offset = select(uniforms.seq_len,0,uniforms.offset_mode == 0u);
-        for (var offset = 0u; offset <= final_offset; offset = offset + 1u) {
+        var final_offset = select(uniforms.seq_len,1,uniforms.offset_mode == 0u);
+        for (var offset = 0u; offset < final_offset; offset = offset + 1u) {
             // todo nan and inf checks
             var cond = ((uniforms.seq_mask >> ((iter + offset + uniforms.seq_offset) % uniforms.seq_len)) & 1u) != 0u;
             if (uniforms.stochasticity == 1) {

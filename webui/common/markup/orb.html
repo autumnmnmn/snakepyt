@@ -14,6 +14,9 @@
         <link rel="stylesheet" type="text/css" href="/style/main.css">
     </head>
     <body>
+        <script type="module">
+            document.body.dataset.dynamic = true;
+        </script>
         <script src="/code/core.js"></script>
         <script type="module" src="/code/main.js"></script>
         <script type="module" id="_orb_load">
@@ -35,7 +38,7 @@
             }
             else
             {
-                document.$bake = () => {
+                window.$bake = () => {
                     params.set("bake", "");
                     location.search = params.toString();
                 };
@@ -61,15 +64,20 @@
                                 document.$orbSheets = null;
                             }
 
+                            document.body.dataset.dynamic = false;
+
                             const blob = new Blob(["<!DOCTYPE html>\n" + document.documentElement.outerHTML], {type: 'text/html'});
                             const a = document.createElement('a');
                             a.href = URL.createObjectURL(blob);
                             a.download = `${orb ?? "page"}.html`;
                             a.click();
 
-                            params.delete("bake")
-                            const cleanSearch = params.toString()
-                            location.search = cleanSearch;
+                            setTimeout(() => {
+                                URL.revokeObjectURL(blob);
+                                params.delete("bake")
+                                const cleanSearch = params.toString()
+                                location.search = cleanSearch;
+                            }, 1000);
                         }
                     });
             } else {

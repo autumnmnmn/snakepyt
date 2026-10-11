@@ -9,7 +9,7 @@ const NOSPACE = "$nospace";
 // elements that are themselves inline
 const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q", "cite", "em", "strong"];
 // elements whose innards are meant to be inline
-const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary", "aside", "abbr", "th", "td"];
+const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary", "aside", "abbr", "th", "td", "noscript"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
@@ -284,6 +284,7 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         const script = $element("script");
+        script.classList = "to-replace";
         if (DEBUG) { script.dataset.provenance = "9" }
         const modName = JSON.stringify(tag.substring(1));
         const modContent = JSON.stringify(source.substring(node.content.start, node.content.end));

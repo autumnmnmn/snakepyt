@@ -192,6 +192,8 @@ details.footnotes aside {
     margin-top: 1em;
 
     scroll-margin-top: calc(min(25em, 25vh));
+
+    max-width: var(--content-width);
 }
 
 details.footnotes aside p {
@@ -526,7 +528,7 @@ msup > :last-child {
     width: fit-content;
 }
 
-aside.info-box {
+.info-box {
     margin: auto;
     margin-top: 1em;
     border: 1px solid var(--main-solid);
@@ -536,10 +538,15 @@ aside.info-box {
     max-width: var(--content-width);
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    display: block;
 }
 
-aside.info-box::before {
+.info-box::before {
     content: "ⓘ";
     padding-right: 0.5em;
+}
+
+[data-dynamic=false] .dynamic {
+    display: none;
 }
 
