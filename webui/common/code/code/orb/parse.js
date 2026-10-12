@@ -269,7 +269,7 @@ export function parseSource(input, startIndex = 0) {
         }
     }
 
-    return { nodes, scanPosition };
+    return { nodes, scanPosition, source: input };
 }
 
 function findClosingBracket(input, startIndex) {

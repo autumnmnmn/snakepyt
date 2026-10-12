@@ -56,6 +56,8 @@ article {
 
     height: 100%;
     overflow-y: scroll;
+
+    padding-bottom: 5em;
 }
 
 article section {
@@ -123,7 +125,7 @@ hgroup p {
     font-size: 0.8em;
 }
 
-hgroup:has(h1) hr {
+hgroup:has(h1) + hr {
     position: relative;
     overflow: visible;
     border-bottom: 1px solid var(--main-solid);
@@ -133,7 +135,7 @@ hgroup:has(h1) hr {
     margin-bottom: 0.5em;
 }
 
-hgroup:has(h1) hr::after {
+hgroup:has(h1) + hr::after {
     font-size: 0.8em;
     font-weight: 800;
     content: "ooo";
@@ -181,6 +183,10 @@ nav#contents ol li:not(.numberless)::marker {
 nav#contents ol li.numberless::marker {
     color: var(--main-faded);
     content: "❖ ";
+}
+
+details {
+    margin-top: 1em;
 }
 
 details.footnotes aside {

@@ -14,61 +14,83 @@ const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
 
-const DEBUG = true;
-
 const spaceAfter = /[\w,;.:†]/;
 
-let pendingFootnotes = [];
-let noteGroup = 0;
-let noteIndex = 0;
+const wrapMap = {
+    section: "p",
+    hgroup: "p"
+};
 
 function verbatimText(source, node) {
     let text = source
-        .substring(node.content.start, node.content.end)
+        .substring(node.content.start, node.content.end + 1)
         .replace(/\\([{}])/g, "$1");
     if (text.startsWith("\n")) text = text.substring(1);
     if (text.endsWith("\n")) text = text.substring(0, text.length - 1);
     return text;
 }
 
-export function unplacedNotes() { return pendingFootnotes };
+export function initialState(parserResult) {
+    const state = {
+        nodes: parserResult.nodes,
+        source: parserResult.source,
+        segment: null,
+        wrapperType: null,
+        inlineEnded: false,
+        pendingSpace: false,
+        inline: false,
+        namespace: null,
+        domNodes: [],
+        pendingFootnotes: [],
+        noteGroup: 0,
+        noteIndex: 0,
+        content: node => parserResult.source.substring(node.content.start, node.content.end),
+        contentP: node => parserResult.source.substring(node.content.start, node.content.end + 1),
+        args: node => parserResult.source.substring(node.args.start, node.args.end + 1),
+        verbatim: node => verbatimText(parserResult.source, node)
+    };
+    state.upper = state;
+    return state;
+}
 
-export async function build(nodes, source, inline=false, namespace=null) {
-    let segment = inline ? document.createDocumentFragment() : document.createElement("p");
-    if (DEBUG && !inline) { segment.dataset.provenance = "0" };
-    let inlineEnded = false;
-    let pendingSpace = false;
+export async function build(state) {
+    if (state.segment === null) {
+        state.segment = (state.inline || state.wrapperType === null) ?
+            document.createDocumentFragment() :
+            $element(state.wrapperType, "first wrapper");
+    }
 
-    const domNodes = [];
+    const outer_namespace = state.namespace;
 
-    const outer_namespace = namespace;
+    for (const node of state.nodes) {
 
-    for (const node of nodes) {
         let namespace = outer_namespace;
         const tag = node.tag.symbol;
 
+        const wrapperType = wrapMap[tag] ?? null;
+
         if (tag === TEXT) {
-            const content = source.substring(node.content.start, node.content.end + 1);
-            if (inlineEnded && /[\w(]/.test(content[0])) {
-                segment.appendChild(document.createTextNode(" "));
+            const content = state.contentP(node);
+            if (state.inlineEnded && /[\w(]/.test(content[0])) {
+                state.segment.appendChild(document.createTextNode(" "));
             }
-            segment.appendChild(document.createTextNode(content));
-            inlineEnded = false;
-            pendingSpace = spaceAfter.test(content.at(-1));
+            state.segment.appendChild(document.createTextNode(content));
+            state.inlineEnded = false;
+            state.pendingSpace = spaceAfter.test(content.at(-1));
             continue;
         }
 
         if (tag === BREAK) {
-            if (inline) {
-                const br = document.createElement("br");
-                if (DEBUG) { br.dataset.provenance = "2" };
-                segment.appendChild(br);
+            if (state.inline) {
+                const br = $element("br", "builtin break");
+                state.segment.appendChild(br);
             } else {
-                if (segment.childNodes.length > 0) {
-                    segment.$contextMenu = { override: true };
-                    domNodes.push(segment);
-                    segment = document.createElement("p");
-                    if (DEBUG) { segment.dataset.provenance = "3" };
+                if (state.segment.childNodes.length > 0) {
+                    state.segment.$contextMenu = { override: true };
+                    state.domNodes.push(state.segment);
+                    state.segment = (state.inline || state.wrapperType === null) ?
+                        document.createDocumentFragment() :
+                        $element(state.wrapperType, "post-break wrapper");
                 }
             }
             continue;
@@ -76,7 +98,7 @@ export async function build(nodes, source, inline=false, namespace=null) {
 
         let bracketArgs = [];
         if (node.args.start !== null) {
-            bracketArgs = source.substring(node.args.start, node.args.end + 1).split("|");
+            bracketArgs = state.args(node).split("|");
         }
 
         if (tag in namespacedElements) {
@@ -84,52 +106,69 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         if (inlineElements.includes(tag)) {
-            const tagElement = namespace === null ? document.createElement(tag) : document.createElementNS(namespace, tag);
-            if (DEBUG) { tagElement.dataset.provenance = "4" }
-            if (pendingSpace || inlineEnded) {
-                segment.appendChild(document.createTextNode(" "));
+            const tagElement = namespace === null ?
+                $element(tag, "inline element noNS") :
+                document.createElementNS(namespace, tag);
+
+            if (state.pendingSpace || state.inlineEnded) {
+                state.segment.appendChild(document.createTextNode(" "));
             }
-            pendingSpace = false;
-            const inlineContents = inlineChildrenElements.includes(tag);
+            state.pendingSpace = false;
+            const inlineContents = inlineChildrenElements.includes(tag); // TODO mark
             const children = node.content.nodes === undefined ?
-                [document.createTextNode(verbatimText(source, node))] :
-                await build(node.content.nodes, source, inlineContents, namespace);
+                [document.createTextNode(state.verbatim(node))] :
+                (await build({ ...state,
+                    nodes: node.content.nodes,
+                    inline: inlineContents,
+                    domNodes: [],
+                    segment: null,
+                    wrapperType
+                })).domNodes;
             tagElement.append(...children);
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
                 tagElement.setAttribute(split[0].trim(), split[1]);
             }
-            segment.appendChild(tagElement);
-            inlineEnded = true;
+            state.segment.appendChild(tagElement);
+            state.inlineEnded = true;
             continue;
         }
 
         if (tag[0] !== "$") {
-            if (segment.childNodes.length > 0) {
-                if (!inline) segment.$contextMenu = { override: true };
-                domNodes.push(segment);
-                segment = inline ? document.createDocumentFragment() : document.createElement("p");
-                if (DEBUG && !inline) { segment.dataset.provenance = "5" }
+            if (state.segment.childNodes.length > 0) {
+                if (!state.inline) state.segment.$contextMenu = { override: true };
+                state.domNodes.push(state.segment);
+                state.segment = (state.inline || state.wrapperType !== null) ?
+                    document.createDocumentFragment() :
+                    $element(state.wrapperType, "post-noninline wrapper");
             }
             try {
-                const tagElement = namespace === null ? document.createElement(tag) : document.createElementNS(namespace, tag);
-                if (DEBUG) { tagElement.dataset.provenance = "6" }
+                const tagElement = namespace === null ?
+                    $element(tag, "element") :
+                    document.createElementNS(namespace, tag);
                 for (const arg of bracketArgs) {
                     const split = arg.split("=");
+                    console.log(split);
                     tagElement.setAttribute(split[0].trim(), split[1]);
                 }
                 const inlineContents = inlineChildrenElements.includes(tag);
                 const children = node.content.nodes === undefined ?
-                    [document.createTextNode(verbatimText(source, node))] :
-                    await build(node.content.nodes, source, inlineContents, namespace);
+                    [document.createTextNode(state.verbatim(node))] :
+                    (await build({ ...state,
+                        nodes: node.content.nodes,
+                        inline: inlineContents,
+                        domNodes: [],
+                        segment: null,
+                        wrapperType
+                    })).domNodes;
                 tagElement.append(...children);
-                domNodes.push(tagElement);
+                state.domNodes.push(tagElement);
             }
             catch {
-                const _sp = document.createElement("span");
-                if (DEBUG) { _sp.dataset.provenance = "7" }
+                const _sp = $element("span", "unknown tag");
                 _sp.innerText = ` [no tag "${tag}"] `;
-                segment.appendChild(_sp);
+                state.segment.appendChild(_sp);
+                console.warn(`Nonsense tag: ${tag}`);
             }
             continue;
         }
@@ -137,27 +176,26 @@ export async function build(nodes, source, inline=false, namespace=null) {
         const modNameStr = tag.substring(1);
 
         if (tag === NOSPACE) {
-            pendingSpace = false;
-            inlineEnded = false;
+            state.pendingSpace = false;
+            state.inlineEnded = false;
             continue;
         }
 
         if (tag === "$") {
-            const span = $element("span");
-            if (DEBUG) { span.dataset.provenance = "9" }
+            const span = $element("span", "shorthand span");
             for (const arg of bracketArgs) {
                 const split = arg.split("=");
                 span.setAttribute(split[0].trim(), split[1]);
             }
-            span.innerText = source.substring(node.content.start, node.content.end);
+            span.innerText = state.content(node);
             span.$contextMenu = { override: true };
 
-            if (pendingSpace) {
-                segment.appendChild(document.createTextNode(" "));
+            if (state.pendingSpace) {
+                state.segment.appendChild(document.createTextNode(" "));
             }
-            segment.appendChild(span);
-            pendingSpace = true;
-            inlineEnded = true;
+            state.segment.appendChild(span);
+            state.pendingSpace = true;
+            state.inlineEnded = true;
             continue;
         }
 
@@ -166,95 +204,101 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         if (tag.substring(1) === "scare") {
-            if (pendingSpace) {
-                segment.appendChild(document.createTextNode(" "));
+            if (state.pendingSpace) {
+                state.segment.appendChild(document.createTextNode(" "));
             }
-            segment.appendChild(document.createTextNode("“"));
+            state.segment.appendChild(document.createTextNode("“"));
             // TODO properly parse the innards of this...
-            segment.appendChild(document.createTextNode(source.substring(node.content.start, node.content.end)));
-            segment.appendChild(document.createTextNode("”"));
-            pendingSpace = true;
-            inlineEnded = true;
+            const content = state.content(node);
+            state.segment.appendChild(document.createTextNode(content));
+            state.segment.appendChild(document.createTextNode("”"));
+            state.pendingSpace = true;
+            state.inlineEnded = true;
             continue;
         }
 
         if (tag.substring(1) === "css") {
-            $css(source.substring(node.content.start, node.content.end), true);
+            $css(state.content(node), true);
             continue;
         }
 
         if (tag.substring(1) === "noted") {
-            let content = source.substring(node.content.start, node.content.end);
+            let content = state.content(node);
 
             content = content.split("$note");
 
             const noteSource = content.pop().trim();
             const noted = content.join("$note");
 
-            if (pendingSpace) {
-                segment.appendChild(document.createTextNode(" "));
+            if (state.pendingSpace) {
+                state.segment.appendChild(document.createTextNode(" "));
             }
 
-            const groupNumeral = roman(noteGroup + 1).toLowerCase();
+            const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
 
-            const notedElement = $element("span");
+            const notedElement = $element("span", "footnote backlink target");
             notedElement.classList = "noted";
 
             const parsedContent = parserModule.parseSource(noted);
             await (async () => {
-                const notedContent = await build(parsedContent.nodes, noted, true);
-                notedElement.append(...notedContent);
+                const notedContent = await build({ ...initialState(parsedContent),
+                    inline: true,
+                    upper: state.upper
+                });
+                notedElement.append(...notedContent.domNodes);
             })();
 
-            noteIndex += 1;
-            const noteNumeral = roman(noteIndex).toLowerCase();
+            state.upper.noteIndex += 1;
+            const noteNumeral = roman(state.upper.noteIndex).toLowerCase();
             notedElement.id = `footnote_backref_${groupNumeral}_${noteNumeral}`;
 
-            const link = $element("a");
+            const link = $element("a", "footnote link");
             link.href = `#footnote_${groupNumeral}_${noteNumeral}`
             link.textContent = `${noteNumeral}`;
 
-            segment.append(notedElement, $element("sup").$with(link));
+            state.segment.append(notedElement, $element("sup", "footnote").$with(link));
 
             const parsedNote = parserModule.parseSource(noteSource);
-            const notePromise = build(parsedNote.nodes, noteSource, true);
+            const notePromise = build({ ...initialState(parsedNote),
+                inline: true,
+            });
 
-            pendingFootnotes.push(notePromise);
+            state.pendingFootnotes.push(notePromise);
 
-            inlineEnded = true;
-            pendingSpace = true;
+            state.inlineEnded = true;
+            state.pendingSpace = true;
 
             continue;
         }
 
         if (tag.substring(1) === "footnotes") {
-            let content = source.substring(node.content.start, node.content.end);
+            let content = state.content(node);
 
-            const header = $element("summary");
+            const header = $element("summary", "footnotes");
             header.textContent = content;
 
-            const section = $element("details").$with(header);
+            const section = $element("details", "footnotes").$with(header);
             section.classList = "footnotes";
 
-            const groupNumeral = roman(noteGroup + 1).toLowerCase();
-            noteGroup += 1;
+            const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
+            state.upper.noteGroup += 1;
 
-            const notes = pendingFootnotes;
-            pendingFootnotes = [];
-            noteIndex = 0;
+            const notes = state.pendingFootnotes;
+            state.upper.pendingFootnotes = [];
+            state.upper.noteIndex = 0;
 
             for (const [index, notePromise] of notes.entries()) {
                 const noteNumeral = roman(index + 1).toLowerCase();
 
-                const note = $element("aside");
+                const note = $element("aside", "footnote");
                 note.id = `footnote_${groupNumeral}_${noteNumeral}`;
 
-                const backlink = $element("a");
+                const backlink = $element("a", "footnote backlink");
                 backlink.href = `#footnote_backref_${groupNumeral}_${noteNumeral}`;
                 backlink.textContent = noteNumeral;
 
                 (async () => {
-                    note.append(...(await notePromise));
+                    note.append(...(await notePromise).domNodes);
                 })();
 
                 section.appendChild(note.$with(
@@ -263,7 +307,7 @@ export async function build(nodes, source, inline=false, namespace=null) {
                 ));
             }
 
-            segment.appendChild(section);
+            state.domNodes.push(section);
 
 
 
@@ -271,39 +315,40 @@ export async function build(nodes, source, inline=false, namespace=null) {
         }
 
         if (tag.substring(1) === "title") {
-            const title = source.substring(node.content.start, node.content.end).trim();
+            const title = state.content(node).trim();
             document.title = title;
-            document.querySelector('meta[property="og:title"]').setAttribute('content', title)
+            document.querySelector('meta[property="og:title"]')
+                .setAttribute('content', title)
             continue;
         }
 
         if (tag.substring(1,4) === "og_") {
-            const content = source.substring(node.content.start, node.content.end).trim();
-            document.querySelector(`meta[property="og:${tag.substring(4)}"]`).setAttribute('content', content)
+            const content = state.content(node).trim();
+            document.querySelector(`meta[property="og:${tag.substring(4)}"]`)
+                .setAttribute('content', content)
             continue;
         }
 
-        const script = $element("script");
+        const script = $element("script", "self-removing script");
         script.classList = "to-replace";
-        if (DEBUG) { script.dataset.provenance = "9" }
         const modName = JSON.stringify(tag.substring(1));
-        const modContent = JSON.stringify(source.substring(node.content.start, node.content.end));
+        const modContent = JSON.stringify(state.content(node));
         const modArgs = JSON.stringify(bracketArgs);
         script.innerText = `$replace(document.currentScript, ${modName}, ...${modArgs}, ${modContent});`;
 
-        if (pendingSpace || inlineEnded) {
-            segment.appendChild(document.createTextNode(" "));
+        if (state.pendingSpace || state.inlineEnded) {
+            state.segment.appendChild(document.createTextNode(" "));
         }
-        pendingSpace = false;
-        segment.appendChild(script);
-        inlineEnded = true;
+        state.pendingSpace = false;
+        state.segment.appendChild(script);
+        state.inlineEnded = true;
     }
 
-    if (segment.childNodes.length > 0) {
-        if (!inline) segment.$contextMenu = { items: [], override: true };
-        domNodes.push(segment);
+    if (state.segment.childNodes.length > 0) {
+        if (!state.inline) state.segment.$contextMenu = { items: [], override: true };
+        state.domNodes.push(state.segment);
     }
 
-    return domNodes;
+    return state;
 }
 

@@ -150,9 +150,19 @@ Object.defineProperty(Element.prototype, "$attrs", {
     enumerable: false
 });
 
-window.$element = (name) => document.createElement(name);
-window.$div = function (className = "") {
-    const div = $element("div");
+const DEBUG = true;
+
+function element(tag, provenance=null) {
+    const element = document.createElement(tag);
+    if (DEBUG && provenance !== null) {
+        element.dataset.provenance = provenance;
+    }
+    return element;
+}
+
+window.$element = element;
+window.$div = function (className = "", provenance=null) {
+    const div = $element("div", provenance);
     div.className = className;
     return div;
 }
