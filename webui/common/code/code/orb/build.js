@@ -1,6 +1,8 @@
 
 import * as parserModule from "/code/code/orb/parse.js";
 import { asciiModernRomanNumeral as roman } from "/code/math/roman.js";
+import { text, builtin_break, scare, title } from "/code/code/orb/builtin/core.js";
+import { noted, footnotes } from "/code/code/orb/builtin/notes.js";
 
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
@@ -14,7 +16,6 @@ const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
 
-const spaceAfter = /[\w,;.:†]/;
 
 const wrapMap = {
     section: "p",
@@ -23,7 +24,7 @@ const wrapMap = {
 
 function verbatimText(source, node) {
     let text = source
-        .substring(node.content.start, node.content.end + 1)
+        .substring(node.content.start, node.content.end)
         .replace(/\\([{}])/g, "$1");
     if (text.startsWith("\n")) text = text.substring(1);
     if (text.endsWith("\n")) text = text.substring(0, text.length - 1);
@@ -45,9 +46,9 @@ export function initialState(parserResult) {
         noteGroup: 0,
         noteIndex: 0,
         content: node => parserResult.source.substring(node.content.start, node.content.end),
-        contentP: node => parserResult.source.substring(node.content.start, node.content.end + 1),
-        args: node => parserResult.source.substring(node.args.start, node.args.end + 1),
-        verbatim: node => verbatimText(parserResult.source, node)
+        args: node => parserResult.source.substring(node.args.start, node.args.end),
+        verbatim: node => verbatimText(parserResult.source, node),
+        build: build
     };
     state.upper = state;
     return state;
@@ -70,29 +71,12 @@ export async function build(state) {
         const wrapperType = wrapMap[tag] ?? null;
 
         if (tag === TEXT) {
-            const content = state.contentP(node);
-            if (state.inlineEnded && /[\w(]/.test(content[0])) {
-                state.segment.appendChild(document.createTextNode(" "));
-            }
-            state.segment.appendChild(document.createTextNode(content));
-            state.inlineEnded = false;
-            state.pendingSpace = spaceAfter.test(content.at(-1));
+            await text(node, state);
             continue;
         }
 
         if (tag === BREAK) {
-            if (state.inline) {
-                const br = $element("br", "builtin break");
-                state.segment.appendChild(br);
-            } else {
-                if (state.segment.childNodes.length > 0) {
-                    state.segment.$contextMenu = { override: true };
-                    state.domNodes.push(state.segment);
-                    state.segment = (state.inline || state.wrapperType === null) ?
-                        document.createDocumentFragment() :
-                        $element(state.wrapperType, "post-break wrapper");
-                }
-            }
+            await builtin_break(node, state);
             continue;
         }
 
@@ -148,7 +132,6 @@ export async function build(state) {
                     document.createElementNS(namespace, tag);
                 for (const arg of bracketArgs) {
                     const split = arg.split("=");
-                    console.log(split);
                     tagElement.setAttribute(split[0].trim(), split[1]);
                 }
                 const inlineContents = inlineChildrenElements.includes(tag);
@@ -166,9 +149,9 @@ export async function build(state) {
             }
             catch {
                 const _sp = $element("span", "unknown tag");
-                _sp.innerText = ` [no tag "${tag}"] `;
+                _sp.innerText = ` [error building tag "${tag}"] `;
                 state.segment.appendChild(_sp);
-                console.warn(`Nonsense tag: ${tag}`);
+                console.warn(`error in tag: ${tag}`);
             }
             continue;
         }
@@ -204,16 +187,7 @@ export async function build(state) {
         }
 
         if (tag.substring(1) === "scare") {
-            if (state.pendingSpace) {
-                state.segment.appendChild(document.createTextNode(" "));
-            }
-            state.segment.appendChild(document.createTextNode("“"));
-            // TODO properly parse the innards of this...
-            const content = state.content(node);
-            state.segment.appendChild(document.createTextNode(content));
-            state.segment.appendChild(document.createTextNode("”"));
-            state.pendingSpace = true;
-            state.inlineEnded = true;
+            await scare(node, state);
             continue;
         }
 
@@ -223,102 +197,17 @@ export async function build(state) {
         }
 
         if (tag.substring(1) === "noted") {
-            let content = state.content(node);
-
-            content = content.split("$note");
-
-            const noteSource = content.pop().trim();
-            const noted = content.join("$note");
-
-            if (state.pendingSpace) {
-                state.segment.appendChild(document.createTextNode(" "));
-            }
-
-            const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
-
-            const notedElement = $element("span", "footnote backlink target");
-            notedElement.classList = "noted";
-
-            const parsedContent = parserModule.parseSource(noted);
-            await (async () => {
-                const notedContent = await build({ ...initialState(parsedContent),
-                    inline: true,
-                    upper: state.upper
-                });
-                notedElement.append(...notedContent.domNodes);
-            })();
-
-            state.upper.noteIndex += 1;
-            const noteNumeral = roman(state.upper.noteIndex).toLowerCase();
-            notedElement.id = `footnote_backref_${groupNumeral}_${noteNumeral}`;
-
-            const link = $element("a", "footnote link");
-            link.href = `#footnote_${groupNumeral}_${noteNumeral}`
-            link.textContent = `${noteNumeral}`;
-
-            state.segment.append(notedElement, $element("sup", "footnote").$with(link));
-
-            const parsedNote = parserModule.parseSource(noteSource);
-            const notePromise = build({ ...initialState(parsedNote),
-                inline: true,
-            });
-
-            state.pendingFootnotes.push(notePromise);
-
-            state.inlineEnded = true;
-            state.pendingSpace = true;
-
+            await noted(node, state);
             continue;
         }
 
         if (tag.substring(1) === "footnotes") {
-            let content = state.content(node);
-
-            const header = $element("summary", "footnotes");
-            header.textContent = content;
-
-            const section = $element("details", "footnotes").$with(header);
-            section.classList = "footnotes";
-
-            const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
-            state.upper.noteGroup += 1;
-
-            const notes = state.pendingFootnotes;
-            state.upper.pendingFootnotes = [];
-            state.upper.noteIndex = 0;
-
-            for (const [index, notePromise] of notes.entries()) {
-                const noteNumeral = roman(index + 1).toLowerCase();
-
-                const note = $element("aside", "footnote");
-                note.id = `footnote_${groupNumeral}_${noteNumeral}`;
-
-                const backlink = $element("a", "footnote backlink");
-                backlink.href = `#footnote_backref_${groupNumeral}_${noteNumeral}`;
-                backlink.textContent = noteNumeral;
-
-                (async () => {
-                    note.append(...(await notePromise).domNodes);
-                })();
-
-                section.appendChild(note.$with(
-                    $element("sup").$with(backlink),
-                    document.createTextNode(" ")
-                ));
-            }
-
-            state.domNodes.push(section);
-
-
-
+            await footnotes(node, state);
             continue;
         }
 
         if (tag.substring(1) === "title") {
-            const title = state.content(node).trim();
-            document.title = title;
-            document.querySelector('meta[property="og:title"]')
-                .setAttribute('content', title)
+            await title(node, state);
             continue;
         }
 

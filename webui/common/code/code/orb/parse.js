@@ -64,7 +64,7 @@ export function parseSource(input, startIndex = 0) {
         if (preContentStart !== null) {
             nodes.push({
                 tag: {symbol: TEXT, start: null, end: null},
-                content: {start: preContentStart, end: preContentEnd},
+                content: {start: preContentStart, end: preContentEnd + 1},
                 args: {start: null, end: null},
                 origin: "text_before_directive"
             });
@@ -92,7 +92,7 @@ export function parseSource(input, startIndex = 0) {
         }
 
         if (!escapeNext && char === "]" && argStart !== null && argEnd === null) {
-            argEnd = scanPosition - 1;
+            argEnd = scanPosition;
             scanPosition++;
             continue;
         }
@@ -101,7 +101,7 @@ export function parseSource(input, startIndex = 0) {
             if (preContentStart !== null) {
                 nodes.push({
                     tag: {symbol: TEXT, start: null, end: null},
-                    content: {start: preContentStart, end: preContentEnd},
+                    content: {start: preContentStart, end: preContentEnd + 1},
                     args: {start: null, end: null},
                     origin: "text_before_block"
                 });
@@ -117,7 +117,7 @@ export function parseSource(input, startIndex = 0) {
                 // args-only tag => implicit div
                 tag = tagStart === argStart - 1 ?
                     "div" : input.substring(tagStart, argStart - 1);
-                argEnd = tagEnd;
+                argEnd = tagEnd + 1;
             } else {
                 if (argStart !== null) {
                     tag = tagStart === argStart - 1 ?
@@ -183,7 +183,7 @@ export function parseSource(input, startIndex = 0) {
                     if (textStart !== null) {
                         nodes.push({
                             tag: {symbol: TEXT, start: null, end: null},
-                            content: {start: textStart, end: textEnd},
+                            content: {start: textStart, end: textEnd + 1},
                             args: {start: argStart, end: argEnd},
                             origin: "text_before_break"
                         });
@@ -262,7 +262,7 @@ export function parseSource(input, startIndex = 0) {
             const end = Math.max(preContentEnd ?? -Infinity, tagEnd ?? -Infinity);
             nodes.push({
                 tag: {symbol: TEXT, start: null, end: null},
-                content: { start: start, end: end },
+                content: { start: start, end: end + 1 },
                 args: {start: null, end: null},
                 origin: "trailing_text"
             });

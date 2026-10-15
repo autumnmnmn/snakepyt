@@ -150,7 +150,7 @@ Object.defineProperty(Element.prototype, "$attrs", {
     enumerable: false
 });
 
-const DEBUG = true;
+const DEBUG = false;
 
 function element(tag, provenance=null) {
     const element = document.createElement(tag);
