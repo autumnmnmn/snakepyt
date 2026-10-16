@@ -19,6 +19,7 @@ const obs = new IntersectionObserver((entries) => {
 
 
 export async function main(target, settings) {
+    return;
     document.querySelectorAll('img[src*="/thumb/"]').forEach(img => {
         let full_src = img.src.replace('/thumb/', '/lightbox/').replace("avif", "webp");
         obs.observe(img);
