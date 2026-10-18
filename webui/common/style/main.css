@@ -120,6 +120,11 @@ hgroup h2, hgroup p {
     display: inline;
 }
 
+h3 {
+    margin-top: 1em;
+    font-size: 1em;
+}
+
 hgroup p {
     padding-left: 1em;
     font-size: 0.8em;
@@ -155,7 +160,6 @@ nav#contents {
     scroll-margin-top: calc(min(25em, 25vh));
     width: fit-content;
     padding-right: 1em;
-    border-radius: 0.25em;
     line-height: 1.25em;
 }
 
@@ -163,6 +167,7 @@ nav#contents ol {
     max-width: var(--content-width);
     list-style: none;
     counter-reset: roman;
+    border-radius: 0.25em;
 }
 
 nav#contents ol li {
@@ -268,6 +273,10 @@ p {
     max-width: var(--content-width);
 }
 
+h3 + p {
+    margin-top: 0.5em;
+}
+
 a {
     color: var(--main-solid);
     text-decoration-color: var(--main-solid);
@@ -371,20 +380,24 @@ thead th {
 
 figure {
     max-width: var(--content-width);
-    position: relative;
 }
 
 figure img {
-    display: block;
     max-width: 100%;
     max-height: 50vh;
-    margin: auto;
 }
 
 figure figcaption {
     width: fit-content;
     margin: auto;
     font-size: 0.8em;
+}
+
+figure .linkAligner {
+    position: relative;
+    width: fit-content;
+    display: block;
+    margin: auto;
 }
 
 figure img + a {
@@ -437,9 +450,14 @@ figure:hover img + a {
 }
 
 
-:target {
+:target, nav:target ol {
     animation: target-flash 0.5s ease-out;
     background-color: var(--main-ghostly);
+}
+
+nav:target {
+    animation: none;
+    background: none;
 }
 
 @keyframes target-flash {

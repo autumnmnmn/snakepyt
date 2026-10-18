@@ -36,6 +36,27 @@ function valueProxy(varMap) {
                     console.log(value);
                 }
             }
+            const selection = v.options ? v.options.find(opt => opt.value == value).label : value;
+            for (const dep of v.dependents) {
+                if (!dep.values) {
+                    console.warn(`${v.varName}: dependent ${dep.varName} should declare values!`);
+                    continue;
+                }
+                let found = false;
+                for (const desired of dep.values) {
+                    if (desired === selection) found = true;
+                }
+                if (!v.panels) continue;
+                for (const panel of v.panels) {
+                    const control = panel[dep.varName];
+                    if (!control) continue;
+                    if (found) {
+                        control.show();
+                    } else {
+                        control.hide();
+                    }
+                }
+            }
             return true;
         }
     })
@@ -172,7 +193,26 @@ export async function loadShader(shaderName, substitutions = {}) {
             }
         });
 
-        const buildNumber = (v, afterChangeCallback) => ({
+        vars.forEach(v => {
+            const selectTag = getTag(v, "select");
+
+            if (selectTag) {
+                const rawOptions = selectTag[1].split(',').map(s => s.trim());
+
+                const options = rawOptions.map((label, value) => ({ label, value }));
+                v.options = options;
+            }
+
+            const boolTag = getTag(v, "bool");
+
+            if (boolTag) {
+                v.options = [{label: "true", value: 1}, {label: "false", value: 0}];
+            }
+        });
+
+        const varProxy = valueProxy(varMap);
+
+        const buildNumber = (v, proxy, afterChangeCallback) => ({
             type: "number",
             label: v.uiName,
             name: v.varName,
@@ -181,70 +221,49 @@ export async function loadShader(shaderName, substitutions = {}) {
             max: v.max,
             step: v.isIntegral ? 1 : 0.001,
             onUpdate: (value, set, panel, doCallback = true) => {
-                v.value = value;
-                if (v.hardMin && v.value < v.min) {
-                    v.value = v.min;
-                    set(v.value);
+                let finalValue = value;
+                if (v.hardMin && finalValue < v.min) {
+                    finalValue = v.min;
+                    set(finalValue);
                 }
-                if (v.hardMax && v.value > v.max) {
-                    v.value = v.max;
-                    set(v.value);
+                if (v.hardMax && finalValue > v.max) {
+                    finalValue = v.max;
+                    set(finalValue);
                 }
+                proxy[v.varName] = finalValue;
                 if (doCallback) afterChangeCallback();
             },
             register: (registration) => v.registrations.push(registration),
             hidden: v.hidden
         });
 
-        const buildBool = (v, afterChangeCallback) => ({
-            type: "toggle",
-            label: v.uiName,
-            name: v.varName,
-            value: !!v.value,
-            hidden: v.hidden,
-            resolveDependency: desiderata => desiderata.some(value => (!!v.value) === (!!value)),
-            onUpdate: (checked, set, panelState, doCallback = true) => {
-                v.value = checked ? 1 : 0;
-                for (const dep of v.dependents) {
-                    // TODO allow $depend(boolval=false) as well
-                    checked ? panelState[dep.varName]?.show?.() : panelState[dep.varName]?.hide?.();
-                }
-                if (doCallback) afterChangeCallback();
-            },
-            register: (registration) => v.registrations.push(registration),
-            subcontrols: v.dependents.length === 0 ? null : []
-        });
+        const buildBool = (v, proxy, afterChangeCallback) => {
+            return {
+                type: "toggle",
+                label: v.uiName,
+                name: v.varName,
+                value: !!v.value,
+                hidden: v.hidden,
+                onUpdate: (checked, set, panelState, doCallback = true) => {
+                    proxy[v.varName] = checked ? 1 : 0;
+                    if (doCallback) afterChangeCallback();
+                },
+                register: (registration) => v.registrations.push(registration),
+                subcontrols: v.dependents.length === 0 ? null : []
+            }
+        };
 
-        const buildSelect = (v, options_raw, afterChangeCallback) => {
+        const buildSelect = (v, proxy, afterChangeCallback) => {
             // TODO more complex option mappings than just enum from 0 up
-            const options = options_raw.map((label, value) => ({ label, value }));
             return {
                 type: "select",
                 label: v.uiName,
                 name: v.varName,
-                options: options,
+                options: v.options,
                 value: v.value,
                 hidden: v.hidden,
-                resolveDependency: desiderata => desiderata.some(desideratum =>
-                    desideratum === options.find(o => o.value == v.value)?.label
-                ),
                 onUpdate: (value, set, panelState, doCallback = true) => {
-                    v.value = value;
-                    const label = options.find(o => o.value == value)?.label;
-                    for (const dep of v.dependents) {
-                        if (!dep.values) {
-                            console.warn(`${v.varName}: dependent ${dep.varName} should declare values!`);
-                            continue;
-                        }
-                        let found = false;
-                        for (const desired of dep.values) {
-                            if (label === desired) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        found ? panelState[dep.varName]?.show?.() : panelState[dep.varName]?.hide?.();
-                    }
+                    proxy[v.varName] = value;
                     if (doCallback) afterChangeCallback();
                 },
                 register: (registration) => v.registrations.push(registration),
@@ -254,7 +273,7 @@ export async function loadShader(shaderName, substitutions = {}) {
 
         const processedComposites = new Set();
 
-        const buildColor = (composite, afterChangeCallback) => {
+        const buildColor = (composite, proxy, afterChangeCallback) => {
             if (processedComposites.has(composite)) return null;
             processedComposites.add(composite);
 
@@ -275,35 +294,39 @@ export async function loadShader(shaderName, substitutions = {}) {
 
                     if (doCallback) afterChangeCallback();
                 },
-                register: (registration) => composite.registrations.push(registration),
+                register: (registration) => composite.registrations.push(registration)
             };
         };
 
-        const buildControl = (v, afterChangeCallback) => {
+        const buildControl = (v, proxy, afterChangeCallback) => {
             if (getTag(v, "bool")) {
-                return buildBool(v, afterChangeCallback);
+                return buildBool(v, proxy, afterChangeCallback);
             }
 
             if (getTag(v, "color")) {
                 if (v.isCompositeSubvar) return null;
 
-                return buildColor(v, afterChangeCallback);
+                return buildColor(v, proxy, afterChangeCallback);
             }
 
             const selectTag = getTag(v, "select")
 
             if (selectTag) {
-                return buildSelect(v, selectTag[1].split(',').map(s => s.trim()), afterChangeCallback);
+                return buildSelect(v, proxy, afterChangeCallback);
             }
 
             if (v.subVars) return;
 
-            return buildNumber(v, afterChangeCallback);
+            return buildNumber(v, proxy, afterChangeCallback);
         };
 
         const getControlSettings = (afterChangeCallback) => {
             const controls = vars.filter(v => v.showControl)
-                .map(v => buildControl(v, afterChangeCallback))
+                .map(v => {
+                    const control = buildControl(v, varProxy, afterChangeCallback);
+                    if (control) control.origin = v;
+                    return control;
+                })
                 .filter(v => v);
 
             const controlMap = {};
@@ -325,6 +348,24 @@ export async function loadShader(shaderName, substitutions = {}) {
 
             return topLevelControls;
         };
+
+        const virtualPanel = {};
+
+        vars.forEach(v => {
+            virtualPanel[v.varName] = {
+                dom: [],
+                set: (value) => v.value = value,
+                show: () => v.hidden = false,
+                hide: () => v.hidden = true
+            };
+            v.panels = [virtualPanel];
+        });
+
+        vars.forEach(v => {
+            if (v.value !== undefined) {
+                varProxy[v.varName] = v.value
+            }
+        });
 
         let bufferSize = 0;
         const bufferAlign = Math.max(...vars.flatMap(v => v.aligns));
@@ -367,7 +408,7 @@ export async function loadShader(shaderName, substitutions = {}) {
         return {
             group: regexMatch[1],
             binding: regexMatch[2],
-            vars: valueProxy(varMap),
+            vars: varProxy,
             varInfo: varMap,
             getControlSettings,
             gpuBuffer,

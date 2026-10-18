@@ -133,9 +133,11 @@ noscript[class=info-box] {
 }
 
 
-h2[id=outline|style=margin-top:1em]{ Contents }
 
-nav[id=contents] { ol[type=I] {
+nav[id=contents] {
+    h2[id=outline|style=margin-top:1em]{ Contents }
+
+    ol[type=I] {
     li[class=numberless] { a[href=#explorer] { Interactive Renderer } br {}
     A WebGPU-based fractal explorer for the logistic Lyapunov fractals, which some might find to be a more compelling introduction to the λ-diagrams than a textual writeup.
     }
@@ -151,6 +153,9 @@ nav[id=contents] { ol[type=I] {
     li[class=numberless] { a[href=#endnote] { Endnote } }
 }}
 
+$contents {}
+
+
 
 
 
@@ -161,6 +166,11 @@ hgroup{
                                 § I. Mario Markus's λ-Diagrams
     }
     a[href=#contents]{ ↩ contents }
+}
+
+$header { Mario Markus's λ-Diagrams
+$description
+An account of the λ-Diagram and its history.
 }
 
 The a[href=https://en.wikipedia.org/wiki/Lyapunov_fractal]{Lyapunov fractal} was
@@ -267,14 +277,7 @@ hgroup{
 
 Consider a λ-diagram with periodic forcing sequence i{AB}, and another with sequence i{BA}. If all we could see was a segment in the middle of the ongoing sequence: i{...ABABABABAB...}. We wouldn't be able to tell which of these systems we were looking at. And indeed when we look at the i{AB} and i{BA} logistic λ-diagrams, we find they are substantially similar:
 
-figure {
-img[src=/media/lyapunov/full/ab_ba_comparison.webp]{}
-
-a[href=/media/lyapunov/full/ab_ba_comparison.webp|target=_blank|title=Open full-size in new tab]{↗}
-
-figcaption { Figure 1: Comparison, Logistic λ-diagram AB (left) vs BA (right) }
-}
-
+$figure[lyapunov|ab_ba_comparison]{ Comparison, Logistic λ-diagram AB (left) vs BA (right) }
 
 They disagree only in a small region, and basically only on which $scare{overlapping stalk} is $scare{on top}. More generally than the i{AB}/ i{BA} case, the same sort of pattern holds for any sequences which only differ up to em{starting offset within the sequence}. For instance, the sequences i{ABA}, i{BAA}, i{AAB} all belong to the same family, the middle of the sequence looking something like i{...ABAABAABAABA...}.
 
@@ -339,31 +342,54 @@ While the first few of these can be worked out by hand (an exercise for the read
     img[src=/media/lyapunov/full/curve_d10.webp] {}
 }
 
+$comment {
+$figure[
+    lyapunov/curve_composite: Composite of first 10 iterations.
+    lyapunov/curve_d01: P_1 = 0
+    lyapunov/curve_d02: P_2 = 0
+    lyapunov/curve_d03: P_3 = 0
+] {
+    
+}}
+
 You can see how these curves accumulate and form the "backbone" of the fractal in the interactive renderer by setting "skip" to 1 and "iterations" to 2, and then gradually incrementing the iteration count. The negative-infinite exponents pleasingly trace out exactly these algebraic curves. It's also interesting to note the alternation between two different qualitative types of curve on even and odd iterations. I have not put much thought into that, but I'm sure there's an interesting reason for it.
 
 Of course, in the original papers, the first 600 iterations are skipped. Some of the algebraic curves from early on are lost due to this, but others reassert themselves no matter how late the accumulation begins. Indeed even with "skip" set to 1 in the renderer you can see that many of the lines appear to fade away quite quickly as the iteration count grows. In reality the limit does still diverge at every point on any of these curves, it's just that the ones that fade have vanishing influence on nearby points. The curves that very em{visibly} remain are those that are included in infinitely many later curves. If it is only these "limiting superstable curves" one cares about, however, there is no finite number of iterations we can skip to exclude all the rest. But I don't feel like pursuing that line of thought any further here and now.
 
 Anyway, I think this is a pretty neat decomposition of much of the structure of the fractal.
 
+$figure[lyapunov|decomp_stalks] { Decomposition of the Logistic λ-diagram AB (Offset-Minimum mode) into $scare{stalks}. }
 
-figure {
-    img[src=/media/lyapunov/card/decomp_stalks.avif|loading=lazy|style=background-color:#ff00ff] {}
+$figure[lyapunov|decomp_crosses] { Decomposition of the Logistic λ-diagram AB (Offset-Minimum mode) into $scare{crosses}. }
 
-    figcaption { Figure 2: Decomposition of the Logistic λ-diagram AB (Offset-Minimum mode) into $scare{stalks}. }
-}
-
-figure {
-    img[src=/media/lyapunov/card/decomp_crosses.avif|loading=lazy] {}
-
-    figcaption { Figure 3: Decomposition of the Logistic λ-diagram AB (Offset-Minimum mode) into $scare{crosses}. }
 }
 
 
 section {
 
-h2[id=controls_notes]{ ❖ Demystifying the Renderer Controls }
+h2[id=controls_notes]{ ❖ Renderer Controls }
 
-h3[style=text-decoration:underline]{Presets}
+h3{Mouse Controls}
+
+You can click and drag to translate the view around.
+
+Scroll up to zooms in, and down to zoom out.
+
+There is a grid icon in the upper-left corner of the canvas. Clicking there will toggle the overlay.
+
+h3{Context Menu}
+
+If you right-click anywhere on the canvas, it'll open a context menu that lets you save the canvas, or an upscaled version which can be 2, 3, or 4 times the resolution on each axis (16x total image size). Note that depending on your settings, some of these upscaled renders can take a few moments, or even end up getting killed by the browser for taking too long. If you have a very large canvas already, some of the upscaled options may fail to run, due to technical limitations on buffer sizes. I have some workarounds in mind for these issues, but that is not a development priority at present.
+
+Another option in the menu is to toggle the visibility of the control panel, to get a little bit more canvas space.
+
+Finally, you can exit the renderer entirely. This will leave behind a blank canvas, where you can load up arbitrary modules. It's a bit of a work-in-progress system and I won't try to document it in full here. Think of it as falling into the backrooms. The main thing you'll probably want to do is get back out, by opening the context menu and selecting $scare{Lyapunov}. Note that you can also create resizable regions with the $scare{row} and $scare{col} options and then create multiple renderers, or just have one that you can conveniently resize to the aspect ratio of your liking.
+
+h3{Keyboard Shortcuts}
+
+You can press F to toggle fullscreen mode.
+
+h3{Presets}
 
 Presets in the interactive renderer have been set up to approximately reproduce the figures from Markus's 1989 and 1990 papers. The renders are not 100% faithful, but they are best-effort. The papers specify the r-value sequences and the coordinate bounds of each render. They do not specify the starting offset in the sequence, which, as I discovered in the course of implementing the presets, is not always 0. This page's interactive renderer has a variable width and height, so I calculated a center point and zoom value that would approximately match the original bounds. It may be necessary to resize one's window, zoom, and pan around, in order to get a more exact match to what is present in the original papers. Some of the original renders also exhibit anisotropic stretching. My renderer does not at present have the capacity to replicate this effect. The original papers specify the $math/math {inline auto x_0} values for many of the figures, but I found that some visual features (for example, in 1989 Fig. 1(a)) could not be reproduced without modifying $math/math {inline auto x_0} slightly. I opted to make this modification, prioritizing visual similarity with the original visualization over precise copying of parameters.
 

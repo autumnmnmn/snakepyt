@@ -202,6 +202,7 @@ export async function main(spec, panelState) {
 
 
     const set = (value) => {
+        if (field.value == value) return;
         slider.value = value;
         field.value = value;
     }
@@ -223,6 +224,7 @@ export async function main(spec, panelState) {
     });
 
     field.addEventListener("input", () => {
+        if (Number.isNaN(Number(field.value))) return;
         slider.value = field.value;
         copyable_value.innerText = field.value;
         spec.onUpdate?.(Number(field.value), set, panelState);

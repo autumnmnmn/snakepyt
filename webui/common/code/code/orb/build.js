@@ -3,6 +3,8 @@ import * as parserModule from "/code/code/orb/parse.js";
 import { asciiModernRomanNumeral as roman } from "/code/math/roman.js";
 import { text, builtin_break, scare, title } from "/code/code/orb/builtin/core.js";
 import { noted, footnotes } from "/code/code/orb/builtin/notes.js";
+import { figure } from "/code/code/orb/builtin/figure.js";
+import { contents, header } from "/code/code/orb/builtin/article.js";
 
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
@@ -10,8 +12,6 @@ const NOSPACE = "$nospace";
 
 // elements that are themselves inline
 const inlineElements = ["b", "i", "span", "sub", "sup", "a", "abbr", "q", "cite", "em", "strong"];
-// elements whose innards are meant to be inline
-const inlineChildrenElements = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "button", "legend", "a", "b", "i", "sup", "sub", "cite", "em", "strong", "li", "summary", "aside", "abbr", "th", "td", "noscript"];
 const namespacedElements = {
     "svg": "http://www.w3.org/2000/svg"
 };
@@ -39,7 +39,6 @@ export function initialState(parserResult) {
         wrapperType: null,
         inlineEnded: false,
         pendingSpace: false,
-        inline: false,
         namespace: null,
         domNodes: [],
         pendingFootnotes: [],
@@ -56,7 +55,7 @@ export function initialState(parserResult) {
 
 export async function build(state) {
     if (state.segment === null) {
-        state.segment = (state.inline || state.wrapperType === null) ?
+        state.segment = (state.wrapperType === null) ?
             document.createDocumentFragment() :
             $element(state.wrapperType, "first wrapper");
     }
@@ -98,12 +97,10 @@ export async function build(state) {
                 state.segment.appendChild(document.createTextNode(" "));
             }
             state.pendingSpace = false;
-            const inlineContents = inlineChildrenElements.includes(tag); // TODO mark
             const children = node.content.nodes === undefined ?
                 [document.createTextNode(state.verbatim(node))] :
                 (await build({ ...state,
                     nodes: node.content.nodes,
-                    inline: inlineContents,
                     domNodes: [],
                     segment: null,
                     wrapperType
@@ -120,9 +117,9 @@ export async function build(state) {
 
         if (tag[0] !== "$") {
             if (state.segment.childNodes.length > 0) {
-                if (!state.inline) state.segment.$contextMenu = { override: true };
+                //if (!state.inline) state.segment.$contextMenu = { override: true };
                 state.domNodes.push(state.segment);
-                state.segment = (state.inline || state.wrapperType !== null) ?
+                state.segment = (state.wrapperType !== null) ?
                     document.createDocumentFragment() :
                     $element(state.wrapperType, "post-noninline wrapper");
             }
@@ -134,12 +131,10 @@ export async function build(state) {
                     const split = arg.split("=");
                     tagElement.setAttribute(split[0].trim(), split[1]);
                 }
-                const inlineContents = inlineChildrenElements.includes(tag);
                 const children = node.content.nodes === undefined ?
                     [document.createTextNode(state.verbatim(node))] :
                     (await build({ ...state,
                         nodes: node.content.nodes,
-                        inline: inlineContents,
                         domNodes: [],
                         segment: null,
                         wrapperType
@@ -183,6 +178,21 @@ export async function build(state) {
         }
 
         if (tag.substring(1) === "comment") {
+            continue;
+        }
+
+        if (tag.substring(1) === "figure") {
+            await figure(node, state, bracketArgs);
+            continue;
+        }
+
+        if (tag.substring(1) === "contents") {
+            await contents(node, state, bracketArgs);
+            continue;
+        }
+
+        if (tag.substring(1) === "header") {
+            await header(node, state, bracketArgs);
             continue;
         }
 
@@ -234,7 +244,7 @@ export async function build(state) {
     }
 
     if (state.segment.childNodes.length > 0) {
-        if (!state.inline) state.segment.$contextMenu = { items: [], override: true };
+        //if (!state.inline) state.segment.$contextMenu = { items: [], override: true };
         state.domNodes.push(state.segment);
     }
 

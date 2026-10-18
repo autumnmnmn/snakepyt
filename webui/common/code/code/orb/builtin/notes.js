@@ -25,8 +25,8 @@ export async function noted(node, state) {
     const parsedContent = parserModule.parseSource(noted);
     await (async () => {
         const notedContent = await build({ ...initialState(parsedContent),
-            inline: true,
-            upper: state.upper
+            upper: state.upper,
+            wrapperType: null
         });
         notedElement.append(...notedContent.domNodes);
     })();
@@ -43,7 +43,7 @@ export async function noted(node, state) {
 
     const parsedNote = parserModule.parseSource(noteSource);
     const notePromise = build({ ...initialState(parsedNote),
-        inline: true,
+        wrapperType: null
     });
 
     state.upper.pendingFootnotes.push(notePromise);

@@ -101,6 +101,12 @@ export async function main(name, controls) {
         if (control.hidden) {
             controlState[name].hide?.();
         }
+
+        if (control.origin) {
+            if (control.origin.panels === undefined) control.origin.panels = [];
+
+            control.origin.panels.push(controlState);
+        }
     }
 
     container.$contextMenu = { override: true };

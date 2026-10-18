@@ -1,5 +1,6 @@
 
-AI 2026
+
+Opinion | On AI in 2026
 
 Where we are, and where we aren't
 
@@ -13,17 +14,19 @@ There are more than 700 PDFs, and some small percent of the results also come wi
 
 This has led to quite a bit of discussion. Is it the end of human mathematics? Is it time to move to a "math 2.0"? Is AGI here? Or ASI? The eschaton?
 
-With all the bombastic commentary flying around I figured I should go ahead and make a record of where my head was at at this time. I don't intend this as a persuasive piece, I'll be laying out conclusions without showing my work.
+With all the bombastic commentary flying around I figured I should go ahead and make a record of where my head was at at this time. I don't intend this as a persuasive piece, more of a snapshot of my thoughts.
 
 On the value of OpenAI's contribution to mathematics.
 
 This has yet to be determined. I think the appropriate attitude at this time is a cautious one.
 
-There is a large amount of content in OpenAI's repo. Many of the "results" are at this point in time only PDFs. Some have Lean certificates, let's return to that in a later paragraph. The results without Lean certificates are lengthy, and inscrutable. The few expert assessments that I've observed to date give a negative impression of their quality. Going by the timeline as I understand it it is basically not possible that OpenAI performed any meaningful review of the non-Lean-certified results prior to their publication. There is simply too much content there, all of a sort that would take a long time to comb over if it were written clearly, which it wasn't. So, for the non-certified results, I have wondered since the day they dropped what it is that makes OpenAI confident they're worth sharing. I should note that at time of writing, OpenAI has already retracted three papers due to a sign error in one of them.
+On the non-Lean-certified papers:
+
+There is a large amount of content in OpenAI's repo. Many of the "results" are at this point in time only PDFs. Some have Lean certificates, many do not. The results without Lean certificates are lengthy, and in many cases appear inscrutable. The few expert assessments that I've observed to date give a negative impression of the quality of the writing. Going by the timeline as I understand it, it is basically not possible that OpenAI performed any meaningful review of the non-Lean-certified results prior to their publication. There is simply too much content there, all of a sort that would take a long time to comb over even if it were written clearly, which it wasn't. So, for the non-certified results, I have wondered since the day they dropped what it is that makes OpenAI confident they're worth sharing. I should note that at time of writing, OpenAI has already retracted three papers due to a sign error in one of them.
 
 Overall impression of the non-certified results: basically nobody knows how many of them are slop, including OpenAI. I don't think anyone digging deeply into these ones out of anything other than their own curiosity is spending their time well. Perhaps OpenAI has released the unconfirmed stuff because they just don't have the ability to evaluate their model's results internally any more and would like some free training signal from the mathematical community at large.
 
-Now, the certified results are more interesting, especially if you're the kind of person who's very interested in autoformalization. Unfortunately that's not me. I think autoformalization is a neat subfield of math and I'm glad people are working on it, but I'm also skeptical of the ambitions and philosophy of foundationalist projects in general.
+Now, the certified results are more interesting, especially if you're the kind of person who's very interested in autoformalization. Unfortunately that's not me. I think autoformalization is a neat subfield of math and I'm glad people are working on it, but I'm also skeptical of the ambitions and philosophy of foundationalist projects in general. More on that later.
 
 On the relation of Lean files and PDF preprints
 
@@ -33,13 +36,17 @@ On the importance of Lean
 
 I have seen it declared that a Lean certificate is considered the "gold standard" in math. I just don't think this is or has ever been true, at least not outside of a relatively narrow subset of mathematicians. It is, perhaps, what some of those working on Lean or similar tools would *like* to be the case going forward. Now, I am not an academic, so maybe I'm mistaken, but my impression is that most mathematicians don't use Lean, and don't feel that formalizing their work in Lean would be a particularly important thing to do, and that very few mathematicians judge results primarily or em{even at all} on the basis of the presence or absence of a Lean certificate.
 
+On machine verification
+
+Furthermore, there is something a bit unusual about a result that is em{solely} established by machine verification: it is one whose proof is contingent on the properties of a particular engineered artifact, not merely when it comes to em{real-world applications} but in em{principle}. An argument could be made that in ordinary mathematics we don't escape this issue, as all our proofs are contingent on the sound proof-checking of ourselves, or at least of mathematicians and their reviewers. My response to that is that I think it's indicative of a different philosophy of what em{proof} is em{about} than I subscribe to. To me, proof is about what is sufficient to convince skeptical rational minds, and as such a number of different methods of proof are valuable in a number of different situations. Many formal and informal systems of proof can coexist, and we don't particularly need to pick one and treat it as $scare{the foundation of all of math}. To encode some particular symbolic system of inference and have a computer check proofs in it is an interesting project, one I'm glad there are people working on, but insofar as its aim is $scare{foundational} I take it to be misguided.
+
 On the reliability of Lean
 
 At time of writing, the most recent patch of soundness bugs in Lean was September 14, 2026. As I understand it, the bugs involved were not of the sort that could easily be squirreled away in an innocent-looking proof. I still find their existence to be cause for caution. These bugs were found by an audit by an internal OpenAI agent tasked with probing for vulnerabilities. I think frontier-scale RL training against the verifier is another tier of threat when it comes to sniffing out vulnerabilities in the tool; I think it is in fact the biggest test to which Lean has ever been put. And while it may well be that Lean holds up to this test, that all the certified proofs stay standing indefinitely, I think it's reasonable at this time to treat it as a em{possibility} that em{some} results might not hold up. On the other hand I also think those that have already lodged a prediction that the results are em{definitely bullshit} are overconfident. Let's wait and see.
 
 Has OpenAI made a model that is "better at math" than humans?
 
-No.
+In the broadest sense, no. OpenAI has made a model that is better at a narrow slice of mathematical practice. This happens, from time to time.
 
 Is it the end of human mathematics?
 
@@ -47,11 +54,15 @@ No.
 
 Is it time to move to "math 2.0"?
 
+No. Mathematical practice will certainly be affected by AI, but it does not need to fundamentally change itself to make use of these tools.
+
+Will machine-generated proofs be the centerpiece of all mathematical development going forward?
+
 No.
 
 Is AGI here?
 
-No.
+No. There is much left to be desired when it comes to the em{generality} of today's models. Pretraining brings a certain em{initial} generality at least when it comes to the scope of the model's knowledge. RL environments, the predominant training methodology of this moment, have to be continually crafted to train models to do better on various benchmarks, and the models don't seem to be getting all that much better at things for which nobody has devised an RL environment yet. In a sense all the work being done to create these rollouts constitutes a hard-coding of task knowledge; it's just that this is being done implicitly, rather than via explicit procedural instructions.
 
 Is ASI here?
 

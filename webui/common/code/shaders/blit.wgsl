@@ -7,7 +7,10 @@ struct Uniforms /* buffer 0 0 */ {
     offset: f32, // -5 to 5 = 0
     nan_color: vec3f, // $color(var(--main-background))
     pos_color: vec3f, // $color
-    neg_color: vec3f // $color
+    neg_color: vec3f, // $color
+    curves: u32, // hard 0 to hard 1 = 0 $bool
+    target_value: f32, // -1 to 1 = 0 $depend(curves=true)
+    edge_multiplier: f32 // 0 to 1 = 0.15 $depend(curves=true)
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -33,7 +36,22 @@ fn frag(@builtin(position) frag_coord: vec4<f32>) -> @location(0) vec4<f32> {
     var val = textureLoad(tex, texel_coord, 0) + uniforms.offset;
 
     let isnan = hacky_isinf(val.r);
-    let div = val.g;
+    let prime = val.g;
+
+    if (uniforms.curves == 1u) {
+        let du = fwidthFine(prime);
+
+        let edge = du * uniforms.edge_multiplier;
+
+        let absTarget = abs(prime + uniforms.target_value);
+
+        let contour = smoothstep(edge, edge + du, absTarget);
+
+        val = vec4<f32>(contour, contour, contour, 1.0);
+
+        return select(val, vec4<f32>(uniforms.nan_color, 1.0), isnan);
+    }
+
     //val.g = select(0.0, 1.0 - exp(val.r * uniforms.negative_scale), val.r < 0.0);
     //val.b = select(0.0, val.r * uniforms.positive_scale, val.r > 0.0);
     //val.r = max(val.g, val.b);
