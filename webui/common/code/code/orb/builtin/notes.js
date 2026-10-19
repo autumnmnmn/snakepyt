@@ -11,7 +11,7 @@ export async function noted(node, state) {
     content = content.split("$note");
 
     const noteSource = content.pop().trim();
-    const noted = content.join("$note");
+    const noted = content.join("$note"); // insane
 
     if (state.pendingSpace) {
         state.segment.appendChild(document.createTextNode(" "));

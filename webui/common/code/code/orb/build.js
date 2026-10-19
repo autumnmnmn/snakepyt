@@ -2,9 +2,9 @@
 import * as parserModule from "/code/code/orb/parse.js";
 import { asciiModernRomanNumeral as roman } from "/code/math/roman.js";
 import { text, builtin_break, scare, title } from "/code/code/orb/builtin/core.js";
-import { noted, footnotes } from "/code/code/orb/builtin/notes.js";
-import { figure } from "/code/code/orb/builtin/figure.js";
-import { contents, header } from "/code/code/orb/builtin/article.js";
+import * as notes from "/code/code/orb/builtin/notes.js";
+import * as figure from "/code/code/orb/builtin/figure.js";
+import * as article from "/code/code/orb/builtin/article.js";
 
 const TEXT = "builtin_text";
 const BREAK = "builtin_break";
@@ -52,6 +52,16 @@ export function initialState(parserResult) {
     state.upper = state;
     return state;
 }
+
+const dispatch = {
+    ...notes,
+    ...figure,
+    ...article,
+    scare,
+    title,
+    "css": (node, state) => $css(state.content(node), true),
+    "comment": () => {}
+};
 
 export async function build(state) {
     if (state.segment === null) {
@@ -117,7 +127,6 @@ export async function build(state) {
 
         if (tag[0] !== "$") {
             if (state.segment.childNodes.length > 0) {
-                //if (!state.inline) state.segment.$contextMenu = { override: true };
                 state.domNodes.push(state.segment);
                 state.segment = (state.wrapperType !== null) ?
                     document.createDocumentFragment() :
@@ -177,47 +186,10 @@ export async function build(state) {
             continue;
         }
 
-        if (tag.substring(1) === "comment") {
-            continue;
-        }
+        const handler = dispatch[tag.substring(1)];
 
-        if (tag.substring(1) === "figure") {
-            await figure(node, state, bracketArgs);
-            continue;
-        }
-
-        if (tag.substring(1) === "contents") {
-            await contents(node, state, bracketArgs);
-            continue;
-        }
-
-        if (tag.substring(1) === "header") {
-            await header(node, state, bracketArgs);
-            continue;
-        }
-
-        if (tag.substring(1) === "scare") {
-            await scare(node, state);
-            continue;
-        }
-
-        if (tag.substring(1) === "css") {
-            $css(state.content(node), true);
-            continue;
-        }
-
-        if (tag.substring(1) === "noted") {
-            await noted(node, state);
-            continue;
-        }
-
-        if (tag.substring(1) === "footnotes") {
-            await footnotes(node, state);
-            continue;
-        }
-
-        if (tag.substring(1) === "title") {
-            await title(node, state);
+        if (handler !== undefined) {
+            await handler(node, state, bracketArgs);
             continue;
         }
 
@@ -244,7 +216,6 @@ export async function build(state) {
     }
 
     if (state.segment.childNodes.length > 0) {
-        //if (!state.inline) state.segment.$contextMenu = { items: [], override: true };
         state.domNodes.push(state.segment);
     }
 

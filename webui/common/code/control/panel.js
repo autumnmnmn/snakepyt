@@ -62,6 +62,29 @@ $css(`
 
     .control {
         max-width: 60vw;
+        width: 60vw;
+        position: relative;
+        overflow: visible;
+        z-index: 1;
+    }
+
+    .control::before {
+        position: absolute;
+        content: "";
+        left: -10vw;
+        top: 0;
+        width: 10vw;
+        height: calc(100% + 1em);
+    }
+
+    .control::after {
+        position: absolute;
+        content: "";
+        right: -20vw;
+        top: 0;
+        width: 20vw;
+        height: calc(100% + 1em);
+        z-index: 0;
     }
 
     .control-panel legend {

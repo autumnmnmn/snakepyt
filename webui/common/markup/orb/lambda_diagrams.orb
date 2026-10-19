@@ -155,8 +155,11 @@ nav[id=contents] {
 
 $contents {}
 
-
-
+$contentsEntry[explorer|numberless]{
+    Interactive Renderer
+$description
+    A WebGPU-based fractal explorer for the logistic Lyapunov fractals, which some might find to be a more compelling introduction to the λ-diagrams than a textual writeup.
+}
 
 
 section{

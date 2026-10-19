@@ -14,6 +14,8 @@ export async function header(node, state, args) {
     const descriptionSource = (content.length > 1) ? content.pop().trim() : null;
     const noted = content.join("$note");
 
+    /*
+
     const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
 
     const notedElement = $element("span", "footnote backlink target");
@@ -49,6 +51,7 @@ export async function header(node, state, args) {
 
     state.inlineEnded = true;
     state.pendingSpace = true;
+    */
 }
 
 export async function contentsEntry(node, state, args) {
