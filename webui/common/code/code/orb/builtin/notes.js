@@ -56,7 +56,7 @@ export async function footnotes(node, state) {
     let content = state.content(node);
 
     const header = $element("summary", "footnotes");
-    header.textContent = content;
+    header.textContent = content.trim();
 
     const section = $element("details", "footnotes").$with(header);
     section.classList = "footnotes";

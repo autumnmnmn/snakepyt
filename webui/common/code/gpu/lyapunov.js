@@ -462,7 +462,7 @@ sequence BA
 
     // TODO find a way to make colors themselves handle this
     observers.theme = new MutationObserver(() => {
-        //blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost })
+        //blitParams.background_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost })
 
         if (canRender) render();
     });
@@ -524,7 +524,7 @@ sequence BA
 
         const texture = $gpu.device.createTexture({
             size: [dims.x, dims.y],
-            format: "rg32float",
+            format: "rgba32float",
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 
@@ -587,7 +587,7 @@ sequence BA
 
     }
 
-    let nan_color_initialized = false;
+    let background_color_initialized = false;
 
     function resize() {
         width = canvas.clientWidth * dpr;
@@ -599,9 +599,9 @@ sequence BA
         overlay.setAttribute("width", width);
         overlay.setAttribute("height", height);
 
-        if (!nan_color_initialized) {
-            blitParams.nan_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost });
-            nan_color_initialized = true;
+        if (!background_color_initialized) {
+            blitParams.background_color = Color.CssColor({ cssString: "var(--main-background)", element: topmost });
+            background_color_initialized = true;
         }
 
         canvas.width = width;
@@ -623,7 +623,7 @@ sequence BA
 
         outputTexture = $gpu.device.createTexture({
             size: [width, height],
-            format: "rg32float",
+            format: "rgba32float",
             usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
         });
 

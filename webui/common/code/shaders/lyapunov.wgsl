@@ -11,7 +11,7 @@ struct Uniforms /* buffer 0 0 */ {
     seq_mask: u32, // hard 0 to hard 4294967295 = 5
     seq_len: u32, // hard 1 to hard 32 = 2
     seq_offset: u32, // hard 0 to hard 31 = 0 $depend(offset_mode=single)
-    offset_mode: u32, // hard 0 to hard 3 = 0 $select(single, minimum, maximum, average, count_distinct, sumabsdiff)
+    offset_mode: u32, // hard 0 to hard 3 = 0 $select(single, minimum, maximum, average, min_abs, count_distinct, avgAbsDiff)
     do_discont: u32, // hard 0 to hard 1 = 0 $bool $test
     discont_alpha: f32, // 0 to 1 = 0.907 $depend(do_discont=true)
     do_tent: u32, // hard 0 to hard 1 = 0 $bool
@@ -23,7 +23,7 @@ struct Uniforms /* buffer 0 0 */ {
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var output_texture: texture_storage_2d<rg32float, write>;
+@group(0) @binding(1) var output_texture: texture_storage_2d<rgba32float, write>;
 
 $paste(core.wgsl);
 $paste(complex.wgsl);
@@ -56,7 +56,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var final_offset = select(uniforms.seq_len,1,uniforms.offset_mode == 0u);
 
-    var seq_position: u32 = uniforms.seq_offset;
+    var seq_position: u32 = uniforms.seq_offset % uniforms.seq_len;
 
     for (var iter = 0u; iter < uniforms.iterations; iter = iter + 1u) {
         for (var offset = 0u; offset < final_offset; offset = offset + 1u) {
@@ -101,74 +101,92 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     }
 
     var val: f32;
+    var lya: f32;
     var prime: f32;
 
-    if (uniforms.offset_mode == 0) {
-        val = lyapunov[0];
+    var scratch: array<f32, 32>;
+
+    var npairs: f32 = f32((uniforms.seq_len * uniforms.seq_len - uniforms.seq_len)/2);
+
+    if (uniforms.offset_mode == 0) { // single
+        val = x[0];
+        lya = lyapunov[0];
         prime = fprime[0];
-    } else if (uniforms.offset_mode == 1) {
-        val = lyapunov[0];
+    } else if (uniforms.offset_mode == 1) { // min
+        val = x[0];
+        lya = lyapunov[0];
         prime = fprime[0];
         for (var i = 1u; i < uniforms.seq_len; i++) {
-            val = min(val, lyapunov[i]);
+            lya = min(lya, lyapunov[i]);
             prime = min(prime, fprime[i]);
+            val = min(val, x[i]);
         }
-    } else if (uniforms.offset_mode == 2) {
-        val = lyapunov[0];
+    } else if (uniforms.offset_mode == 2) { // max
+        val = x[0];
+        lya = lyapunov[0];
         prime = fprime[0];
         for (var i = 1u; i < uniforms.seq_len; i++) {
-            val = max(val, lyapunov[i]);
+            lya = max(lya, lyapunov[i]);
+            val = max(val, x[i]);
             prime = max(prime, fprime[i]);
         }
-    } else if (uniforms.offset_mode == 3) {
-        val = lyapunov[0];
+    } else if (uniforms.offset_mode == 3) { // avg
+        val = x[0];
+        lya = lyapunov[0];
         prime = fprime[0];
         for (var i = 1u; i < uniforms.seq_len; i++) {
-            val = val + lyapunov[i];
+            val = val + x[i];
+            lya = lya + lyapunov[i];
             prime = prime + fprime[i];
         }
         val = val / f32(uniforms.seq_len);
+        lya = lya / f32(uniforms.seq_len);
         prime = prime / f32(uniforms.seq_len);
-    } else if (uniforms.offset_mode == 4) {
-        val = 0.0;
+    } else if (uniforms.offset_mode == 4) { // min abs
+        val = abs(x[0]);
+        lya = abs(lyapunov[0]);
+        prime = abs(fprime[0]);
+        for (var i = 1u; i < uniforms.seq_len; i++) {
+            lya = min(lya, abs(lyapunov[i]));
+            prime = min(prime, abs(fprime[i]));
+            val = min(val, abs(x[i]));
+        }
+    } else if (uniforms.offset_mode == 5) { // count distinct
+        lya = 0.0;
         prime = fprime[0];
+        val = x[0];
         for (var i = 0u; i < uniforms.seq_len; i++) {
-            x[i] = 1.0;
+            scratch[i] = 1.0;
         }
         for (var i = 0u; i < uniforms.seq_len; i++) {
-            if (x[i] == 0.0) { continue; }
+            if (scratch[i] == 0.0) { continue; }
             for (var j = i+1; j < uniforms.seq_len; j++) {
                 if (abs(lyapunov[j] - lyapunov[i]) < uniforms.epsilon) {
-                    x[j] = 0.0;
+                    scratch[j] = 0.0;
                 }
             }
         }
         for (var i = 0u; i < uniforms.seq_len; i++) {
-            val += x[i];
+            lya += scratch[i];
         }
-        val /= f32(uniforms.seq_len);
-    } else if (uniforms.offset_mode == 5) {
+        lya /= f32(uniforms.seq_len);
+    } else if (uniforms.offset_mode == 6) { // avg abs diff
+        lya = 0.0;
+        prime = 0.0;
         val = 0.0;
-        prime = fprime[0];
         for (var i = 0u; i < uniforms.seq_len; i++) {
             for (var j = i+1; j < uniforms.seq_len; j++) {
-                val += abs(lyapunov[i] - lyapunov[j]);
+                lya += abs(lyapunov[i] - lyapunov[j]);
+                val += abs(x[i] - x[j]);
+                prime += abs(fprime[i] - fprime[j]);
             }
         }
+        lya /= npairs;
+        val /= npairs;
+        prime /= npairs;
     }
 
-    /*
-    var r = pow(val, uniforms.pow_r);
-    var g = pow(-val, uniforms.pow_g);
-    var b = pow(-tanh(val), uniforms.pow_b);
-
-    var color: vec4<f32> = vec4<f32>(r, g, b, 1.0);
-
-
-    color = select(color, vec4<f32>(uniforms.nan_color, 1.0), isnan);
-    */
-
-    textureStore(output_texture, vec2<i32>(i32(px), i32(py)), vec4f(val, prime, 0.0, 0.0));
+    textureStore(output_texture, vec2<i32>(i32(px), i32(py)), vec4f(lya, prime, val, 0.0));
 }
 
 

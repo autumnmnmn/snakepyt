@@ -5,12 +5,13 @@ struct Uniforms /* buffer 0 0 */ {
     positive_scale: f32, // -7 to 7 = 1
     positive_scale_b: f32, // -7 to 7 = 1
     offset: f32, // -5 to 5 = 0
-    nan_color: vec3f, // $color(var(--main-background))
+    background_color: vec3f, // $color(var(--main-background))
     pos_color: vec3f, // $color
     neg_color: vec3f, // $color
     curves: u32, // hard 0 to hard 1 = 0 $bool
     target_value: f32, // -1 to 1 = 0 $depend(curves=true)
-    edge_multiplier: f32 // 0 to 1 = 0.15 $depend(curves=true)
+    edge_multiplier: f32, // 0 to 1 = 0.15 $depend(curves=true)
+    mode: u32 // hard 0 to hard 2 = 0 $select(lyapunov, fprime, x)
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -37,26 +38,37 @@ fn frag(@builtin(position) frag_coord: vec4<f32>) -> @location(0) vec4<f32> {
 
     let isnan = hacky_isinf(val.r);
     let prime = val.g;
+    let lyap = val.r;
+    let x = val.b;
+
+    var pick = lyap;
+
+    if (uniforms.mode == 1) {
+        pick = prime;
+    }
+    if (uniforms.mode == 2) {
+        pick = x;
+    }
 
     if (uniforms.curves == 1u) {
-        let du = fwidthFine(prime);
+        let du = fwidthFine(pick);
 
         let edge = du * uniforms.edge_multiplier;
 
-        let absTarget = abs(prime + uniforms.target_value);
+        let absTarget = abs(pick - uniforms.target_value);
 
-        let contour = smoothstep(edge, edge + du, absTarget);
+        let contour = smoothstep(edge, edge * 2 , absTarget);
 
         val = vec4<f32>(contour, contour, contour, 1.0);
 
-        return select(val, vec4<f32>(uniforms.nan_color, 1.0), isnan);
+        return select(val, vec4<f32>(uniforms.background_color, 1.0), isnan);
     }
 
     //val.g = select(0.0, 1.0 - exp(val.r * uniforms.negative_scale), val.r < 0.0);
     //val.b = select(0.0, val.r * uniforms.positive_scale, val.r > 0.0);
     //val.r = max(val.g, val.b);
-    var neg_term = uniforms.negative_scale_b * exp(val.r * abs(uniforms.negative_scale));
-    var pos_term = uniforms.positive_scale_b * exp(-val.r * abs(uniforms.positive_scale));//1.0 - exp(-val.r * abs(uniforms.positive_scale));
+    var neg_term = uniforms.negative_scale_b * exp(pick * abs(uniforms.negative_scale));
+    var pos_term = uniforms.positive_scale_b * exp(-pick * abs(uniforms.positive_scale));//1.0 - exp(-val.r * abs(uniforms.positive_scale));
 
     if (uniforms.negative_scale > 0.0) {
         neg_term = 1.0 - neg_term;
@@ -67,11 +79,11 @@ fn frag(@builtin(position) frag_coord: vec4<f32>) -> @location(0) vec4<f32> {
     }
 
     //let val3 = select(neg_term * uniforms.neg_color, val.r * uniforms.positive_scale * uniforms.pos_color, val.r > 0.0);
-    let val3 = select(neg_term * uniforms.neg_color, pos_term * uniforms.pos_color, val.r > 0.0);
+    let val3 = select(neg_term * uniforms.neg_color, pos_term * uniforms.pos_color, pick > 0.0);
 
     val = vec4<f32>(val3, 1.0);
     //val.a = 1.0;
 
-    return select(val, vec4<f32>(uniforms.nan_color, 1.0), isnan);
+    return select(val, vec4<f32>(uniforms.background_color, 1.0), isnan);
 }
 
