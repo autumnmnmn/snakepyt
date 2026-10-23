@@ -44,9 +44,11 @@ On the reliability of Lean
 
 At time of writing, the most recent patch of soundness bugs in Lean was September 14, 2026. As I understand it, the bugs involved were not of the sort that could easily be squirreled away in an innocent-looking proof. I still find their existence to be cause for caution. These bugs were found by an audit by an internal OpenAI agent tasked with probing for vulnerabilities. I think frontier-scale RL training against the verifier is another tier of threat when it comes to sniffing out vulnerabilities in the tool; I think it is in fact the biggest test to which Lean has ever been put. And while it may well be that Lean holds up to this test, that all the certified proofs stay standing indefinitely, I think it's reasonable at this time to treat it as a em{possibility} that em{some} results might not hold up. On the other hand I also think those that have already lodged a prediction that the results are em{definitely bullshit} are overconfident. Let's wait and see.
 
-Has OpenAI made a model that is "better at math" than humans?
+Isn't this shocking?
 
-In the broadest sense, no. OpenAI has made a model that is better at a narrow slice of mathematical practice. This happens, from time to time.
+Has OpenAI made a model that is $scare{better at math} than humans?
+
+In the broadest sense, no. OpenAI has made a model that is better at a narrow slice of mathematical practice. This happens, from time to time. The number of mathematical tasks the computer can perform reliably, and faster than a human, was already quite large.
 
 Is it the end of human mathematics?
 

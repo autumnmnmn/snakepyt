@@ -105,6 +105,10 @@ $math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum
 $math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
 
 
+muderover > :not(:first-child) {
+    font-size: 70%;
+}
+
 
 characters
 

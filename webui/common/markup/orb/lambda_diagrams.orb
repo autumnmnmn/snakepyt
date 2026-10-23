@@ -388,6 +388,25 @@ Another option in the menu is to toggle the visibility of the control panel, to 
 
 Finally, you can exit the renderer entirely. This will leave behind a blank canvas, where you can load up arbitrary modules. It's a bit of a work-in-progress system and I won't try to document it in full here. Think of it as falling into the backrooms. The main thing you'll probably want to do is get back out, by opening the context menu and selecting $scare{Lyapunov}. Note that you can also create resizable regions with the $scare{row} and $scare{col} options and then create multiple renderers, or just have one that you can conveniently resize to the aspect ratio of your liking.
 
+h3{Parameters}
+
+sequence: The strings of As and Bs that defines the periodic forcing sequence
+
+x_0: The starting value for the iterative process, at all points
+
+iterations: N in the formula
+
+skip: M in the formula
+
+offset mode: How should offsets of the sequence be handled?
+    Single: Just one offset is considered; a slider is provided to sweep across them
+    Minimum, Maximum, Average: The Lyapunov exponent is computed for all offsets, and the minimum, maximum, or average is taken, respectively
+    min_abs: Minimum of the absolute value of lambda
+    count_distinct: Counts the number of distinct values taken by lambda across the offsets, where distinctness is up to a threshold, epsilon. This mode is kinda janky, a lot of what can be seen with it is due to numerical issues. I left it in because it can produce interesting visuals.
+    avgAbsDiff: Compute lambdas for all offsets, compute absolute differences between all pairs of them, take the average of all those differences.
+
+
+
 h3{Keyboard Shortcuts}
 
 You can press F to toggle fullscreen mode.
