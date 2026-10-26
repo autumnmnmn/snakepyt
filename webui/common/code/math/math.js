@@ -235,7 +235,7 @@ function tokenize(expression, declarations, isAuto) {
     return tokens;
 }
 
-const allModifiers = new Set(["inline", "auto"])
+const allModifiers = new Set(["block", "manual"])
 
 export const staticModule = true;
 
@@ -243,7 +243,7 @@ export const staticModule = true;
 
 const cache = new Map();
 
-export async function main(expression, inline=false) {
+export async function main(expression, inline=true) {
     const trimmed = expression.trim();
 
     const cache_hit = cache.get(trimmed);
@@ -260,8 +260,8 @@ export async function main(expression, inline=false) {
     let ops = {};
     const contentLines = [];
 
-    let isInline = false;
-    let isAuto = false;
+    let isInline = true;
+    let isAuto = true;
 
     let contentStarted = false;
     for (const line of lines) {
@@ -275,23 +275,21 @@ export async function main(expression, inline=false) {
             continue;
         }
 
-        const firstWord = line.match(/^\S+/)?.[0];
+        const words = line.split(/\s+/);
 
-        if (allModifiers.has(firstWord)) {
-            const words = line.split(/\s+/);
-            let i = 0;
-            while (i < words.length && allModifiers.has(words[i])) { i++; }
-            const modifiers = new Set(words.slice(0, i));
+        while (words.length && allModifiers.has(words[0])) {
+            const modifier = words.shift();
 
-            isInline = modifiers.has("inline");
-            isAuto = modifiers.has("auto");
+            if (modifier === "block") isInline = false;
+            if (modifier === "manual") isAuto = false;
+        }
 
-            if (isAuto) {
-                contentStarted = true;
-                const rest = words.slice(i).join(" ");
-                if (rest) contentLines.push(rest);
-                continue;
-            }
+        const rest = words.join(" ");
+
+        if (isAuto) {
+            contentStarted = true;
+            if (rest) contentLines.push(rest);
+            continue;
         }
 
         if (trimmed.startsWith("ident ")) {
