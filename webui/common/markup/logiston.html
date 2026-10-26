@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta name="description" content="An interactive WebGPU explorer for logiston products and iteration protocols.">
+        <title>Logiston Explorer</title>
+        <link rel="icon" href="/media/favicon.png">
+        <link id="themeLink" rel="stylesheet" type="text/css" href="/style/theme/themes.css">
+        <link rel="stylesheet" type="text/css" href="/style/main.css">
+    </head>
+    <body>
+        <script src="/code/core.js"></script>
+        <script type="module" src="/code/main.js"></script>
+        <script>
+            $replace(document.currentScript, "gpu/logiston");
+        </script>
+        <noscript>This explorer needs JavaScript and WebGPU.</noscript>
+    </body>
+</html>

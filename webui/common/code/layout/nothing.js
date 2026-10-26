@@ -61,6 +61,7 @@ export async function main() {
         projective_shift: load("gpu/proj_shift"),
         mandelbrot: load("gpu/brot"),
         lyapunov: load("gpu/lyapunov"),
+        logistons: load("gpu/logiston"),
         concat: load("llm/concat.vibe"),
         //prompt: load("prompt"),
         row2: load("layout/split", [noth2]),
