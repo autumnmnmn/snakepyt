@@ -24,7 +24,7 @@ $css {
 
 article {
 
-hgroup[class=main-title] {
+hgroup.main-title {
     h1 { Notes on MathML }
 
     the browser will render math well but only if you ask nicely
@@ -32,6 +32,7 @@ hgroup[class=main-title] {
     hr{}
 }
 
+section {
 
 note up front: much of what's here esp. regarding behavior of different browsers is non-exhaustive and subject to change
 
@@ -45,7 +46,7 @@ pre { code {
 
 To create mathml elements, you cannot just use document.createElement. MathML is not HTML, it is its own kind of markup, which can be nested inside HTML. To be more exact, it has its own i{namespace}. If you use document.createElement("math"), you will get an element that looks like a "math" node but does not render correctly. You must instead use document.createElementNS("http://www.w3.org/1998/Math/MathML", "math"). The same is true for all descendent elements of the base math element.
 
-$math/math { auto x + y }
+$math/math { x + y }
 
 details { summary { Fixed Code }
 pre { code {
@@ -98,11 +99,11 @@ font-family
 
 the only font that i have found to produce adequate typesetting in browser mathml is Latin Modern Math. I have not tested every font exhaustively, of course
 
-[class=badmath]{
-$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
+.badmath {
+$math/math { lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
 }
 
-$math/math { auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
+$math/math { lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=m} {n-1} end log{|f'{(x_i)}|} }
 
 
 muderover > :not(:first-child) {
@@ -116,7 +117,7 @@ in math, we use capital sigma and capital pi to represent sums and products, wri
 
 in mathml, we represent this with the i{munderover} element. munderover should have three children, the first is what will have elements above and below it, the second is what goes below it, and the third is what goes above. so we can simply make <mo>Σ</mo> or <mo>Π</mo> the first element of our munderover, right?
 
-$math/math { auto underover Σ {i=0} n end x = underover Π {j=1} m end y }
+$math/math { underover Σ {i=0} n end x = underover Π {j=1} m end y }
 br{}
 
 
@@ -125,13 +126,13 @@ br{}
 
 Wrong. It looks horrendous. And that's because the Σ and Π characters there are em{Greek letters} instead of em{math symbols}. A sane reader might object, saying $scare{but ponder, the Greek letters Σ and Π em{are} math symbols!} But to a computer, they simply are not. The characters I just used are from the a[href=https://en.wikipedia.org/wiki/Greek_and_Coptic]{Greek and Coptic Unicode Block}, whereas for mathml to properly understand our intent and render our math nicely, we must use the symbols ∑ and ∏ from the a[href=https://en.wikipedia.org/wiki/Mathematical_Operators_(Unicode_block)]{Mathematical Operators Unicode Block}.
 
-$math/math { auto underover ∑ {i=0} n end x = underover ∏ {j=1} m end y }
+$math/math { underover ∑ {i=0} n end x = underover ∏ {j=1} m end y }
 
 Much better. Unicode actually has a whole zoo of capital sigma & pi characters: Σ, 𝚺, ∑, 𝝨, ᴨ, 𝚷, ∏, 𝝥, Π. You can expand the section below to see how they all look in MathML:
 
 details { summary { The Menagerie }
 
-table[id=greek_menagerie] {
+table#greek_menagerie {
 
 thead {
 tr {
@@ -144,55 +145,55 @@ th{Source}
 tbody {
 tr {
 td{Σ}
-td{$math/math { inline auto underover Σ {i=0} n end x }}
+td{$math/math { underover Σ {i=0} n end x }}
 td{ Greek Capital Letter Sigma, Greek and Coptic block }
 }
 
 tr {
 td{𝚺}
-td{$math/math { inline auto underover 𝚺 {i=0} n end x }}
+td{$math/math { underover 𝚺 {i=0} n end x }}
 td{ Mathematical Bold Capital Sigma, Mathematical Alphanumeric Symbols block }
 }
 
 tr {
 td{∑}
-td{$math/math { inline auto underover ∑ {i=0} n end x }}
+td{$math/math { underover ∑ {i=0} n end x }}
 td{ N-ary Summation, Mathematical Operators block }
 }
 
 tr {
 td{𝝨}
-td{$math/math { inline auto underover 𝝨 {i=0} n end x }}
+td{$math/math { underover 𝝨 {i=0} n end x }}
 td{ Mathematical Sans-Serif Bold Capital Sigma, Mathematical Alphanumeric Symbols block }
 }
 
 tr {
 td{ᴨ}
-td{$math/math { inline auto underover ᴨ {i=0} n end x }}
+td{$math/math { underover ᴨ {i=0} n end x }}
 td{ Greek Letter Small Capital Pi, Greek Script Phonetic Extensions block }
 }
 
 tr {
 td{𝚷}
-td{$math/math { inline auto underover 𝚷 {i=0} n end x }}
+td{$math/math { underover 𝚷 {i=0} n end x }}
 td{ Mathematical Bold Capital Pi, Mathematical Alphanumeric Symbols block }
 }
 
 tr {
 td{∏}
-td{$math/math { inline auto underover ∏ {i=0} n end x }}
+td{$math/math { underover ∏ {i=0} n end x }}
 td{ N-ary Product, Mathematical Operators block }
 }
 
 tr {
 td{𝝥}
-td{$math/math { inline auto underover 𝝥 {i=0} n end x }}
+td{$math/math { underover 𝝥 {i=0} n end x }}
 td{ Mathematical Sans-Serif Bold Capital Pi, Mathematical Alphanumeric Symbols block }
 }
 
 tr {
 td{Π}
-td{$math/math { inline auto underover Π {i=0} n end x }}
+td{$math/math { underover Π {i=0} n end x }}
 td{ Greek Capital Letter Pi, Greek and Coptic block }
 }
 }
@@ -205,5 +206,6 @@ make sure parentheses &c are enclosed in a mrow!
 }
 
 }
+
 
 

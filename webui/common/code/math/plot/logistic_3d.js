@@ -204,7 +204,7 @@ export async function main(svg) {
         );
         const x_label = space.math(
             v3.of(bounds_max.x + overhang.x + 0.1, 0, 0),
-            (await math("inline auto x_0")).dom[0]
+            (await math("x_0")).dom[0]
         );
         const y_axis = space.line(
             v3.of(0, bounds_min.y - overhang.y, 0),
@@ -213,7 +213,7 @@ export async function main(svg) {
         );
         const y_label = space.math(
             v3.of(0, bounds_max.y + overhang.y + 0.1, 0),
-            (await math(`inline auto x_${iteration}`)).dom[0]
+            (await math(`x_${iteration}`)).dom[0]
         );
         const z_axis = space.line(
             v3.of(0, 0, bounds_min.z - overhang.z),
@@ -222,7 +222,7 @@ export async function main(svg) {
         );
         const z_label = space.math(
             v3.of(0, 0, bounds_max.z + overhang.z + 0.1),
-            (await math(`inline auto x_${iteration + 1}`)).dom[0]
+            (await math(`x_${iteration + 1}`)).dom[0]
         );
         const x_guides_xy = x_ticks.map(x_val =>
             space.line(

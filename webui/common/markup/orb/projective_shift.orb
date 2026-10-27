@@ -3,7 +3,7 @@ $theme {}
 
 $title { Projective Shift Maps }
 
-$og_description { Investigating a class of functions I think are neat }
+$og_description { A class of functions I think are neat }
 
 $css {
     .render-container {
@@ -21,20 +21,23 @@ hgroup {
 hr {}
 
 
-div[id=explorer|class=dynamic|style=margin-top:1em;border-radius:0.25em;] {
+#explorer.dynamic[style=margin-top:1em;border-radius:0.25em;] {
 
 $layout/loadwall[gpu/proj_shift|render-container] { Load interactive renderer? (designed for desktop) }
 
 }
 
 
-noscript[class=info-box] {
+noscript.info-box {
     It looks like you have scripts turned off. Just so you know, there's an interactive WebGPU-based renderer you're missing out on, and a few other interactive visualizations throughout the article where you'll see a handful of screenshots instead.
 }
+
+section {
 
     h2 { Projective Shift Map }
 
     div { $math/math {
+        manual block
         ident z r cos theta:~ phi:~ psi:~ c n i e
         text where:~
         op ( ) + - =
@@ -44,7 +47,7 @@ noscript[class=info-box] {
         where z_n = r e^{i theta}
     } }
 
-    b{click and drag} to move around, b{scroll} to zoom in and out; b{press F} to go
+    i{click and drag} to move around, i{scroll} to zoom in and out; i{press F} to go
     fullscreen
 
     this visualization is treating each pixel coordinate as a starting value z_0 in the
@@ -65,6 +68,8 @@ see also:
 https://link.springer.com/article/10.1140/epjs/s11734-022-00440-w
 
 some figures strikingly similar to what's shown in this paper can be achieved by setting squoosh_x ~ 0.6
+
+}
 
 }
 

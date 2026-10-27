@@ -55,6 +55,7 @@ export async function header(node, state, args) {
 }
 
 export async function contentsEntry(node, state, args) {
+    console.log(node, state, args);
 }
 
 export async function contents(node, state) {

@@ -84,7 +84,7 @@ export async function main(svg) {
         const y_labels = await y_ticks.$asyncMap(async y_val =>
             space.math(
                 v2.of(-0.07, y_val),
-                (await $mod("math/math", `inline auto ${y_val.toFixed(1)}`)).dom[0]
+                (await $mod("math/math", `${y_val.toFixed(1)}`)).dom[0]
             )
         );
 
@@ -109,7 +109,7 @@ export async function main(svg) {
         const x_labels = await x_ticks.$asyncMap(async pair =>
             space.math(
                 v2.of(pair.x, bounds_min.y - overhang.y - 0.01),
-                (await $mod("math/math", `inline auto ${pair.i}`)).dom[0]
+                (await $mod("math/math", `${pair.i}`)).dom[0]
             )
         );
 

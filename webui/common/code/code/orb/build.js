@@ -63,6 +63,57 @@ const dispatch = {
     "comment": () => {}
 };
 
+function unpackSymbol(symbol) {
+    let state = null;
+    let segment = "";
+    let tag = null;
+    let id = null;
+    let classes = [];
+
+    const transition = (nextState) => {
+        if (state === null) {
+            tag = (segment === "") ? "div" : segment;
+        }
+        if (state === "#") {
+            id = segment;
+        }
+        if (state === ".") {
+            classes.push(segment);
+        }
+        segment = "";
+        if (nextState === "#" && id !== null) {
+            console.warn(`multiple ids in symbol "${symbol}"`);
+        }
+        state = nextState;
+        segment = "";
+    }
+
+    for (let i = 0; i < symbol.length; i++) {
+        const char = symbol[i];
+
+        if (char === ".") {
+            transition(".");
+            continue;
+        }
+        if (char === "#") {
+            transition("#");
+            continue;
+        }
+
+        segment += char;
+    }
+
+    transition("!");
+
+    if (classes.length === 0) classes = null;
+
+    return {
+        tag,
+        id,
+        classes
+    }
+}
+
 export async function build(state) {
     if (state.segment === null) {
         state.segment = (state.wrapperType === null) ?
@@ -75,19 +126,24 @@ export async function build(state) {
     for (const node of state.nodes) {
 
         let namespace = outer_namespace;
-        const tag = node.tag.symbol;
 
-        const wrapperType = wrapMap[tag] ?? null;
+        const symbol = node.tag.symbol;
 
-        if (tag === TEXT) {
+        if (symbol === TEXT) {
             await text(node, state);
             continue;
         }
 
-        if (tag === BREAK) {
+        if (symbol === BREAK) {
             await builtin_break(node, state);
             continue;
         }
+
+        const unpack = unpackSymbol(node.tag.symbol);
+
+        const tag = unpack.tag;
+
+        const wrapperType = wrapMap[tag] ?? null;
 
         let bracketArgs = [];
         if (node.args.start !== null) {
@@ -102,6 +158,10 @@ export async function build(state) {
             const tagElement = namespace === null ?
                 $element(tag, "inline element noNS") :
                 document.createElementNS(namespace, tag);
+
+            if (unpack.id) tagElement.id = unpack.id;
+
+            if (unpack.classes) tagElement.classList.add(...unpack.classes);
 
             if (state.pendingSpace || state.inlineEnded) {
                 state.segment.appendChild(document.createTextNode(" "));
@@ -136,6 +196,11 @@ export async function build(state) {
                 const tagElement = namespace === null ?
                     $element(tag, "element") :
                     document.createElementNS(namespace, tag);
+
+                if (unpack.id) tagElement.id = unpack.id;
+
+                if (unpack.classes) tagElement.classList.add(...unpack.classes);
+
                 for (const arg of bracketArgs) {
                     const split = arg.split("=");
                     tagElement.setAttribute(split[0].trim(), split[1]);

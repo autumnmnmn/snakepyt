@@ -103,12 +103,12 @@ $css {
     }
 }
 
-[id=lightbox| onclick=this.classList.remove('open')] {
-    img[id=lightbox-img]{}
+#lightbox[onclick=this.classList.remove('open')] {
+    img#lightbox-img {}
 }
 
 svg[style=height:0;width:0;margin:0;padding:0;display:block] {
-  filter[id=thumb-blur] {
+  filter#thumb-blur {
     feGaussianBlur[stdDeviation=3 | edgeMode=duplicate]{}
   }
 }
@@ -122,23 +122,21 @@ hgroup {
 }
 hr {}
 
-div[id=explorer|class=dynamic|style=margin-top:1em;border-radius:0.25em;] {
+#explorer.dynamic[style=margin-top:1em;border-radius:0.25em;] {
 
 $layout/loadwall[gpu/lyapunov|render-container] { Load interactive renderer? (designed for desktop) }
 
 }
 
-noscript[class=info-box] {
+noscript.info-box {
     It looks like you have scripts turned off. Just so you know, there's an interactive WebGPU-based fractal explorer you're missing out on, and a few other interactive visualizations throughout the article where you'll see a handful of screenshots instead.
 }
 
-
-
-nav[id=contents] {
-    h2[id=outline|style=margin-top:1em]{ Contents }
+nav#contents {
+    h2#outline[style=margin-top:1em]{ Contents }
 
     ol[type=I] {
-    li[class=numberless] { a[href=#explorer] { Interactive Renderer } br {}
+    li.numberless { a[href=#explorer] { Interactive Renderer } br {}
     A WebGPU-based fractal explorer for the logistic Lyapunov fractals, which some might find to be a more compelling introduction to the λ-diagrams than a textual writeup.
     }
 
@@ -148,9 +146,9 @@ nav[id=contents] {
 
     li{ a[href=#section_iii]{Observations of the Logistic AB λ-Diagram} br{} The final section is loosest in its structure and purpose; a sort of grab-bag of facts and features of the fractal, alongside some explanation of the interactive renderer. }
 
-    li[class=numberless] { a[href=#gallery] { Gallery } }
+    li.numberless { a[href=#gallery] { Gallery } }
 
-    li[class=numberless] { a[href=#endnote] { Endnote } }
+    li.numberless { a[href=#endnote] { Endnote } }
 }}
 
 $contents {}
@@ -165,7 +163,7 @@ $description
 section{
 
 hgroup{
-    h2[id=section_i]{
+    h2#section_i {
                                 § I. Mario Markus's λ-Diagrams
     }
     a[href=#contents]{ ↩ contents }
@@ -182,7 +180,7 @@ a[href=https://onlinelibrary.wiley.com/doi/10.1002/anie.200390466]{Benno Hess} i
 paper cite{a[href=https://doi.org/10.1016/0097-8493(89)90019-8]{Lyapunov exponents of the logistic
 map with periodic forcing}}. It is a visualization of the iterated a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} $math/math { f_n{(x)} = r_n dot x dot {(1 - x)}} with a periodically varying parameter $math/math {r_n} taking on two values $math/math { a, b} according to a rule specified as a string of i{A} $nospace s and i{B} $nospace s. For instance the string i{ABA} corresponds to the sequence $math/math { r_0 = a, r_1 = b, r_2 = a, r_3 = a, r_4 = b, r_5 = a,...} which repeats ad infinitum. The values of $math/math{ a} and $math/math{ b} vary with the pixel coordinates within the diagrams. Starting typically from $math/math{ x_0 = 0.5}, $noted { the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{Lyapunov exponent} $math/math {  lambda } is computed for each such parametrization: $note In earlier drafts of this article, I included a section building up the formula for the Lyapunov exponent from more basic ideas, for those unfamiliar with it. That section grew quite long, will take much more work to complete, and is distinct in purpose from the rest of this article. For these reasons I have opted to make it a separate piece, which I intend to publish at a later date. }
 
-$math/math{auto lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} }
+$math/math{block lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} }
 
 
 
@@ -207,7 +205,7 @@ of the logistic map; in i{Charts} he really takes the concept and runs with it, 
 The λ-diagrams sit in the overlap between art and science. While they can be appreciated with or without care for their $scare{meaning}, to engage with the underlying math is to experience their beauty more fully; and while these and related techniques can help us understand the dynamics of real physical phenomena, it would be sad to appreciate them em{solely} for their utility.
 
 details { summary { Pseudocode, Logistic AB λ-Diagram }
-pre { code[id=pseudocode] {
+pre { code#pseudocode {
 sequence = "AB"
 x_0 = 0.5
 max_iterations = 4000
@@ -272,7 +270,7 @@ $footnotes { Section I Footnotes }
 section{
 
 hgroup{
-    h2[id=section_ii]{
+    h2#section_ii {
                                 § II. Sequence Offsets
     }
     a[href=#contents]{ ↩ contents }
@@ -286,7 +284,7 @@ They disagree only in a small region, and basically only on which $scare{overlap
 
 In the interactive renderer, you can quickly cycle through these offsets by setting the i{offset mode} to $scare{single} and then adjusting the $scare{seq offset} slider.
 
-a[href=https://doi.org/10.1063/1.4822940]{Chaos in Maps with Continuous and Discontinuous Maxima}, in addition to investigating 
+a[href=https://doi.org/10.1063/1.4822940]{Chaos in Maps with Continuous and Discontinuous Maxima}, in addition to investigating
 
 
 
@@ -302,7 +300,7 @@ A somewhat more common modification is to include a third value, C, correspondin
 section {
 
 hgroup{
-    h2[id=section_iii]{
+    h2#section_iii {
                                 § III. Observations of the Logistic λ-Diagram
     }
     a[href=#contents]{ ↩ contents }
@@ -320,7 +318,7 @@ Since $math/math {  log{|x|} } diverges to $math/math {  -inf } as x approaches 
 
 Because $math/math {  x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors $math/math {  c_n } so as to produce polynomials with the same zeros but with integer coefficients, the first few curves $math/math {  P_n = c_n dot d/{d x} f_n{(x_n)} = 0 } are as follows:
 
-$math/math {auto P_1 = {- a} + 2 = 0
+$math/math {P_1 = {- a} + 2 = 0
 
 P_2 = a^2 b - 4 ab + 8 = 0
 
@@ -331,7 +329,7 @@ P_4 = a^10b^5 - 16a^9b^5 + 96a^8b^5 + 32a^8b^4 - 256a^7b^5 - 384a^7b^4 + 256a^6b
 
 While the first few of these can be worked out by hand (an exercise for the reader, of course), they grow in complexity very quickly. By the sixth iteration, there are already hundreds of terms, and by the tenth, a plaintext file containing the formula takes up several megabytes. I had an LLM agent use SymPy to produce the first ten iterations of polynomials, and while I didn't look at the code at all, the task was straightforward and the plots look correct:
 
-[class=carousel] {
+.carousel {
     img[src=/media/lyapunov/full/curve_composite.webp] {}
     img[src=/media/lyapunov/full/curve_d01.webp] {}
     img[src=/media/lyapunov/full/curve_d02.webp] {}
@@ -352,7 +350,7 @@ $figure[
     lyapunov/curve_d02: P_2 = 0
     lyapunov/curve_d03: P_3 = 0
 ] {
-    
+
 }}
 
 You can see how these curves accumulate and form the "backbone" of the fractal in the interactive renderer by setting "skip" to 1 and "iterations" to 2, and then gradually incrementing the iteration count. The negative-infinite exponents pleasingly trace out exactly these algebraic curves. It's also interesting to note the alternation between two different qualitative types of curve on even and odd iterations. I have not put much thought into that, but I'm sure there's an interesting reason for it.
@@ -370,7 +368,7 @@ $figure[lyapunov|decomp_crosses] { Decomposition of the Logistic λ-diagram AB (
 
 section {
 
-h2[id=controls_notes]{ ❖ Renderer Controls }
+h2#controls_notes { ❖ Renderer Controls }
 
 h3{Mouse Controls}
 
@@ -421,13 +419,13 @@ Presets in the interactive renderer have been set up to approximately reproduce 
 
 section{
 hgroup{
-    h2[id=gallery]{
+    h2#gallery {
                                 ❖  Gallery
     }
     a[href=#contents]{ ↩ contents }
 }
 
-[class=gallery] {
+.gallery {
     img[src=/media/lyapunov/thumb/0.avif] {}
     img[src=/media/lyapunov/thumb/1.avif] {}
     img[src=/media/lyapunov/thumb/2.avif] {}
@@ -443,7 +441,7 @@ TODO scriptless gallery improvements
 
 section {
 
-h2[id=endnote]{ ❖ Endnote }
+h2#endnote { ❖ Endnote }
 
 Thank you for taking the time to read however much of this you did. I may push out updates to this page and the renderer from time to time.
 
