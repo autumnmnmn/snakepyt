@@ -166,7 +166,7 @@ export async function main(spec, panelState) {
 
     const label = document.createElement("label");
     label.innerText = spec.label;
-    label.id = `${name}-label`;
+    label.id = $id(`${name}-label`);
 
     const label_eq = document.createElement("span");
     label_eq.innerText = " = ";

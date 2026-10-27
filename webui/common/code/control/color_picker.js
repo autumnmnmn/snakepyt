@@ -79,7 +79,7 @@ export async function main(spec, panelState) {
 
     const label = document.createElement("label");
     label.innerText = spec.label + ":";
-    label.id = `${name}-label`;
+    label.id = $id(`${name}-label`);
 
     const nativePicker = $element("input");
     nativePicker.type = "color";

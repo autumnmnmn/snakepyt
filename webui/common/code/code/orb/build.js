@@ -74,10 +74,10 @@ function unpackSymbol(symbol) {
         if (state === null) {
             tag = (segment === "") ? "div" : segment;
         }
-        if (state === "#") {
+        if (state === "#" && segment !== "") {
             id = segment;
         }
-        if (state === ".") {
+        if (state === "." && segment !== "") {
             classes.push(segment);
         }
         segment = "";
@@ -106,6 +106,12 @@ function unpackSymbol(symbol) {
     transition("!");
 
     if (classes.length === 0) classes = null;
+
+    if (tag === "$m") {
+        tag = "$math/math";
+    }
+
+    if (id) id = $id(id);
 
     return {
         tag,

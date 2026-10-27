@@ -15,15 +15,7 @@ $css(`
 }
 
 .button button {
-    background: var(--main-background);
-    color: var(--main-solid);
-    font-family: var(--main-font);
-    border: 1px solid var(--main-faded);
-    border-radius: 2px;
-    padding: 0.1rem 0.5rem;
-    min-height: 1rem;
-    line-height: 1rem;
-    cursor: pointer;
+    
 }
 
 .button button:hover {

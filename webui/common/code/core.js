@@ -20,6 +20,24 @@ window.userPreferences = {
 
 window.userPreferences.setLoadButton(localStorage.getItem("loadButton"));
 
+const distributedIds = new Map();
+
+window.$id = function (baseId) {
+    if (baseId === undefined) {
+        console.warn("$id() called without a baseId; defaulting to 'id'");
+        baseId = "id";
+    }
+
+    if (distributedIds.has(baseId)) {
+        const count = distributedIds.get(baseId);
+        distributedIds.set(baseId, count + 1);
+        return `${baseId}_${count}`;
+    }
+
+    distributedIds.set(baseId, 0);
+    return baseId;
+};
+
 window.$mod = async function(moduleName, ...args) {
     const module = await import(`/code/${moduleName}.js`);
     if ("main" in module) {

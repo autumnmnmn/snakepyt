@@ -57,7 +57,7 @@ export async function main(spec, panelState) {
 
     const label = $element("label");
     label.innerText = spec.label + ":";
-    label.id = `${name}-label`;
+    label.id = $id(`${name}-label`);
 
     const copyable_value = $element("span");
     copyable_value.innerText = `${spec.value};\n`;
