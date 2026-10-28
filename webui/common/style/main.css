@@ -156,36 +156,36 @@ hgroup:has(h1) + hr::after {
     color: var(--main-solid);
 }
 
-nav#contents {
+nav.contents {
     scroll-margin-top: calc(min(25em, 25vh));
     width: fit-content;
     padding-right: 1em;
     line-height: 1.25em;
 }
 
-nav#contents ol {
+nav.contents ol {
     max-width: var(--content-width);
     list-style: none;
     counter-reset: roman;
     border-radius: 0.25em;
 }
 
-nav#contents ol li {
+nav.contents ol li {
     margin-left: 5ch;
     overflow: visible;
     margin-top: 0.6em;
     margin-bottom: 0.6em;
 }
 
-nav#contents ol li:not(.numberless) {
+nav.contents ol li:not(.numberless) {
     counter-increment: roman;
 }
 
-nav#contents ol li:not(.numberless)::marker {
+nav.contents ol li:not(.numberless)::marker {
     content: counter(roman, upper-roman) ". ";
 }
 
-nav#contents ol li.numberless::marker {
+nav.contents ol li.numberless::marker {
     color: var(--main-faded);
     content: "❖ ";
 }

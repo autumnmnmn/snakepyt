@@ -222,11 +222,12 @@ export async function build(state) {
                 tagElement.append(...children);
                 state.domNodes.push(tagElement);
             }
-            catch {
+            catch (error) {
                 const _sp = $element("span", "unknown tag");
                 _sp.innerText = ` [error building tag "${tag}"] `;
                 state.segment.appendChild(_sp);
                 console.warn(`error in tag: ${tag}`);
+                throw error;
             }
             continue;
         }

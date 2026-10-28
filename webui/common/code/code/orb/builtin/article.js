@@ -6,13 +6,100 @@ import { asciiModernRomanNumeral as roman } from "/code/math/roman.js";
 
 
 export async function header(node, state, args) {
-    return;
-    let content = state.content(node);
+    const contentsExist = !!state.upper.contents;
 
-    content = content.split("$description");
+    const contentRaw = state.content(node);
 
-    const descriptionSource = (content.length > 1) ? content.pop().trim() : null;
-    const noted = content.join("$note");
+    const contentParts = contentRaw.split("$description");
+
+    if (contentParts.length > 2) {
+        console.warn("Multiple $description subtags in one header. Wtf?");
+        console.log(node);
+    }
+
+    const descriptionSource = contentParts.length > 1 ? contentParts[1].trim() : null;
+    const contentSource = contentParts[0].trim();
+
+    const parsedContent = parserModule.parseSource(contentSource);
+    const content = await build({
+        ...initialState(parsedContent),
+        inline: true,
+        upper: state.upper
+    });
+
+    console.log(content);
+
+    const description = descriptionSource === null ? null : (
+        await build({
+            ...initialState(parserModule.parseSource(descriptionSource)),
+            inline: true,
+            upper: state.upper
+        })
+    );
+
+    const entryId = args.length > 0 ? args[0] : null;
+    const entryClass = args.length > 1 ? args[1] : null;
+
+    const header = $element("h2");
+    header.id = $id(entryId);
+
+    if (contentsExist) {
+        const numbered = !args.includes("numberless");
+
+        if (numbered) {
+            state.upper.contentsNumbered += 1;
+        }
+        const number = numbered ? state.upper.contentsNumbered : null;
+
+        const numeral = numbered ? roman(number).toUpperCase() : null;
+
+        const numeralText = numbered ?
+            document.createTextNode(`§ ${numeral}. `) :
+            document.createTextNode("❖ ");
+
+        const numeralNodes = [numeralText];
+
+        const li = $element("li", "contents entry");
+        if (entryClass) li.classList = entryClass;
+
+        const link = $element("a");
+        if (entryId) link.href = `#${header.id}`;
+
+        state.upper.contentsEntries.appendChild(
+            li.$with(
+                link.$with(...content.domNodes.map(n => n.cloneNode(true))),
+                ...((description === null) ? [] :
+                    [
+                        $element("br"),
+                        ...description.domNodes
+                    ]
+                )
+            )
+        );
+
+        const backlink = $element("a");
+        backlink.href = `#${state.upper.contents.id}`;
+        backlink.textContent = "↩ contents";
+
+        state.domNodes.push(
+            $element("hgroup").$with(
+                header.$with(
+                    ...numeralNodes,
+                    ...content.domNodes
+                ),
+                $element("p").$with(backlink)
+            )
+        );
+    }
+    else // !contentsExist
+    {
+        state.domNodes.push(
+            header.$with(
+                ...content.domNodes
+            )
+        );
+    }
+
 
     /*
 
@@ -55,49 +142,84 @@ export async function header(node, state, args) {
 }
 
 export async function contentsEntry(node, state, args) {
-    console.log(node, state, args);
+    if (!state.upper.contents) {
+        console.warn("Tried to add contents entry to a page w/ no contents.");
+        console.log(node);
+        return;
+    }
+
+    const contentRaw = state.content(node);
+
+    const contentParts = contentRaw.split("$description");
+
+    if (contentParts.length > 2) {
+        console.warn("Multiple $description subtags in one header. Wtf?");
+        console.log(node);
+    }
+
+    const descriptionSource = contentParts.length > 1 ? contentParts[1].trim() : null;
+    const contentSource = contentParts[0].trim();
+
+    const parsedContent = parserModule.parseSource(contentSource);
+    const content = await build({
+        ...initialState(parsedContent),
+        inline: true,
+        upper: state.upper
+    });
+
+    console.log(content);
+
+    const description = descriptionSource === null ? null : (
+        await build({
+            ...initialState(parserModule.parseSource(descriptionSource)),
+            inline: true,
+            upper: state.upper
+        })
+    );
+
+    const entryId = args.length > 0 ? args[0] : null;
+    const entryClass = args.length > 1 ? args[1] : null;
+
+    if (entryId === null) {
+        console.warn("Contents entry needs link");
+        console.log(node);
+    }
+
+    const li = $element("li", "contents entry");
+    if (entryClass) li.classList = entryClass;
+
+    const link = $element("a");
+    if (entryId) link.href = `#${entryId}`;
+
+    state.upper.contentsEntries.appendChild(
+        li.$with(
+            link.$with(...content.domNodes),
+            ...((description === null) ? [] :
+                [
+                    $element("br"),
+                    ...description.domNodes
+                ]
+            )
+        )
+    );
 }
 
 export async function contents(node, state) {
-    //let content = state.content(node);
     const header = $element("h2", "contents header");
     header.textContent = "Contents";
 
     const entries = $element("ol", "contents list");
+    entries.type = "I";
 
-    const nav = $element("nav", "contents").$with(header, entries);
-    nav.id = "contents";
+    const nav = $element("nav", "contents");
+    nav.classList = "contents";
+    nav.id = $id("contents");
 
-    /*
-    const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
-    state.upper.noteGroup += 1;
+    state.upper.contents = nav;
+    state.upper.contentsEntries = entries;
+    state.upper.contentsNumbered = 0;
 
-    const notes = state.pendingDescriptions;
-    state.upper.pendingDescriptions = [];
-    state.upper.noteIndex = 0;
-
-    for (const [index, notePromise] of notes.entries()) {
-        const noteNumeral = roman(index + 1).toLowerCase();
-
-        const note = $element("aside", "footnote");
-        note.id = `footnote_${groupNumeral}_${noteNumeral}`;
-
-        const backlink = $element("a", "footnote backlink");
-        backlink.href = `#footnote_backref_${groupNumeral}_${noteNumeral}`;
-        backlink.textContent = noteNumeral;
-
-        (async () => {
-            note.append(...(await notePromise).domNodes);
-        })();
-
-        section.appendChild(note.$with(
-            $element("sup").$with(backlink),
-            document.createTextNode(" ")
-        ));
-    }
-    */
-
-    state.domNodes.push(nav);
+    state.domNodes.push(nav.$with(header, entries));
 }
 
 

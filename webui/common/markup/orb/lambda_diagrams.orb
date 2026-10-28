@@ -140,40 +140,6 @@ noscript.info-box {
     a handful of screenshots instead.
 }
 
-nav#contents {
-    h2#outline[style=margin-top:1em]{ Contents }
-
-    ol[type=I] {
-        li.numberless {
-            a[href=#explorer] { Interactive Renderer } br{}
-            A WebGPU-based fractal explorer for the logistic Lyapunov fractals, which some
-            might find to be a more compelling introduction to the λ-diagrams than a textual writeup.
-        }
-
-        li {
-            a[href=#section_i]{ Mario Markus's λ-Diagrams } br{}
-            An account of the λ-Diagram and its history.
-        }
-
-        li {
-            a[href=#section_ii]{ Sequence Offsets } br{}
-            We consider ways of visualizing the effect of offsetting the starting index of the
-            forcing sequence.
-        }
-
-        li {
-            a[href=#section_iii]{Observations of the Logistic AB λ-Diagram} br{}
-            The final section is loosest in its structure and purpose;
-            a sort of grab-bag of facts and features of the fractal, alongside some explanation
-            of the interactive renderer.
-        }
-
-        li.numberless { a[href=#gallery] { Gallery } }
-
-        li.numberless { a[href=#endnote] { Endnote } }
-    }
-}
-
 $contents {}
 
 $contentsEntry[explorer|numberless]{
@@ -183,18 +149,15 @@ $description
 }
 
 
+
+
+
 section{
 
-hgroup{
-    h2#section_i {
-                                § I. Mario Markus's λ-Diagrams
-    }
-    a[href=#contents]{ ↩ contents }
-}
-
-$header { Mario Markus's λ-Diagrams
+$header[section_i] {
+    Mario Markus's λ-Diagrams
 $description
-An account of the λ-Diagram and its history.
+    An account of the λ-Diagram and its history.
 }
 
 The a[href=https://en.wikipedia.org/wiki/Lyapunov_fractal]{Lyapunov fractal} was
@@ -292,11 +255,11 @@ $footnotes { Section I Footnotes }
 
 section{
 
-hgroup{
-    h2#section_ii {
-                                § II. Sequence Offsets
-    }
-    a[href=#contents]{ ↩ contents }
+$header[section_ii] {
+    Sequence Offsets
+$description
+    We consider ways of visualizing the effect of offsetting the starting index of the
+    forcing sequence.
 }
 
 Consider a λ-diagram with periodic forcing sequence i{AB}, and another with sequence i{BA}. If all we could see was a segment in the middle of the ongoing sequence: i{...ABABABABAB...}. We wouldn't be able to tell which of these systems we were looking at. And indeed when we look at the i{AB} and i{BA} logistic λ-diagrams, we find they are substantially similar:
@@ -322,11 +285,12 @@ A somewhat more common modification is to include a third value, C, correspondin
 
 section {
 
-hgroup{
-    h2#section_iii {
-                                § III. Observations of the Logistic λ-Diagram
-    }
-    a[href=#contents]{ ↩ contents }
+$header[section_iii] {
+    Observations of the Logistic λ-Diagram
+$description
+    The final section is loosest in its structure and purpose;
+    a sort of grab-bag of facts and features of the fractal, alongside some explanation
+    of the interactive renderer.
 }
 
 The original paper concerns itself only with A and B values in the range [0,4]. However, there is no technical constraint that prevents us from peeking outside that box. When we do, it becomes visually apparent that this range is not entirely arbitrary (a[href=https://en.wikipedia.org/wiki/Logistic_map#Characterization_of_the_logistic_map]{the logistic map remains finite there}). The crisp edge of this "blessed" square stands out prominently. Nevertheless, there is some interesting structure outside of it. Some of the superstable curves poke out into the void of divergence. A smaller, distorted square exists where A and B are both negative.
@@ -392,7 +356,9 @@ $figure[lyapunov|decomp_crosses] { Decomposition of the Logistic λ-diagram AB (
 
 section {
 
-h2#controls_notes { ❖ Renderer Controls }
+$header[controls_notes|numberless] {
+    Renderer Controls
+}
 
 h3{Mouse Controls}
 
@@ -442,11 +408,9 @@ Presets in the interactive renderer have been set up to approximately reproduce 
 
 
 section{
-hgroup{
-    h2#gallery {
-                                ❖  Gallery
-    }
-    a[href=#contents]{ ↩ contents }
+
+$header[gallery|numberless] {
+    Gallery
 }
 
 .gallery {
@@ -465,7 +429,9 @@ TODO scriptless gallery improvements
 
 section {
 
-h2#endnote { ❖ Endnote }
+$header[endnote|numberless] {
+    Endnote
+}
 
 Thank you for taking the time to read however much of this you did. I may push out updates to this page and the renderer from time to time.
 

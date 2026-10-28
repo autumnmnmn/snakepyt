@@ -22,11 +22,10 @@ hr {}
 
 
 #explorer.dynamic[style=margin-top:1em;border-radius:0.25em;] {
-
-$layout/loadwall[gpu/proj_shift|render-container] { Load interactive renderer? (designed for desktop) }
-
+    $layout/loadwall[gpu/proj_shift|render-container] {
+        Load interactive renderer? (designed for desktop)
+    }
 }
-
 
 noscript.info-box {
     It looks like you have scripts turned off. Just so you know, there's an interactive WebGPU-based renderer you're missing out on, and a few other interactive visualizations throughout the article where you'll see a handful of screenshots instead.
@@ -35,6 +34,10 @@ noscript.info-box {
 section {
 
     h2 { Projective Shift Map }
+
+    header[section_i] {
+        Projective shifts
+    }
 
     div { $math/math {
         manual block
