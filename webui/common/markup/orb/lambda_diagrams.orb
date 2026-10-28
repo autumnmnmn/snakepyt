@@ -341,7 +341,8 @@ Since $m {  log{|x|} } diverges to $m {  -inf } as x approaches 0, we have that 
 
 Because $m {  x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors $m {  c_n } so as to produce polynomials with the same zeros but with integer coefficients, the first few curves $m {  P_n = c_n dot d/{d x} f_n{(x_n)} = 0 } are as follows:
 
-$m {P_1 = {- a} + 2 = 0
+$m { block
+P_1 = {- a} + 2 = 0
 
 P_2 = a^2 b - 4 ab + 8 = 0
 
@@ -511,10 +512,11 @@ generally: refactor plotting code, make sure nothing extraneous is getting drawn
 
 color picker input controls
 
-finish writeup; other plots building up toward what lyap exp is and why
-
 mention "verhulst dynamics" and link:
 https://www.lactamme.polytechnique.fr/Mosaic/descripteurs/Commentaires_EspaceLyapunovComplexe.01.html
+
+
+do_frac option: seemingly "natural" extension in the +/+ quadrant, symmetry in other quadrants might be aesthetically pleasing to some but mathematically it obliterates structure which displeases me personally; haven't found an alternative that fully preserves the structure in the other quadrants like i'd hope for
 
 }
 

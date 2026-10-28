@@ -32,8 +32,6 @@ function valueProxy(varMap) {
             for (const registration of v.registrations.filter(r => r.set)) {
                 registration.set(value);
                 if (v.isCompositeSubvar) {
-                    console.log(v);
-                    console.log(value);
                 }
             }
             const selection = v.options ? v.options.find(opt => opt.value == value).label : value;

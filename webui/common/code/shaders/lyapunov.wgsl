@@ -20,6 +20,7 @@ struct Uniforms /* buffer 0 0 */ {
     stochastic_modulus: u32, // 1 to 200 = 100 $depend(stochasticity=true)
     rotation: f32, // 0 to 1 = 0
     epsilon: f32, // 0 to 0.01 = 0.0001 $depend(offset_mode=count_distinct)
+    do_frac: u32 // hard 0 to hard 1 = 0 $bool
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -90,7 +91,11 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
                 var term = log(abs(fprime[offset]));
                 lyapunov[offset] = c_avg(lyapunov[offset], term, iter - uniforms.skip + 1);
             }
-            x[offset] = x_next;
+            if (uniforms.do_frac == 1u) {
+                x[offset] = fract(x_next);
+            } else {
+                x[offset] = x_next;
+            }
 
         }
         if (hacky_isnan(x[0]) && diverged_at == 0) {

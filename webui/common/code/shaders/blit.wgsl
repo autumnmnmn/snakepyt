@@ -1,5 +1,6 @@
 
 struct Uniforms /* buffer 0 0 */ {
+    mode: u32, // hard 0 to hard 2 = 0 $select(lyapunov, fprime, x)
     negative_scale: f32, // -7 to 7 = 1
     negative_scale_b: f32, // -7 to 7 = 1
     positive_scale: f32, // -7 to 7 = 1
@@ -10,8 +11,7 @@ struct Uniforms /* buffer 0 0 */ {
     neg_color: vec3f, // $color
     curves: u32, // hard 0 to hard 1 = 0 $bool
     target_value: f32, // -1 to 1 = 0 $depend(curves=true)
-    edge_multiplier: f32, // 0 to 1 = 0.15 $depend(curves=true)
-    mode: u32 // hard 0 to hard 2 = 0 $select(lyapunov, fprime, x)
+    edge_multiplier: f32, // 0 to 1 = 0.5 $depend(curves=true)
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;

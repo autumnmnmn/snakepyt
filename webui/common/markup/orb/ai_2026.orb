@@ -79,3 +79,48 @@ Additional commentary
 Many (all? I haven't checked) of the Lean-formalized results appear to take on the axiom of choice. I'd be more impressed if they didn't.
 
 
+
+
+A mathematician is uniquely qualified to say why anyone would give a shit about any of these results
+
+
+
+
+ponder
+ @ponder.ooo
+· 12h
+it's also weird that pop explainers of math act like zfc has already succeeded at this and mathematical work always proceeds from the axioms of zfc. but also now are sometimes acting like lean (and thereby univalence or hott or whatever) has done so, that a lean cert is "the gold standard" in math
+ponder
+ @ponder.ooo
+· 12h
+it's cool to have ppl working on foundations in math, encoding as much of the body of math as they can in whatever system they like. but if any such project succeeded in bringing about a future where everyone else doing math always had to operate in one foundational system, that would be horrible
+
+
+ponder
+ @ponder.ooo
+· 13h
+very much dislike openai's view that when results are obtained via processes involving sufficiently large proprietary RL models, the academic norm should be to leave all details of the process except the involvement of a proprietary model undisclosed and to leave most researchers involved unnamed 1/6
+ponder
+ @ponder.ooo
+· 12h
+they should publish with full transparency about the full processes by which they achieve their results, and their researchers should be putting their names on that 2/6
+ponder
+ @ponder.ooo
+· 12h
+they have insane amounts of compute, proprietary data, and human research talent. once the model capabilities presently only available to them become generally available, their norm of assigning all credit to the llm will become increasingly obviously untenable and deranged 3/6
+ponder
+ @ponder.ooo
+· 12h
+ofc by that time they will have even better models than that so they'll just keep doing the same shit, trying to pass off a massive material advantage in compute resources, data, & highly skilled intellectual laborers as something fundamentally different in kind from all other research 4/6
+ponder
+ @ponder.ooo
+· 12h
+also the lean certs are the main results, not the generated preprints, especially not the preprints that not only lack lean certs but that nobody has meaningfully reviewed. those "preprints" should be released as attachments/supporting material alongside an actually-well-written writeup 5/6
+ponder
+@ponder.ooo
+or rather *writeups*, of their full process for creating their internal model as well as their full process for obtaining the mathematical results they obtained with it 6/6
+
+
+
+i think the way llms can help me learn the math that already exists is more revolutionary than the results they're proving in lean tbh
+
