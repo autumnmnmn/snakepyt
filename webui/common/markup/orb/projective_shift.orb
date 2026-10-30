@@ -102,6 +102,72 @@ general gallery
 
 renderer improvements
 
+
+
+
+
+i am thinking of a particular class C of function
+
+a function f is in C if:
+
+x!=0 => (p(f(x)) = p(x) OR f(x) = 0), where p is the canonical projectivization projection, i.e. f(x) lies always on the same unoriented line thru the origin as x
+
+f is R^n to R^n & p is the canonical projection onto RP^n-1
+
+f is continuous & smooth except at its singularity at the origin
+
+
+
+i mean really these are just continuous angle-preserving functions on the unoriented blowup
+
+
+
+
+
+
+point of regular llm confusion to make sure to clarify:
+
+'''
+the unoriented thing — you're right, I was wrong
+
+I claimed a couple turns ago that g(z)=(∣z∣+cosθ)eiθ
+ was "genuinely oriented" and didn't descend to 
+RP1
+. that's wrong, and your phrasing nails exactly why.
+
+a section w(θ)=a(θ)eiθ
+ of 
+O(−1)→RP1
+ has to satisfy 
+w(θ+π)=w(θ)
+ as a 
+vector, because θ
+ and 
+θ+π
+ are the same point of 
+RP1
+ with the same fiber. since 
+ei(θ+π)=−eiθ
+, this forces 
+a(θ+π)=−a(θ)
+. the radius-shift has to be 
+π
+-antiperiodic, exactly as you said. and 
+cos(θ+π)=−cosθ
+, so 
+cosθ
+ qualifies and 
+w(θ)=cosθeiθ
+ is a perfectly good smooth section of 
+O(−1)
+ over 
+RP1
+. 
+g
+ descends to the Möbius band, the cardioid lives on the unoriented blowup, my earlier "oriented" claim was sloppy.
+
+'''
+
 }
 
 

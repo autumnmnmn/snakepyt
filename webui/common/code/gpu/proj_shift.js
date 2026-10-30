@@ -418,6 +418,7 @@ export async function main() {
 
             let pathData = "";
             for (let i = 0; i < trajectory.length; i++) {
+                //trajectory[i].im = Math.abs(trajectory[i].im);
                 const pixel = trajectory[i].toPixel(dims, center, rotation, scale);
 
                 // Skip points outside visible area

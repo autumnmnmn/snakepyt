@@ -6,8 +6,8 @@ struct Uniforms /* buffer 0 0 */ {
     zoom: f32,
     rotation: f32, // 0 to 1 = 0
     c: vec2f, // 0 to 1 = 0.85,0
-    c2: vec2f, // 0 to 1 = 0.85,0
-    c3: vec2f, // 0 to 1 = 0.85,0
+    c2: vec2f,
+    c3: vec2f,
     t: f32, // hard 0 to hard 1 = 0
     iterations: u32, // hard 0 to 500 = 100
     twist: f32, // -pi to pi = 0
@@ -54,6 +54,20 @@ fn iterate_polar(
         mids.x * sinTwist + mids.y * cosTwist
     );
     return rotated + halfEbb;
+}
+
+fn iterate_polar_foo(
+    x: vec2<f32>,
+    phi: f32, psi: f32, eta: f32,
+    c: vec2f,
+    cosTwist: f32, sinTwist: f32,
+    squoosh: vec2f
+    ) -> vec2<f32> {
+    let x_mag = complex_mag(x);
+    let x_angle = complex_angle(x);
+    let j = x_mag + c.x * sin(x_angle);
+    let theta = x_angle + j;
+    return vec2<f32>(j * cos(theta), j * sin(theta));
 }
 
 fn iterate_cartesian(z: vec2<f32>, phi: f32, c: vec2f) -> vec2<f32> {
@@ -200,6 +214,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         var avg_abs_df_z_p = f32(0.0);
 
         var c = uniforms.c;
+        /*
         if (iter % 3 == 1) {
             c = uniforms.c2;
         }
@@ -207,6 +222,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
         if (iter % 3 == 2) {
             c = uniforms.c3;
         }
+        */
         var f_z = iterate_polar(z, uniforms.phi, uniforms.psi, uniforms.eta, c, cosTwist, sinTwist, uniforms.squoosh);
 
         if (iter >= transient_skip) {

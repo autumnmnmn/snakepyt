@@ -1,20 +1,45 @@
 
+$theme {}
 
-Opinion | On AI in 2026
+$title { AI 2026 }
 
-Where we are, and where we aren't
+$og_description { Where we are, and where we aren't }
+
+$css { }
+
+article {
 
 
+hgroup {
+    h1 { AI 2026 }
 
-It's October 2026. OpenAI has just released a massive github repo of of .pdf and .lean files.
+    Where we are, and where we aren't
+}
+hr {}
 
-https://openai.com/index/sharing-ai-progress-in-mathematics/
+section#intro {
+It's October 2026. Or at least, it was when I began writing this. OpenAI has just released a[href=https://openai.com/index/sharing-ai-progress-in-mathematics/]{a massive github repo of of .pdf and .lean files}.
 
-There are more than 700 PDFs, and some small percent of the results also come with Lean certificates.
+There are more than 700 PDFs, and some portion of those results also come with Lean certificates.
 
 This has led to quite a bit of discussion. Is it the end of human mathematics? Is it time to move to a "math 2.0"? Is AGI here? Or ASI? The eschaton?
 
-With all the bombastic commentary flying around I figured I should go ahead and make a record of where my head was at at this time. I don't intend this as a persuasive piece, more of a snapshot of my thoughts.
+With all the commentary flying around, much of it quite bombastic, I figured I should go ahead and make a record of where my head was at at this time. I don't intend this as a persuasive piece, more of a snapshot of my thoughts.
+}
+
+$contents {}
+
+$contentsEntry[intro|numberless]{
+    Introduction
+}
+
+section {
+
+$header[wip] {
+    WIP
+$description
+    stuff that i haven't found a proper section for yet
+}
 
 On the value of OpenAI's contribution to mathematics.
 
@@ -44,7 +69,7 @@ On the reliability of Lean
 
 At time of writing, the most recent patch of soundness bugs in Lean was September 14, 2026. As I understand it, the bugs involved were not of the sort that could easily be squirreled away in an innocent-looking proof. I still find their existence to be cause for caution. These bugs were found by an audit by an internal OpenAI agent tasked with probing for vulnerabilities. I think frontier-scale RL training against the verifier is another tier of threat when it comes to sniffing out vulnerabilities in the tool; I think it is in fact the biggest test to which Lean has ever been put. And while it may well be that Lean holds up to this test, that all the certified proofs stay standing indefinitely, I think it's reasonable at this time to treat it as a em{possibility} that em{some} results might not hold up. On the other hand I also think those that have already lodged a prediction that the results are em{definitely bullshit} are overconfident. Let's wait and see.
 
-Isn't this shocking?
+
 
 Has OpenAI made a model that is $scare{better at math} than humans?
 
@@ -56,7 +81,7 @@ No.
 
 Is it time to move to "math 2.0"?
 
-No. Mathematical practice will certainly be affected by AI, but it does not need to fundamentally change itself to make use of these tools.
+I don't want to disparage the entire $scare{Math 2.0} programme. But I am against the baggage of its name! Mathematical practice will certainly be affected by AI, but it does not need to fundamentally change itself to make use of these tools. We do not need a $scare{new major version} of math. Granted, I'm not an academic, perhaps this just amounts to the fact that my view of what math is is a little high-minded.
 
 Will machine-generated proofs be the centerpiece of all mathematical development going forward?
 
@@ -73,6 +98,16 @@ No.
 The eschaton?
 
 No.
+
+But isn't this all so shocking?
+
+idk how ppl have it in them to get breathlessly hyped once per news cycle about ai for years on end as if every single development is a generation-defining breakthrough! Don't get me wrong, I can understand being impressed w/ advancements in AI. but the rly big ones happened years ago! at a certain point one should incorporate that fact into one's understanding of where we're at and stop being shocked & awed over and over again. I feel I already got the hype out of my system in the early days of LLMs (and diffusion/flow models, which to be honest I have always found more theoretically interesting, even as the industry has decided to continually optimize such models, which at their dawn held so much promise, toward ever-more-artless schlock).
+
+But you have to admit these models are impressive!
+
+Yes. I do! I find them very impressive and useful. I think they're especially a boon to curious minds. Even with free-tier models, you can talk about some vague idea and the model can tell you there's a well known term for that, there's this or that relevant literature, &c. You can describe some strange notation or some difficulty that's been bothering you and even if you don't get a perfect answer it'll be a hell of a lot better than what google ever could have given you. And I find the models useful for doing quick experiments that otherwise wouldn't have felt worth the effort. There's a lot to be excited about with AI!
+
+I genuinely think the way LLMs can already help people that want to learn the math that already exists is more revolutionary than the results they've recently proved in Lean.
 
 Additional commentary
 
@@ -122,5 +157,434 @@ or rather *writeups*, of their full process for creating their internal model as
 
 
 
-i think the way llms can help me learn the math that already exists is more revolutionary than the results they're proving in lean tbh
+
+
+
+ponder
+ @ponder.ooo
+· 8h
+"maybe math isn't beautiful" is a bizarre reaction to the recent ai math stuff, imo. like i don't know how someone who previously genuinely thought math was beautiful could stop thinking so on the basis of those results; none of what i find beautiful in math has been lost or at all tarnished
+ponder
+ @ponder.ooo
+· 8h
+like sure i don't find those particular results beautiful. there's a lot of theorems i don't find particularly beautiful or interesting in math. i don't think very many people who have any sense for "mathematical beauty" were ever of the opinion that every theorem provable in lean is beautiful
+
+
+ponder
+ @ponder.ooo
+· 15m
+so one of the answers im hearing to this is along the lines that "ugly" ai results are indicative that humanity has been sort of "limited" by aesthetic taste, simply *unwilling* to go find all the answers to open problems bc we just weren't willing to suppose that the answers might be inelegant
+ponder
+ @ponder.ooo
+· 15m
+however i don't buy this, bc these results are actually very much in line w/ the kind of stuff ppl have been churning out for a while. galactic runtime algos, bounds proofs w/ nasty arbitrary constants, &c &c are nothing new. & i also don't think the sheer quantity of them to be found is surprising
+ponder
+ @ponder.ooo
+· 15m
+that kind of problem has basically been something you can go grind against and have a decent guarantee you'll come across some kind of result, inelegant as it might be. oai's results i guess just shine a light on how much of contemporary academic math is just "go swing a pickaxe in the results mine"
+
+
+ponder
+ @ponder.ooo
+· now
+i guess being personally not part of academia and viewing "math" as something broader than "churn out papers" makes it easier for me to view the ripping apart of those ore-rich hills by a bucket-wheel excavator as something less than apocalyptic
+
+
+
+p(Dulany)
+ @dulanyw.bsky.social
+· 14m
+In a lot of instances, the anti-AI math position isn't even that
+
+It's that "by keeping the ore in the hills, it gives us an opportunity to talk about mining"
+
+bsky.app/profile/dula...
+p(Dulany)
+ @dulanyw.bsky.social
+· 1mo
+It's like living in a gold-mining town
+
+Looking up at the mountains, blinded by the yellow shine
+
+And saying "our real value is telling people about gold mining" 4/4
+ponder
+ @ponder.ooo
+· 10m
+imo the "ore" in this metaphor is already something of questionable value anyway & the "publish or perish" grind is just one case of the broader societal problem of valuing nothing but the production of endless slop & requiring ppl to waste their lives doing pointless drudgery to pay the rent
+ponder
+ @ponder.ooo
+· 6m
+the responses of academic mathematicians are then the panicked appeals of mine workers being asked "ok so if we can just roll up w/ a big machine... why shouldn't society just discard you all, toss you all in a landfill"
+ponder
+ @ponder.ooo
+· now
+tho i think there's much more to math than the mining, the main reason we as a society even buy the "ore" of endless publications is not bc there's anyone out there that actually has a use for that ore in the way industries use ore irl, rather we pay for the ore as a proxy for funding math bc there
+ponder
+@ponder.ooo
+has to be some kind of "product" to satisfy the ideological conceit our economy has where everyone has to be "productive" all the time in some legible way, even if that productivity isn't doing anyone much good, or else deserves to be left out on the street to die of exposure in the winter
+
+
+---
+
+
+
+hey hey what kind of math have oai &co been doing anyway
+37m
+
+hmm kinda all over the place
+
+lots of like. long convoluted proofs from various areas
+
+all building on pretty established topics
+
+just kinda treating known "open problems" as a checklist to methodically grind thru, & treating a lean verified proof as all it takes to make a result adequate
+
+alongside pdf writeups that explain the results poorly and don't always make the same exact argument the lean formalization makes
+34m
+
+bluh
+34m
+
+even if they argue to the same conclusion
+34m
+
+ah
+34m
+
+& it's like
+
+this is nothing like what math is to me lmao
+
+it's very pathological
+
+malicious compliance vibe
+33m
+
+but u think people are overreacting to it
+33m
+
+like "come up with any objective standard for work in your field and i will make a machine that performs that perfectly, while also clearly missing the actual point"
+
+but u think people are overreacting to it
+
+hmm i guess mathematicians in academia have their livelihoods on the line when it comes to how the cultural conversation about it shakes out so a strong reaction there makes sense
+
+but when it comes to like. what it means for math writ large, yea i think this is like. underwhelming stuff
+30m
+
+You
+like "come up with any objective standard for work in your field and i will make a machine that performs that perfectly, while also clearly missing the actual point"
+
+the actual point being to find proofs that uhh, are more conceptually elegant/useful/extensible? so that u can actually take something away from them that's applicable elsewhere in the field..? trying to understand ur perspective on it as a layperson lol
+29m
+
+the actual point being to find proofs that uhh, are more conceptually elegant/useful/extensible? so that u can actually take something away from them that's applicable elsewhere in the field..? trying to understand ur perspective on it as a layperson lol
+
+yeah like it's kinda about "what is the actual point of proving things anyway"
+
+like
+
+the point of a proof is to communicate an understanding
+
+that's prior to even formalization
+
+formal systems make it so we can like. agree on what the rules of reasoning are in a particular theoretical context, so we don't have to hash out whether the axiom of choice holds, we can just say "this result is dependent on it" and agree that it is fine to invoke in this proof
+
+but formal systems also have the side effect where
+
+you can make a huge gnarly proof and just check each step without having to understand the entire thing all at once
+
+and like. you can do that without formalization as well
+
+but
+
+formalization lets you communicate something like that precisely
+
+but massive machine generated proofs are more like
+25m
+
+You
+you can make a huge gnarly proof and just check each step without having to understand the entire thing all at once
+
+but in doing so u lose out on the revision and refinement of ur models that understanding necessitates
+Edited24m
+
+someone looking at that whole process of like "here are the local rules of reasoning and here's the step by step process that proves some interesting result there" and thinks "ah ok so all that matters is that the steps in this formalism check out. well then i can just make a machine that checks that stuff and then nobody needs to care about reasoning any more"
+
+it seems like malicious compliance with the formalization of reasoning, imo
+
+100% following the letter of the law but completely contemptuous of the spirit of it
+
+bc the point of proofs is to actually convince ourselves and one another of various facts about what precise ideas entail each other under various ideas of entailment and various foundational assumptions
+
+but these oai proofs are like. not only failing to communicate any understanding, but produced also without understanding
+
+and they're treating "there's a lean cert that checks out" as a standard for the quality of papers
+
+which is just not really the standard in mathematics lol
+19m
+
+yeah
+19m
+
+what a lean cert checking out demonstrates is that insofar as we trust an engineered piece of software, we can be assured that the theorem encoded in lean follows from the axioms specified, according to the argument encoded in lean
+
+but there are several ways that can fail to correspond with what's in the paper
+18m
+
+yeah uve talked abt that last part before
+17m
+
+the paper can be making a totally different argument for the same conclusion
+
+yeah lol sry
+17m
+
+oh no you're fine!!
+
+it really likes listening to u talk abt this stuff:>
+16m
+
+❤️
+
+its very interesting & you're good at explaining it
+16m
+
+:D
+15m
+
+💛
+
+cutie
+15m
+
+You
+what a lean cert checking out demonstrates is that insofar as we trust an engineered piece of software, we can be assured that the theorem encoded in lean follows from the axioms specified, according to the argument encoded in lean
+
+& aside from issues of correspondence w/ the paper, this also has the issue of like. presenting math as though it all proceeds from one single foundational system
+
+which is a bit of brainrot that's been afflicting the culture for some time
+
+usually ppl treating zfc set theory as the true foundation
+
+when like
+
+the history of foundationalism is a farce imo
+
+19th/20th century epistemic foundational aspirations got dunked thru the fucking floor
+Edited13m
+
+hehe
+13m
+
+by theorems proving that reasonably powerful formalisms can't guarantee they have all the nice properties one would want the One True Foundation to have and also by that foundational sort of philosophy being trash more broadly
+
+but the foundationalists just kinda shrugged and decided "who cares let's just declare zfc the foundation of all math" and the meme has survived
+10m
+
+😭
+10m
+
+the funny thing is tho
+
+lean isnt even that
+
+lean is built on a totally different foundation
+
+"univalent foundations" / "homotopy type theory" stuff
+
+which is
+
+galaxy brain 5d alien bullshit
+
+i mean
+
+i mean "galaxy brain 5d alien bullshit" somewhat affectionately
+
+but
+
+it's also
+
+very new
+
+has the same epistemic/philosophical issues as any foundational project
+
+so even w/ it being true that "any proof verified in lean, if the verification is done properly, has a very very very high probability that the theorem as-stated-in-lean indeed holds as a consequence of the axioms used"
+
+it's still not the case that having a lean cert to go along w/ a paper is "the gold standard" in math
+
+most mathematical work doesn't even explicitly proceed from any foundational system's axioms
+
+ppl proceed from a variety of formalisms or even informal arguments
+
+and it's all legitimate math
+
+like u can lay out the axioms of group theory w/o grounding them in the axioms of a particular axiomatization of set theory
+
+"does this result depend on axiom of choice" is less a question about the true nature of a proof as written and more a question about what happens if you try to encode that proof in zfc
+4m
+
+You
+but the foundationalists just kinda shrugged and decided "who cares let's just declare zfc the foundation of all math" and the meme has survived
+
+its kind of funny how the course of the 20th century is kind of an arc of dissolution of unified ontologies and other mononarratives  like in the sciences and math and philosophy and everywhere else . but then that never actually resolved and we just arrived at the postmodern condition which is like. idk fischer kind of touched on it with hauntology we still can't really overcome the specter of the old aspirations :3
+3m
+
+its kind of funny how the course of the 20th century is kind of an arc of dissolution of unified ontologies and other mononarratives  like in the sciences and math and philosophy and everywhere else . but then that never actually resolved and we just arrived at the postmodern condition which is like. idk fischer kind of touched on it with hauntology we still can't really overcome the specter of the old aspirations :3
+
+yea
+
+it gets it
+3m
+
+🙂‍↕️
+3m
+
+You
+"does this result depend on axiom of choice" is less a question about the true nature of a proof as written and more a question about what happens if you try to encode that proof in zfc
+
+so like i would say "most papers don't invoke choice" & a zfc nerd might be like "uhm actually it assumed all vector spaces have a basis and that's equivalent to choice" & it's like
+2m
+
+gross lol
+2m
+
+that's true if you try to like. re-encode the proof in your preferred foundations
+
+you would end up needing choice to encode that particular move of the proof in set theory, sure
+
+but at the same time
+
+the proof itself didn't actually rely on any such foundation and didn't *need to* to be rigorous and valid
+
+rigor is not the same thing as formalization for one thing
+1m
+
+💛
+
+but that's i guess too spicy a take for the 21st century on this chud planet
+
+You
+the proof itself didn't actually rely on any such foundation and didn't *need to* to be rigorous and valid
+
+and furthermore
+
+even if the proof assumed every vector space has a basis
+
+it might not actually *need* the strongest version of that to still hold
+
+bcl ike
+
+most vector spaces anybody gives a shit about have a basis even if u dont assume choice
+
+
+
+"but that's i guess too spicy a take for the 21st century on this chud planet
+
+You
+the proof itself didn't actually rely on any such foundation and didn't *need to* to be rigorous and valid
+
+and furthermore
+
+even if the proof assumed every vector space has a basis
+
+it might not actually *need* the strongest version of that to still hold
+
+bcl ike
+
+most vector spaces anybody gives a shit about have a basis even if u dont assume choice
+6m
+
+strikes it as people just being narrowminded
+
+unfortunate
+5m
+
+yea
+
+a fun thing re: "rigor" & formalization
+
+is
+
+formalizations of calculus
+
+the main way we formalize calculus & real analysis today was developed originally as a way of "making it rigorous" bc ppl were very anxious about whether calculus was actually sufficiently rigorous
+
+bc there was a lot of argument by intuitions abt infinitesimals for example
+
+or other things
+
+and like
+
+now we have these ideas of epsilon-delta proofs about limits &c &c
+
+but
+
+in the long run
+
+actual formalizations have been developed for a lot of the shit that was previously discarded as an "unrigorous intuition"
+
+like there has been a formalization of calculus in terms of infinitesimals
+
+there's bishop's constructive analysis
+
+there's umbral calculus results
+
+&c &c
+
+a lot of math that was dismissed as the "unrigorous intuition" that needed to be replaced w/ a properly rigorous formalization in some "more foundational" system turned out to be just as formalizable in the long run
+
+it just didn't track w/ the formalization that ppl at the time were most taken with
+
+didn't fit nicely into the conceptual schemes that were held in highest regard
+
+in an obvious and easy way
+
+and ppl mistook "fits into this foundational mindset" as being what it meant for a mathematical result to be properly rigorously established but like
+
+that just wasn't the reality!!
+Now
+
+You
+like there has been a formalization of calculus in terms of infinitesimals
+
+YEAH
+Now
+
+math is pluralistic
+
+
+this bothered it when it looked into it
+
+like oh we can't have infinitesimals. that doesn't make any sense. that's bullshit. we need to do some other shit to get around that
+
+no actually you can just use them it's fine
+Now
+
+& the especially galling thing is that that notion of rigor is like
+
+one that shits all over the ppl that actually originally came up w/ calculus lmfao
+
+being like "ah they're just mystical hacks guessing"
+
+no
+
+they were thinking in a way that actually does hold up!!
+"
+
+
+
+sanderson on tao's blog:
+One clear shortcoming of a motivated explanation is that its validity is not binary the way a proof’s is. This is a big reason proof is so useful a way to measure progress: You can clearly define what does and does not have a proof yet. There will never be Lean for motivated explanations. 
+ponder
+@ponder.ooo
+this is not a shortcoming of motivated explanation. this is a shortcoming in the ideological expectation that everything should be evaluable by "objective" binary judgements
+
+}
+
+}
+
+
+
+
 
