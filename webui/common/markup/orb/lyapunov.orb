@@ -111,7 +111,7 @@ li { As r increases, at some point there's a change, and each point on the inter
 li { As r increases further, there are more values to bounce between, and by the time r is quite close to 4, the plot gets very messy very quickly and this ceases to be a useful visualization. }
 }
 
-The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from $noted{ almost any $note There do exist other exceptional initial conditions. Try out $math/math { x_0 = 0.75, r = 4 }, for instance. The set of periodic initial conditions in otherwise-chaotic parametrizations is an interesting object of study that merits a mention even if it's outside the scope of this post. } x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { x_0 } and plot its behavior for many timesteps:
+The most important takeaway from that visualization is that, as long as it's not 0 or 1, we could start from $noted{ almost any $note There do exist other exceptional initial conditions. Try out $math/math { x_0 = 0.75, r = 4 }, for instance. It's not too hard to demonstrate to oneself that in general $math/math { x_0 = 1 - 1 / r } is a fixed point. } x-value and the system's long-term dynamics would be qualitatively similar. So, let's not keep wasting a dimension of our visualization on that. Instead, let's take a i{single} $math/math { x_0 } and plot its behavior for many timesteps:
 
 .dynamic.interactive-plot { $math/plot { logistic/timeseries } }
 

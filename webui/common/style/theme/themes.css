@@ -1,7 +1,7 @@
 
 @font-face {
     font-family: Latin Modern Math;
-    src: url("/media/latinmodern-math.woff2"), local("Latin Modern Math"), local("LatinModernMath-Regular");
+    src: url("/media/latinmodern-math.woff2") format("woff2");
 }
 
 @font-face {

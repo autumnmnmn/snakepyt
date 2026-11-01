@@ -29,4 +29,3 @@ fn c_avg(prev: f32, val: f32, n: u32) -> f32 {
     return next;
 }
 
-
