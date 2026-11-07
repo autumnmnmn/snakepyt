@@ -5,7 +5,7 @@ struct Uniforms /* buffer 0 0 */ {
     center_high: vec2f,
     zoom: f32,
     rotation: f32, // 0 to 1 = 0
-    c: vec2f, // 0 to 1 = 0.85,0
+    c: vec2f, // 0 to 1 = 0.801,0
     c2: vec2f,
     c3: vec2f,
     t: f32, // hard 0 to hard 1 = 0
@@ -16,8 +16,8 @@ struct Uniforms /* buffer 0 0 */ {
     eta: f32, // 0 to 12 = 1
     squoosh: vec2f, // 0 to 10 = 1,1
     escape_distance: f32, // 0 to 10 = 2
-    death_radius: f32, // 0 to 0.2 = 0.01
-    death_mode: u32, // hard 0 to hard 1 = 0 $bool
+    origin_preimages: u32, // hard 0 to hard 1 = 0 $bool
+    neighborhood_radius: f32, // 0 to 0.2 = 0.01 $depend(origin_preimages=true)
     rad_mode: u32, // hard 0 to hard 1 = 0 $bool
     radmax: f32, // 0 to 10 = 4
     radscale: f32 // 0 to 1 = 0.2
@@ -187,7 +187,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     let cosTwist = cos(uniforms.twist);
     let sinTwist = sin(uniforms.twist);
 
-    let death_squared = uniforms.death_radius * uniforms.death_radius;
+    let rad_sq = uniforms.neighborhood_radius * uniforms.neighborhood_radius;
 
     let orig_mag_sq = complex_mag_sq(orig_z);
 
@@ -197,7 +197,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
             escaped = true;
             //break;
         }
-        if (mag_sq < death_squared) {
+        if (mag_sq < rad_sq) {
             died = true;
         }
         if (mag_sq < minrad) {
@@ -249,7 +249,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     var color: vec4<f32>;
 
-    if (uniforms.death_mode == 1) {
+    if (uniforms.origin_preimages == 1) {
         if (died) {
             color = vec4<f32>(0.0, 1.0, 1.0, 1.0);
         } else {

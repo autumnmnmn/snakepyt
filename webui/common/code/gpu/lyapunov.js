@@ -593,7 +593,10 @@ sequence BA
         width = canvas.clientWidth * dpr;
         height = canvas.clientHeight * dpr;
 
-        if (width * height === 0) return;
+        if (width * height === 0) {
+            canRender = false;
+            return;
+        }
 
         overlay.setAttribute("viewBox", `0 0 ${width} ${height}`);
         overlay.setAttribute("width", width);
@@ -611,11 +614,6 @@ sequence BA
 
         params.width = width;
         params.height = height;
-
-        if (width * height <= 0) {
-            canRender = false;
-            return;
-        }
 
         canRender = true;
 

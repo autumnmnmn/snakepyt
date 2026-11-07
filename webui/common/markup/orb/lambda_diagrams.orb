@@ -166,7 +166,7 @@ a[href=https://onlinelibrary.wiley.com/doi/10.1002/anie.200390466]{Benno Hess} i
 paper cite{a[href=https://doi.org/10.1016/0097-8493(89)90019-8]{Lyapunov exponents of the logistic
 map with periodic forcing}}. It is a visualization of the iterated a[href=https://en.wikipedia.org/wiki/Logistic_map]{logistic map} $m { f_n{(x)} = r_n dot x dot {(1 - x)}} with a periodically varying parameter $m {r_n} taking on two values $m { a, b} according to a rule specified as a string of i{A} $nospace s and i{B} $nospace s. For instance the string i{ABA} corresponds to the sequence $m { r_0 = a, r_1 = b, r_2 = a, r_3 = a, r_4 = b, r_5 = a,...} which repeats ad infinitum. The values of $m{ a} and $m{ b} vary with the pixel coordinates within the diagrams. Starting typically from $m{ x_0 = 0.5}, $noted { the a[href=https://en.wikipedia.org/wiki/Lyapunov_exponent]{Lyapunov exponent} $m {  lambda } is computed for each such parametrization: $note In earlier drafts of this article, I included a section building up the formula for the Lyapunov exponent from more basic ideas, for those unfamiliar with it. That section grew quite long, will take much more work to complete, and is distinct in purpose from the rest of this article. For these reasons I have opted to make it a separate piece, which I intend to publish at a later date. }
 
-$m{block lambda = underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|f'_i{(x_i)}|} }
+$m{block lambda = under{ lim {n arrowr inf}} 1/n underover{ sum {i=1} {n} } log|f'_i(x_i)| }
 
 
 
@@ -299,11 +299,11 @@ h3[style=text-decoration:underline]{Algebraic Curves}
 
 Qualitatively, the fractal appears to be structured along a "skeleton" of precise curves, the so-called "superstable" curves, where the Lyapunov exponent diverges to $m {  -inf }. We can actually produce exact algebraic descriptions of these curves!
 
-Consider the formula for the Lyapunov exponent: $m {  underover lim {n arrowr inf} {} end 1/n underover sum {i=1} {n} end log{|d/{d x} f_i{(x_i)}|} }
+Consider the formula for the Lyapunov exponent: $m {  under{ lim {n arrowr inf} } 1/n underover{ sum {i=1} {n} } log|d/{d x} f_i(x_i)| }
 
-Since $m {  log{|x|} } diverges to $m {  -inf } as x approaches 0, we have that the entire sum must diverge when $m {  d/{d x} f_n{(x_n)} = 0 }. Given $m {  x_0 = 1/2}, we can apply the logistic formula with alternating parameters $m { a} and $m { b} repeatedly and obtain $m {  d/{d x} f_n{(x_n)} } as a multivariate polynomial in $m { a} and $m { b}.
+Since $m {  log|x| } diverges to $m { -inf } as x approaches 0, we have that the entire sum must diverge when $m {  d/{d x} f_n(x_n) = 0 }. Given $m { x_0 = 1/2 }, we can apply the logistic formula with alternating parameters $m{a} and $m{b} repeatedly and obtain $m { d/{d x} f_n(x_n) } as a multivariate polynomial in $m {a} and $m {b}.
 
-Because $m {  x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors $m {  c_n } so as to produce polynomials with the same zeros but with integer coefficients, the first few curves $m {  P_n = c_n dot d/{d x} f_n{(x_n)} = 0 } are as follows:
+Because $m {  x_0 = 1/2 }, the first iteration of our iterative process actually has derivative 0 uniformly across all r-values, which is why the sum in our Lyapunov exponent calculation begins at index 1 instead of 0. Anyway, assuming the basic "AB" sequence, and choosing scaling factors $m {  c_n } so as to produce polynomials with the same zeros but with integer coefficients, the first few curves $m {  P_n = c_n dot d/{d x} f_n(x_n) = 0 } are as follows:
 
 $m { block
 P_1 = {- a} + 2 = 0

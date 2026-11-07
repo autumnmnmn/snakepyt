@@ -25,7 +25,15 @@ import { splitDouble } from "/code/math/precision.js";
 import { translatedProjectiveShift } from "/code/math/proj_shift.js";
 
 export async function main() {
+    let canRender = false;
     let showTrajectory = false;
+
+    let dirty = false;
+    const concurrencyBuffer = new SharedArrayBuffer(4);
+    const framesInFlight = new Int32Array(concurrencyBuffer);
+    Atomics.store(framesInFlight, 0, 0);
+
+    const maxFramesInFlight = 2;
 
     const observers = {};
 
@@ -208,19 +216,15 @@ export async function main() {
     );
     let topmost = split.topmost;
 
-
-    let width = canvas.clientWidth;
-    let height = canvas.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    let width = canvas.clientWidth * dpr;
+    let height = canvas.clientHeight * dpr;
 
     let outputTexture;
     let computeBindGroup;
     let renderBindGroup;
 
     const sampler = $gpu.device.createSampler({ magFilter: "nearest", minFilter: "nearest" });
-
-
-
-    let canRender = false;
 
     async function offscreenRender(scalingFactor) {
         const dims = v2.of(width * scalingFactor, height * scalingFactor);
@@ -289,8 +293,13 @@ export async function main() {
     }
 
     function resize() {
-        width = canvas.clientWidth;
-        height = canvas.clientHeight;
+        width = canvas.clientWidth * dpr;
+        height = canvas.clientHeight * dpr;
+
+        if (width * height === 0) {
+            canRender = false;
+            return;
+        }
 
         overlay.setAttribute("viewBox", `0 0 ${width} ${height}`);
         overlay.setAttribute("width", width);
@@ -303,11 +312,6 @@ export async function main() {
 
         params.extent_x = width;
         params.extent_y = height;
-
-        if (width * height <= 0) {
-            canRender = false;
-            return;
-        }
 
         canRender = true;
 
@@ -341,46 +345,73 @@ export async function main() {
     observers.resize = new ResizeObserver(resize);
     observers.resize.observe(canvas);
 
-    function render(targetContext = context, dims = null) {
+    async function render(targetContext = context, dims = null) {
 
         if (!canRender) {
-            console.warn("Cannot render; aborting render.");
             return;
+            //console.warn("Cannot render; aborting render.");
+            //console.trace();
         }
 
-        dims = dims || v2.of(width, height);
+        dirty = true;
 
-        const uniforms = compShader.bufferDefinitions["0,0"];
-        uniforms.updateBuffers();
+        while (true) {
+            const frames = Atomics.load(framesInFlight, 0);
 
-        const commandEncoder = $gpu.device.createCommandEncoder();
+            if (frames > maxFramesInFlight) {
+                //console.log("discard frame");
+                return;
+            }
 
-        const computePass = commandEncoder.beginComputePass();
-        computePass.setPipeline(computePipeline);
-        computePass.setBindGroup(0, computeBindGroup);
-        computePass.dispatchWorkgroups(
-            Math.ceil(dims.x / 16),
-            Math.ceil(dims.y / 16),
-            1
-        );
-        computePass.end();
+            const old = Atomics.compareExchange(framesInFlight, 0, frames, frames+1);
 
-        const renderPass = commandEncoder.beginRenderPass({
-            colorAttachments: [
-                {
-                    view: targetContext.getCurrentTexture().createView(),
-                    loadOp: "clear",
-                    storeOp: "store"
-                }
-            ]
-        });
+            if (old === frames) {
+                break;
+            }
+        }
 
-        renderPass.setPipeline(renderPipeline);
-        renderPass.setBindGroup(0, renderBindGroup);
-        renderPass.draw(6); // 1 quad, 2 tris
-        renderPass.end();
+        try {
+            dims = dims || v2.of(width, height);
 
-        $gpu.device.queue.submit([commandEncoder.finish()]);
+            const uniforms = compShader.bufferDefinitions["0,0"];
+            uniforms.updateBuffers();
+
+            dirty = false;
+
+            const commandEncoder = $gpu.device.createCommandEncoder();
+
+            const computePass = commandEncoder.beginComputePass();
+            computePass.setPipeline(computePipeline);
+            computePass.setBindGroup(0, computeBindGroup);
+            computePass.dispatchWorkgroups(
+                Math.ceil(dims.x / 16),
+                Math.ceil(dims.y / 16),
+                1
+            );
+            computePass.end();
+
+            const renderPass = commandEncoder.beginRenderPass({
+                colorAttachments: [
+                    {
+                        view: targetContext.getCurrentTexture().createView(),
+                        loadOp: "clear",
+                        storeOp: "store"
+                    }
+                ]
+            });
+
+            renderPass.setPipeline(renderPipeline);
+            renderPass.setBindGroup(0, renderBindGroup);
+            renderPass.draw(6); // 1 quad, 2 tris
+            renderPass.end();
+
+            $gpu.device.queue.submit([commandEncoder.finish()]);
+
+            await $gpu.device.queue.onSubmittedWorkDone();
+        }
+        finally { Atomics.sub(framesInFlight, 0, 1); }
+
+        if (dirty) render();
     }
 
     let lastMouse = v2.of(0,0);
@@ -390,7 +421,10 @@ export async function main() {
         const pMouse = v2.fromMouse(e, canvas);
 
         const dims = v2.of(width, height);
-        const center = cart(params.center_low_x + params.center_high_x, params.center_low_y + params.center_high_y);
+        const center = cart(
+            params.center_low_x + params.center_high_x,
+            params.center_low_y + params.center_high_y
+        );
         const scale = 1.0 / params.zoom;
         const rotation = params.rotation;
 

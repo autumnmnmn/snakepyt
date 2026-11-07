@@ -1,0 +1,35 @@
+
+$theme {}
+
+$title { Logiston Experiments }
+
+$og_description { Cursory exploration of a loose family of magmas }
+
+$css {
+
+}
+
+article {
+
+hgroup {
+    h1 {  }
+
+}
+hr {}
+
+section {
+
+A $scare{logiston} we define to be a pair $m {(a,b)} with a pointwise sum $m {(a,b)+(c,d)=(a+c,b+d)} and a $scare{logiston product} $m {(a,b)(c,d) = (f(a,b,c,d), g(a,b,c,d))} where $m{f} and $m{g} must in some way incorporate the logistic map $m{L(r,x) = r x (1-x)}.
+
+For instance, one candidate product might be $m {(a,b)(c,d) = (L(a c,b d), L(b d,a c))}, another might be $m {(a,b)(c,d) = (L(c,a + b d), L(a,c + b d))}.
+
+This is a vague definition, as the goals at the outset of this exploration were to find a sensible way to categorize all the meaningfully-different ways the logistons could be defined, and see if any of these $scare{logiston candidates} would produce interesting imagery under simple iterative processes akin to the Mandelbrot or Julia sets of the complex numbers.
+
+As far as the first goal goes, I'd call this experiment a failure. However in terms of the second goal it was a success.
+
+I had an LLM carry out the legwork of this investigation for me. The agent got the idea at some point that $m{r} was meant to be supplied from outside, to parametrize the entire algebra, rather than having both $m{r} and $m{x} both be functions of the components of the factors of the logiston product. By the time I noticed and pointed this out, it was already far along in its work constructing an inscrutable categorization scheme; the case where $m{r} is determined by the factors was tacked on as a bit of an afterthought. The LLM produced lengthy and largely unreadable writeups in which it deployed a lot of jargon including some that it had made up and not bothered to explain. But it also produced a catalogue of images of its various logiston candidates, and some of them I found visually interesting.
+
+}
+
+}
+

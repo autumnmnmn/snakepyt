@@ -55,7 +55,7 @@ function makeLeaf(tag, content) {
 }
 
 function make(node) {
-    if (node.type === "group") {
+    if (node.type === "group" || node.type === "annoying_group") {
         return node.make(node.children);
     }
     else if (node.type === "leaf") {
@@ -176,6 +176,12 @@ const autoOps = {
     "'": "′"
 };
 
+const rowOpeners = {
+    "{": "mrow",
+    "underover{": "munderover",
+    "under{": "munder"
+};
+
 const whitespace = /\s/;
 const numeric = /[\d.]/;
 const hasNumber = /\d/;
@@ -205,7 +211,7 @@ function tokenize(expression, declarations, isAuto) {
         const char = expression[i];
         const begun = current !== "";
 
-        if (/\s/.test(char)) {
+        if (whitespace.test(char)) {
             if (begun) token(current);
             current = "";
         } else if (alphabet.test(char)) {
@@ -215,7 +221,7 @@ function tokenize(expression, declarations, isAuto) {
             } else {
                 current += char;
             }
-        } else if (numeric.test(char)) { // numerics
+        } else if (numeric.test(char)) {
             if (begun && !numeric.test(current[current.length - 1])) {
                 token(current);
                 current = char;
@@ -223,8 +229,16 @@ function tokenize(expression, declarations, isAuto) {
                 current += char;
             }
         } else {
-            if (begun) token(current);
-            token(char);
+            if (begun) {
+                if (char === "{" && declarations[current + char]) {
+                    token(current + char);
+                } else {
+                    token(current);
+                    token(char);
+                }
+            } else {
+                token(char);
+            }
             current = "";
         }
         i++;
@@ -238,8 +252,6 @@ function tokenize(expression, declarations, isAuto) {
 const allModifiers = new Set(["block", "manual"])
 
 export const staticModule = true;
-
-// TODO fix issue where "0.5," gets read as <mn>0.5,</mn> instead of <mn>0.5</mn><mo>,</mo>
 
 const cache = new Map();
 
@@ -326,7 +338,6 @@ export async function main(expression, inline=true) {
             }
         }
 
-        // Claude's work, not fully reviewed
         if (trimmed.startsWith("text ")) {
             const declarations = trimmed.slice(5);
             let i = 0;
@@ -373,13 +384,14 @@ export async function main(expression, inline=true) {
         "_": { type: "infix", make: makeGroup("msub") },
         "/": { type: "infix", make: makeGroup("mfrac") },
         "root": { type: "infix", make: makeGroup("mroot") },
-        "{": { type: "row_begin" },
         "}": { type: "row_end" },
-        "end": { type: "row_end" },
-        "underover": { type: "underover_begin" },
         "_auto_numeric": n => ({ type: "leaf", make: makeLeaf("mn", n) }),
         "_auto_ident": content => ({ type: "leaf", make: makeLeaf("mi", content) })
     };
+
+    for (const opener in rowOpeners) {
+        declaredTokens[opener] = { type: "row_begin", make: makeGroup(rowOpeners[opener]) };
+    }
 
     if (isAuto) {
         ops = { ...autoOps, ...ops };
@@ -390,7 +402,16 @@ export async function main(expression, inline=true) {
         declaredTokens[ident] = { type: "leaf", make: makeLeaf("mi", idents[ident]) };
     }
     for (const op in ops) {
-        declaredTokens[op] = { type: "leaf", make: makeLeaf("mo", ops[op]) };
+        const leaf = { type: "leaf", make: makeLeaf("mo", ops[op]) };
+        if (op === "(") {
+            declaredTokens[op] = { type: "row_begin", make: makeGroup("mrow"), children: [leaf] };
+        } else if (op === ")") {
+            declaredTokens[op] = { type: "row_end", children: [leaf] };
+        } else if (op === "|") {
+            declaredTokens[op] = { type: "annoying", make: makeGroup("mrow"), children: [leaf] };
+        } else {
+            declaredTokens[op] = leaf;
+        }
     }
     for (const text in texts) {
         declaredTokens[text] = { type: "leaf", make: makeLeaf("mtext", texts[text]) };
@@ -406,14 +427,34 @@ export async function main(expression, inline=true) {
         const groupStack = [root];
         for (const token of tokens) {
             if (token.type === "row_begin") {
-                groupStack.push({ type: "group", make: makeGroup("mrow"), children: [] });
-            }
-            else if (token.type === "underover_begin") {
-                groupStack.push({ type: "group", make: makeGroup("munderover"), children: [] });
+                groupStack.push({
+                    type: "group",
+                    make: token.make,
+                    children: [...(token.children ?? [])]
+                });
             }
             else if (token.type === "row_end") {
                 const row = groupStack.pop();
+                row.children.push(...(token.children ?? []));
                 groupStack[groupStack.length - 1].children.push(row);
+            }
+            else if (token.type === "annoying") {
+                const row = groupStack.at(-1);
+                console.log(row);
+                if (row.type === "annoying_group") {
+                    console.log("here");
+                    const r = groupStack.pop();
+                    r.children.push(...(token.children ?? []));
+                    groupStack[groupStack.length - 1].children.push(r);
+                }
+                else {
+                    console.log("there");
+                    groupStack.push({
+                        type: "annoying_group",
+                        make: token.make,
+                        children: [...(token.children ?? [])]
+                    });
+                }
             }
             else {
                 groupStack[groupStack.length - 1].children.push(token);
@@ -435,12 +476,12 @@ export async function main(expression, inline=true) {
                 }
                 else {
                     modified.push(left);
-                    if (left.type === "group") groupStack.push(left);
+                    if (left.type === "group" || left.type === "annoying_group") groupStack.push(left);
                 }
             }
             for (; i < node.children.length; i++) {
                 modified.push(node.children[i]);
-                if (node.children[i].type === "group") groupStack.push(node.children[i]);
+                if (node.children[i].type === "group" || node.children[i].type === "annoying_group") groupStack.push(node.children[i]);
             }
 
             node.children = modified;

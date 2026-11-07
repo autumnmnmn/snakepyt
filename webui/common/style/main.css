@@ -506,6 +506,10 @@ munderover {
     font-size: 100%;
 }
 
+munder {
+    font-size: 100%;
+}
+
 munderover > :last-child {
     /*margin-bottom: 0.15em;*/
 }
@@ -514,7 +518,8 @@ munderover > :not(:first-child) {
     font-size: 70%;
 }
 
-munderover > :not(:first-child) {
+munder > :not(:first-child) {
+    font-size: 70%;
 }
 
 munderover > :first-child {
