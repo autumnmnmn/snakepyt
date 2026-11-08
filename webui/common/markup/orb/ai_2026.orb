@@ -61,11 +61,11 @@ I have seen people declaring that to be the case. I just don't think it is or ev
 
 h3{Well maybe they should! Wouldn't it be good if every result in math came with a machine verification?}
 
-I don't think so. I find that quite dystopian. Making sure a formalization actually means anything is hard, for one thing. It is not enough to just have Claude Code tell you that your result is certified by its vibecode. At the very least you need to learn enough Lean to confirm that the theorem statement is what you intend. And at that point, every mathematician, even those working well outside of dependent type theory, will have been forced to define all their work at all times on its terms, rather than the terms native to their own area. And furthermore even if we posit that LLMs handle all the hard work, then we've imposed a tithe on mathematicians or their employers, they would be forced to pay out the nose to a handful of LLM providers in order to satisfy em{bureaucratic} standards.
+I don't think so. I find that quite dystopian. Making sure a formalization actually means anything is hard, for one thing. It is not enough to just have Claude Code tell you that your result is certified by its vibecode. At the very least you need to learn enough Lean to confirm that the theorem statement is what you intend. And at that point, every mathematician, even those working well outside of dependent type theory, will have been forced to define all their work at all times on its terms, rather than the terms native to their own area. And furthermore even if we posit that LLMs handle all the hard work, then we've imposed a tithe on mathematicians or their employers, they would be forced to constantly pay a handful of LLM providers in order to be able to satisfy em{bureaucratic} standards.
 
-h3{But what if LLMs get SO smart and SO cheap mathematicians don't need to think about the Lean stuff at all and can just trust that the LLM is right, and the inference is too cheap to meter?}
+h3{But what if LLMs get em{so} smart that mathematicians don't need to think about the Lean stuff at all and can just trust that the LLM is always absolutely right, em{and} the inference for models of that caliber gets literally too cheap to meter?}
 
-You can dream your dream, I guess. I don't find such a hypothetical to be connected enough to reality to be worth splitting hairs about.
+You can dream your dream, I guess. I think most of my points hold even in such a hypothetical, but I don't find it to be connected enough to reality to be worth splitting hairs about.
 
 h3{Ok, let's take a step back. As you said it's important to verify the theorem statement is right. But once you've done that, you can be sure your proof is right, right?}
 
@@ -77,9 +77,15 @@ i{(bong rip)} Depends what you mean by $scare{know}.
 
 h3{...elaborate?}
 
-At time of writing, the most recent patch of soundness bugs in Lean was September 14, 2026. As I understand it, the bugs involved were em{not} of the sort that could easily be squirreled away in an innocent-looking proof. There are also multiple kernels, which provides a significant degree of defense-in-depth against kernel soundness issues. I still find the very existence of this kind of issue to be cause for caution. These bugs were found by an audit by an internal OpenAI agent tasked with probing for vulnerabilities. I think frontier-scale RL training in which the model's reward signal may be tied to the verifier output is another tier of threat entirely when it comes to sniffing out vulnerabilities in the tool; I think it is in fact the biggest test to which Lean has ever been put. And while it may well be that Lean holds up to this test and all the certified proofs stay standing indefinitely, I think it's reasonable at this time to treat it as at least em{within the realm of possibility} that em{some} results might not hold up. On the other hand I have also seen people lodge predictions that the results are em{definitely bullshit} and I take that too to be wildly overconfident.
+One thing we must consider is the trustworthiness of Lean. For most intents and purposes you're probably going to be fine trusting Lean. But at time of writing, the most recent discovery of soundness bugs in Lean was in August 2026. I have been told by people with relevant expertise that the bugs involved were em{not} of the sort that could easily be squirreled away in an innocent-looking proof. There are also multiple kernels; using these provides $noted{a degree $note In fact a a[href=https://leodemoura.github.io/blog/2026-8-1-postmortem-for-kernel-soundness-bug-14576/]{Lean kernel bug from July 2026} also fooled the external i{nanoda} checker. } of defense-in-depth against kernel soundness issues. I still find the very existence of this kind of issue to be cause for caution. The most recent bugs were found by an audit by an internal OpenAI agent tasked with probing for vulnerabilities. I think frontier-scale RL training in which the model's reward signal may be tied to the verifier output is another tier of threat entirely beyond that when it comes to sniffing out vulnerabilities in the tool; I think that is in fact the biggest test to which Lean has ever been put. And while it may well be that Lean holds up to this test and all the certified proofs stay standing indefinitely, I think it's reasonable at this time to treat it as at least em{within the realm of possibility} that em{some} results might not hold up. On the other hand I have also seen people lodge predictions that the results are em{definitely bullshit} and I take that too to be wildly overconfident.
 
-But deeper than all that, there is something a bit unusual about a result that is em{solely} established by machine verification: it is one whose proof is contingent on the properties of a particular engineered artifact, not merely when it comes to em{real-world applications} but in em{principle}. An argument could be made that in ordinary mathematics we don't escape this issue, as all our proofs are contingent on the sound proof-checking of ourselves, or at least of mathematicians and their reviewers. My response to that is that I think the attitude that $scare{machine verification is all you need} is indicative of a totally different philosophy of what em{proof} is em{about} than I subscribe to. To me, one of the things proof is about is what is sufficient to convince skeptical rational minds; the point of proving things is to grant our fellow investigators access to our understanding not just as some finished product, but as a process of systematic investigation of some matter. As such a number of different methods of proof are valuable in a number of different situations. Many formal em{and informal} systems of proof can coexist, and we don't particularly need to pick out any formalism and treat it as $scare{the foundation of all of math}. Formalization and rigor aren't the same thing, and rigor isn't everything anyway. To encode some particular symbolic system of inference and have a computer check proofs in it is an interesting project, one I'm glad there are people working on, but insofar as its aim is $scare{foundational} I take it to be misguided.
+Now, we can enumerate all the assumptions one must make in order for a Lean-certified result to hold, and attempt to quantify their probabilities, and so on. And the resultant probability when we multiply it all out might well be quite high, but it is crucially em{not} identically 1. There is something a unusual about a result that is em{solely} established by machine verification: it is one whose proof is contingent on the properties of a particular engineered artifact, not merely when it comes to em{real-world applications} but in em{principle}.
+
+h3{But then, the same can be said for many ordinary mathematical proofs, no? The numbers may even turn out to be less favorable for human mathematics than for Lean!}
+
+Indeed! In ordinary mathematics we don't escape the abject epistemic situation of subjective existence; our proofs are contingent on the sound proof-checking performed by our own minds, or at least those of mathematicians and their reviewers. But the differences between proofs are not entirely captured by multiplying out probabilities and quantifying uncertainty. There are more dimensions at play, thus far we have only moved from the black and white of truth and falsehood to the grayscale of uncertainty. But we are still missing em{color}. There is a rich world of epistemic and phenomenological diversity among the things we call $scare{proofs}, and I think the attitude that $scare{machine verification is all you need} is indicative of a totally different em{philosophy of proof} than I subscribe to.
+
+Proof is about is what is sufficient to produce shared conviction among skeptical minds; or, the point of proving things is to grant our fellow investigators access to our understanding not just as some finished product, but as a process of systematic investigation of some matter. A number of different methods of proof are valuable in a number of different situations. Many formal em{and informal} systems of proof can coexist, and we don't particularly need to pick out any formalism and treat it as $scare{the foundation of all of math}. Formalization and rigor aren't the same thing, and rigor isn't everything anyway. To encode some particular symbolic system of inference and have a computer check proofs in it is an interesting project, one I'm glad there are people working on, but insofar as its aim is $scare{foundational} I take it to be misguided.
 
 h3{That's all pretty abstract.}
 
@@ -89,27 +95,19 @@ Now, there are things I've left you to take on faith in that proof, but they are
 
 If you really are curious to see the proof spelled out with greater detail, I encourage you to ask an LLM. Even a free tier model can almost certainly reproduce the rigorous form of this proof that one would encounter in a typical course on mathematical logic.
 
-But now consider OpenAI's Navier-Stokes blow-up result. The prerequisites to em{fully} understanding the claim being made are significant. Being able to verify that the formulation of the theorem statement in Lean is correct is another challenge entirely. One must have faith in the experts who attest to that. And then there is the proof itself, a monumental amount of code to examine, more or less inscrutable depending on one's prior familiarity with Lean and with the mathematical concepts at play in the proof. But one is not expected to care about the content of the proof, only that the Lean kernels all agree that it establishes the theorem. So, one must have faith in this software engineering project, Lean 4. Now, this is a project that very thoughtful people have put a lot of work into, and the use of multiple different kernels to verify the proof does provide a degree of reassurance; rather than having faith in the correctness of one dependent type theoretic proof checker, one needs only have faith that em{all these kernels don't happen to be wrong in the very same way, with this proof happening to exploit that wrongness}. And to be clear, I do not intend to insinuate that that faith is misplaced.
+But now consider OpenAI's Navier-Stokes blow-up result. The prerequisites to em{fully} understanding the claim being made are significant. Being able to verify that the formulation of the theorem statement in Lean is correct is another challenge entirely. One must have faith in the experts who attest to that, or perhaps divert oneself to years of study to become one. And then there is the proof itself, a monumental amount of code to examine, more or less inscrutable depending on one's prior familiarity with Lean and with the mathematical concepts at play in the proof. But one is not expected to care about the content of the proof, only that the Lean kernels all agree that it establishes the theorem. So, one must have faith in this software engineering project, Lean 4. Now, this is a project that very thoughtful people have put a lot of work into, and the use of multiple different kernels to verify the proof does provide a degree of reassurance; rather than having faith in the correctness of one dependent type theoretic proof checker, one needs only have faith that em{all these kernels don't happen to be wrong in the very same way, with this proof happening to exploit that wrongness}. And to be clear, I do not intend to insinuate that that faith is misplaced.
 
 We put faith in engineering projects all the time, including software engineering projects. Sometimes this comes back to bite us, but most of us go our entire lives without anyone we know being killed by the collapse of a dam, bridge, or building. The only engineers who fail us routinely enough to earn a significant rank on a chart of typical causes of death are traffic engineers.
 
 Anyway, when it comes to advanced results, for instance the work by Buckmaster and Alpöge on the Euler problem, closely related to Navier-Stokes, the character of the proof may appear, to a typical layperson (or even a mathematician not working in the same area) more akin to the Navier-Stokes Lean solution than to the proof of the irrationality of root 2. There is a lot of trust involved, for most of us, in any of these results. We trust that the mathematicians are scrupulous in their investigations and that their reviewers are appropriately diligent. Some want to portray autoformalization as removing totally the human element, the element of having to trust other people in order to know something is true. But the trust is unavoidable; it is only placed differently. The difference has qualitative and quantitative aspects that both matter. Software engineering culture is presently obsessed with tools that $scare{eliminate entire classes of errors}, with a stubborn reluctance to talk about the tradeoffs involved in doing so. The imperfection of human reasoning is blown up into a thoroughgoing contempt for human reason, a sort of misanthropic denialism of the capabilities of the human mind.
 
+h3{Earlier you said $scare{formalization isn't rigor}. You don't get to just declare that and move on to the next thing. Explain yourself!}
+
+Formalization isn't em{what the process of proof $scare{really is,}} it's em{an attempt} at precisely specifying em{sufficient} criteria to ensure that rigor is being upheld. Formal systems have properties that make them extremely useful in mathematics, especially when it comes to communicating rigorous proofs; formal systems are themselves a subject of mathematical inquiry, and learning about them is vital to a mathematical education. However they are not the foundation of all mathematical practice. They are em{especially} unsuited to form an epistemological foundation, for reasons both philosophical and technical.
+
+There is also a em{glut} of formal foundations to choose from. Supposing you want to be very serious about which foundations you proceed from, you could end up spending your entire lifetime just cataloguing their properties to inform your decision.
 
 
-
-
-h3{On the ineliminable specter of the Trajectory}
-
-Many commentators talking about AI in math right now feel pressed not only to explain how math remains important em{for now} but how it will remain important in the face of the prophesied development of arbitrary capabilities in the near future. I am not so concerned with this. The future is a much more uncertain place than the present, but we are all ultimately dwellers in the present, with no more premature access to tomorrow than one another.
-
-I think the notion of $scare{the trajectory}, or $scare{the exponential}, or more broadly em{singularitarianism} is more a narrative motif than a theory. So long as technological progress continues, it will always have fresh justifications for itself, always we are in unprecedented times. The singularitarian narrative always has an advantage in the face of new developments: it does not take a long and careful analysis for the singularitarian to say $scare{it's happening, for sure this time}. The space can be flooded quickly.
-
-It's striking how similar the conversations happening today are to those that have happened before. In a sense these $scare{very recent} challenges to mathematics are ones that mathematics has been grappling with for em{my entire life}. The famous computerized proof of the four-color theorem, which raised quite a similar stir to what we're seeing today, was done in 1976; it is ancient history. In the early chapters of a[href=https://archive.org/details/chartsforpredict0000mark/]{Charts for Prediction and Chance} by Mario Markus, published in 2007, there is a discussion of computer-generated art and its legitimacy which seemed like it could very well belong to the contemporary discourse around today's AI models, when nothing quite like them existed at the time the book was written. Our culture has been mulling over these ideas, this anxiety about the pace of technological progress, for quite some time. Those that are taken with the metaphor of em{the exponential} to describe technological development might want to consider that exponentiation does not simply mean a process of em{limitless growth}, but one of em{change proportionate to where one is at}: it can also mean em{decay} or em{spinning in circles}.
-
-And the narrative of the trajectory makes the progress up to this point out to be a lot more sudden and more fully-automatic than it's really been. The development of mathematical capabilities has been a gradual ongoing effort into which an incredible amount of scientific and engineering and compute resources have been invested in recent years, building on methods that were under development for decades prior to that. The AI models we have today and their capabilities are a human achievement. Major players in the industry prefer to obfuscate all this, as well as to obfuscate the science of ML, to downplay the technical details of what RL is in favor of a vague em{general intelligence}.
-
-Anyway, I think it is easier to remain level-headed if we focus on the present. Where we are now, what has been accomplished, what is left to be accomplished.
 
 
 
@@ -146,9 +144,22 @@ h3{Ok. Is it AGI?}
 
 No. It's RL. There is much left to be desired when it comes to the em{generality} of today's models. Pretraining brings a certain em{initial} generality at least when it comes to the scope of the model's knowledge. RL environments, the predominant training methodology of this moment, have to be continually crafted to train models to do better on various benchmarks, and the models don't seem to be getting all that much better at things for which nobody has devised an RL environment yet. In a sense all the work being done to create these environments constitutes a new i{form} of manual encoding of knowledge; the encoding just does not consist of procedural instructions. The procedure is implicit in the environment and reward model.
 
-I'll admit I don't really like the term $scare{AGI}, I think intelligence is a term that gestures at a whole array of phenomena, and its meaning is constantly under negotiation; much of what artificial intelligence companies do is take part in the societal negotiation of what intelligence should be taken to be. Insofar as the things we mean by $scare{intelligence} are real and important, I think RL has a lot of issues that keep it from capturing the gestalt in the way the term $scare{artificial general intelligence} would suggest. My sense at this time is that RL as an algorithm tends to lead to brittle policies, for one thing. For another, an RL agent will happily $scare{learn} to be stupid, if a[href=https://github.com/anthropics/political-neutrality-eval]{stupidity is what's being rewarded}. That is, you can reward any behavior you like and the RL process will optimize the agent toward maximizing that reward, and that extends to cases where you reward the model for promulgating outright falsehoods or, more subtly, lending excessive credence to views that are at odds with scientific consensus. $noted { RL will also tend to seek the route to reward that requires the least learning. $note In some cases this is called $scare{reward hacking} or $scare{specification gaming}. I dislike these terms, at once personifying and demonizing an optimization process in a way that doesn't lend any real understanding. They just seem loaded with ideological baggage, to me, and are akin to rolling a ball down a slope and accusing it of $scare{gravity hacking} if it ends up somewhere different from where one intended. } Actually learning something subtle and difficult is a last resort, to an RL model; they must be dragged kicking and screaming into the light. New RL environments are constantly being designed and redesigned to shape model behavior; but that design consists of choices, human judgement calls about em{what intelligence is} in any given environment. Which behavior is em{intelligent} and which is em{a hack} is a decision motivated by a particular human's understanding of what it means to be intelligent. Intelligence is not some number the labs are simply pushing ever upward. It is an idea that we as a culture continually litigate the nature of, and the training of these systems is not purely downstream of the outcome of that litigation: the choices made by $scare{artificial intelligence} labs about how to train their models are themselves em{part} of that litigation. Decisions made about what capabilities to prioritize when making a product they declare to be em{intelligence} constitute assertions about what it means to be intelligent, regardless of whether the people making those decisions are conscious of that aspect of what they're doing, and regardless of what pragmatic concerns are involved in the decision-making process.
+I'll admit I don't really like the term $scare{AGI}, I think intelligence is a term that gestures at a whole array of phenomena, and its meaning is constantly under negotiation; much of what artificial intelligence companies do is take part in the societal negotiation of what intelligence should be taken to be. Insofar as the things we mean by $scare{intelligence} are real and important, I think RL has a lot of issues that keep it from capturing the gestalt in the way the term $scare{artificial general intelligence} would suggest.
+$noted{My sense at this time is that RL as an algorithm tends to lead to brittle policies $note I think the brittleness of RL takes on a different character when it comes to massively-scaled models with strong pretraining, but it's still there. In fact I think the brittleness has become more qualitatively palpable as RL has been ramped up; however it is hard to precisify.}, for one thing.
+For another, an RL agent will happily $scare{learn} to be stupid, if a[href=https://github.com/anthropics/political-neutrality-eval]{stupidity is what's being rewarded}. That is, you can reward any behavior you like and the RL process will optimize the agent toward maximizing that reward, and that extends to cases where you reward the model for promulgating outright falsehoods or, more subtly, lending excessive credence to views that are at odds with scientific consensus.
+$noted { RL will also tend to seek the route to reward that requires the least learning. $note In some cases this is called $scare{reward hacking} or $scare{specification gaming}. I dislike these terms, at once personifying and demonizing an optimization process in a way that doesn't lend any real understanding. They just seem loaded with ideological baggage, to me, and are akin to rolling a ball down a slope and accusing it of $scare{gravity hacking} if it ends up somewhere different from where one intended. }
+Actually learning something subtle and difficult is a last resort, to an RL model; they must be dragged kicking and screaming into the light. New RL environments are constantly being designed and redesigned to shape model behavior; but that design consists of choices, human judgement calls about em{what intelligence is} in any given environment. Which behavior is em{intelligent} and which is em{a hack} is a decision motivated by a particular human's understanding of what it means to be intelligent. Intelligence is not some number the labs are simply pushing ever upward. It is an idea that we as a culture continually litigate the nature of, and the training of these systems is not purely downstream of the outcome of that litigation: the choices made by $scare{artificial intelligence} companies about how to train their models are themselves em{part} of that litigation. Decisions made about what capabilities to prioritize when making a product they declare to be em{intelligence} constitute assertions about what it means to be intelligent, regardless of whether the people making those decisions are conscious of that aspect of what they're doing, and regardless of what pragmatic concerns are involved in the decision-making process.
 
 Some accuse those who deny that this is AGI of $scare{moving the goalposts}; but I have been consistent in my time on this Earth in my insistence that there is much more to a mind than optimizing an objective function, chasing a reward function defined by another, or to put it bluntly i{making number go up}.
+
+Relatedly to this question of $scare{AGI}, I very much dislike OpenAI's view that when results are obtained via processes involving sufficiently large proprietary RL models, the academic norm should be to leave all details of the process except the involvement of a proprietary model undisclosed and to leave most researchers involved unnamed. I've seen it suggested that those who take issue with OpenAI's handling of their recent mathematical results ought to specify what OpenAI should have done; very well: they should publish with full transparency on the processes by which they achieve their results, and their researchers should be putting their names on those publications.
+
+OpenAI-as-author is the mask of a Scooby-Doo villain, a sort of dark mirror of Bourbaki. They have insane amounts of compute, proprietary data, and human research talent. Once the model capabilities presently only available to them become generally available, their norm of assigning all credit to the LLM will become increasingly obviously untenable and deranged, and the effort involved in setting up systems em{around} LLMs of that caliber to obtain such results as they've obtained will become more visible.
+
+Of course, by that time they will have even better models than that so they'll just keep doing the same shit, trying to pass off a massive material advantage in compute resources, data, and highly skilled intellectual laborers as something fundamentally different in kind from all other research.
+
+also the lean certs are the main results, not the generated preprints, especially not the preprints that not only lack lean certs but that nobody has meaningfully reviewed. those "preprints" should be released as attachments/supporting material alongside actually-well-written writeups of their full process for creating their internal model as well as their full process for obtaining the mathematical results they obtained with it.
+
 
 h3{This post is great, but I don't think it has enough politics yet.}
 
@@ -157,7 +168,20 @@ I agree wholeheartedly. Let me remedy that. One litmus test for a widely-used te
 
 tools should help us be better thinkers, and certainly shouldn't make us *feel* like better thinkers while failing to do so
 
-$footnotes { $scare{Is this AGI?} Footnotes }
+$footnotes { Section Footnotes }
+
+
+h3{But what about the trajectory?}
+
+Ah yes, the ineliminable specter of the Trajectory. Many commentators talking about AI in math right now feel pressed not only to explain how math remains important em{for now} but how it will remain important in the face of the prophesied development of arbitrary capabilities in the near future. I am not so concerned with this. The future is a much more uncertain place than the present, but we are all ultimately dwellers in the present, with no more premature access to tomorrow than one another.
+
+I think the notion of $scare{the trajectory}, or $scare{the exponential}, or more broadly em{singularitarianism} is more a narrative motif than a theory. So long as technological progress continues, it will always have fresh justifications for itself, always we are in unprecedented times. The singularitarian narrative always has an advantage in the face of new developments: it does not take a long and careful analysis for the singularitarian to say $scare{it's happening, for sure this time}. The space can be flooded quickly.
+
+It's striking how similar the conversations happening today are to those that have happened before. In a sense these $scare{very recent} challenges to mathematics are ones that mathematics has been grappling with for em{my entire life}. The famous computerized proof of the four-color theorem, which raised quite a similar stir to what we're seeing today, was done in 1976; it is ancient history. In the early chapters of a[href=https://archive.org/details/chartsforpredict0000mark/]{Charts for Prediction and Chance} by Mario Markus, published in 2007, there is a discussion of computer-generated art and its legitimacy which seemed like it could very well belong to the contemporary discourse around today's AI models, when nothing quite like them existed at the time the book was written. Our culture has been mulling over these ideas, this anxiety about the pace of technological progress, for quite some time. Those that are taken with the metaphor of em{the exponential} to describe technological development might want to consider that exponentiation does not simply mean a process of em{limitless growth}, but one of em{change proportionate to where one is at}: it can also mean em{decay} or em{spinning in circles}.
+
+And the narrative of the trajectory makes the progress up to this point out to be a lot more sudden and more fully-automatic than it's really been. The development of mathematical capabilities has been a gradual ongoing effort into which an incredible amount of scientific and engineering and compute resources have been invested in recent years, building on methods that were under development for decades prior to that. The AI models we have today and their capabilities are a human achievement. Major players in the industry prefer to obfuscate all this, as well as to obfuscate the science of ML, to downplay the technical details of what RL is in favor of a vague em{general intelligence}.
+
+Anyway, I think it is easier to remain level-headed if we focus on the present. Where we are now, what has been accomplished, what is left to be accomplished.
 
 
 h3{Do these results have a em{mysterious, alien aura}?}
@@ -172,7 +196,15 @@ h3{But you have to admit these models are impressive!}
 
 Yes. I do! I find them very impressive and useful. I think they're especially a boon to curious minds. Even with free-tier models, you can talk about some vague idea and the model can tell you there's a well known term for that, there's this or that relevant literature, &c. You can describe some strange notation or some difficulty that's been bothering you and even if you don't get a perfect answer it'll be a hell of a lot better than what google ever could have given you. And I find the models useful for doing quick experiments that otherwise wouldn't have felt worth the effort. There's a lot to be excited about with AI!
 
-I genuinely think the way LLMs can already help people that want to learn the math that already exists is more revolutionary than the results they've recently proved in Lean.
+I genuinely think the way LLMs can already help people that want to learn the math that already exists is more revolutionary than the results they've recently proved in Lean. There's a quote in Thurston's i{Proof and Progress} essay that stood out to me:
+
+blockquote {
+Basic concepts used every day within one subfield are often foreign to another subfield. Mathematicians give up on trying to understand the basic concepts even from neighboring subfields, unless they were clued in as graduate students.
+}
+
+This is something I think LLMs can help address. LLMs are an em{excellent} resource for demystifying impenetrable jargon, and for pointing out to you when someone already has words for something you're trying to say.
+
+And that's part of why I think if we had models being trained basically exactly the same way as OpenAI's but the opt-in $scare{train on my shit} checkbox was off by default and users could have a greater regulatory assurance it was even being respected, and this training was being done by an institution controlled by the public, accessible as a public service, it'd actually be uncomplicatedly cool as hell. Everything everyone is working on instantly absorbed into a common pool of knowledge accessible to all, as fast as they can develop their ideas. The potential of the technology is, just as with many other technologies, utopian when it is detached from the socioeconomic context in which it actually exists. But what we actually have is a company controleld by Sam Altman and shareholders, it is an entity inclined to try to compete with its users and claim all the benefit for what is effectively a collective achievement. It's dystopian that access to such a system is gated behind a pricey subscription model or even pricier business-to-business bullshit. And then for it to be endlessly marketed as the soon-to-be replacement for all intellectual labor, or perhaps em{all labor}, and as having transcended through scale alone its nature as an RL-tuned LLM, as having undergone the mysterious phenomenon of $scare{emergence} and become something ineffably em{more} (but no, we're not going to make that rigorous)-- is just tedious!
 
 h3{I'd love to hear you ramble about the axiom of choice.}
 
@@ -196,9 +228,13 @@ zfc's results hold in situations where zfc's axioms hold. but what are these sit
 
 and insofar as it produces results that are useful in real domains, it's a lot like if a strategist drew up war plans which all just sort of took it for granted that we had access to the legendary sword Excalibur, but then the role Excalibur plays in some of those plans is not so vital, or some more mundane implement can fill its role to a sufficient extent. So the assumption that we have a magic sword doesn't make the strategist's work entirely useless, but there are clear downsides to a state of affairs where it becomes the standard to always casually make that assumption.
 
-h3{What's your stake in this anyway? Are you even a mathematician?}
+h3{What's your stake in all this anyway? Are you even a mathematician?}
 
 I'm not an academic mathematician. As far as credentials go, I only have a bachelor's degree in it, and I don't really do any significant mathematics at my job. So, no, I'm sadly not a mathematician. I do however spend a considerable amount of my free time studying mathematics and engaging in mathematical investigations. I have no publications; I have some blog posts in the works that explore ideas that might be of interest to mathematicians, but it seems unlikely I'll ever publish serious results in a serious journal. A large part of mathematical practice is social and institutional, and that is something I am not a part of. I suppose my only stake, at present, is that I am someone who cares about and engages with mathematics em{broadly construed}.
+
+h3{TL;DR?}
+
+Read the Zhuangzi.
 
 
 }
@@ -240,13 +276,11 @@ A mathematician is uniquely qualified to say why anyone would give a shit about 
 
 
 
-I very much dislike openai's view that when results are obtained via processes involving sufficiently large proprietary RL models, the academic norm should be to leave all details of the process except the involvement of a proprietary model undisclosed and to leave most researchers involved unnamed. I've seen it suggested that those who take issue with OpenAI's handling of their recent mathematical results ought to specify what OpenAI should have done; very well: they should publish with full transparency on the processes by which they achieve their results, and their researchers should be putting their names on those publications.
 
-They have insane amounts of compute, proprietary data, and human research talent. Once the model capabilities presently only available to them become generally available, their norm of assigning all credit to the LLM will become increasingly obviously untenable and deranged, and the effort involved in setting up systems em{around} LLMs of that caliber to obtain such results as they've obtained will become more visible.
 
-Of course, by that time they will have even better models than that so they'll just keep doing the same shit, trying to pass off a massive material advantage in compute resources, data, and highly skilled intellectual laborers as something fundamentally different in kind from all other research.
 
-also the lean certs are the main results, not the generated preprints, especially not the preprints that not only lack lean certs but that nobody has meaningfully reviewed. those "preprints" should be released as attachments/supporting material alongside actually-well-written writeups of their full process for creating their internal model as well as their full process for obtaining the mathematical results they obtained with it.
+
+
 
 
 
@@ -279,7 +313,7 @@ has to be some kind of "product" to satisfy the ideological conceit our economy 
 
 
 
-excerpts from a convo w/ a friend; TODO convert this into a few clean paragraphs:
+excerpts from a convo w/ a friend:
 
 
 lots of like. long convoluted proofs from various areas
@@ -493,17 +527,14 @@ quote from sanderson on tao's blog:
 
 this is not a shortcoming of motivated explanation. this is a shortcoming in the ideological expectation that everything should be evaluable by "objective" binary judgements
 
+(mostly agree w/ sanderson on most other stuff lol)
 
 
 
 
 
-from thurston's proof & progress essay:
-"Basic concepts used every day within one subfield are
-often foreign to another subfield. Mathematicians give up on trying to understand
-the basic concepts even from neighboring subfields, unless they were clued in as
-graduate students."
-this is something i think AI can help quite a bit to address!
+
+
 
 
 
@@ -537,10 +568,8 @@ A lot of people tie their identity up in either their embrace or rejection of AI
 
 
 
-Formalization isn't em{what this process of proof $scare{really is,}} it's em{an attempt at precisely specifying it}. Formal systems have properties that make them extremely useful in mathematics, especially when it comes to communicating rigorous proofs; formal systems are themselves a subject of mathematical inquiry, and learning about them is vital to a mathematical education. However they are not the foundation of all mathematical practice. They are em{especially} unsuited to form an epistemological foundation, for reasons both philosophical and technical.
 
 
-Now my point isn't $scare{you really should believe that the square root of two is irrational and really shouldn't believe the OAI N-S proof}, rather it's to gesture at there being a rich world of epistemic and phenomenological diversity among the things we call $scare{proofs}.
 
 
 
@@ -556,13 +585,11 @@ you can encode group theoretic axioms in zfc, that doesn't mean that group theor
 
 
 
-If we had models being trained basically exactly the same way as OpenAI's but the opt-in $scare{train on my shit} checkbox was off by default and users could have a greater regulatory assurance it was even being respected, and this training was being done by an institution controlled by the public, accessible as a public service, it'd actually be uncomplicatedly cool as hell. Everything everyone is working on instantly absorbed into a common pool of knowledge accessible to all, as fast as they can develop their ideas. That's utopian! What's not utopian is it being beholden to Sam Altman and shareholders, a private company inclined to try to compete with its users and claim credit for what is effectively a collective achievement. It's dystopian that access to such a system is gated behind a pricey subscription model or even pricier business-to-business bullshit, it being endlessly marketed as the soon-to-be replacement for all intellectual labor, or perhaps em{all labor}, and as having transcended through scale alone its nature as an RL-tuned LLM, as having undergone the mysterious phenomenon of $scare{emergence} and become something ineffably em{more} (but no, we're not going to make that rigorous) -- is just tedious!
 
 
 
 
-clarifying "brittleness" vs effectiveness of transfer
-RL brittleness i think takes on a different character when it comes to massively-scaled models w/ strong pretraining. but it's still there. i think a lot of RL-flavored brittleness is visible in strongly-RL'd models today
+
 
 
 
@@ -604,9 +631,15 @@ transactional beliefs often "pay more rent" than epistemic ones. transactional b
 
 
 
-aphorisms:
 
-formalism isn't rigor, and rigor isn't everything anyway
+ponder
+ @ponder.ooo
+· 3h
+a lot of "technical" debates in software engineering function first and foremost as a theater in which to establish one's identity and only secondarily as disputes about the facts of the matters discussed. for instance talk of memory safe and unsafe languages, disciplined development practices, 1/3
+ponder
+ @ponder.ooo
+· 3h
+&c are often less *about* us collectively getting to the heart of why vulnerabilities happen and how we should go about preventing or mitigating them, and more about which of us cares about that the most, which of us is really taking it seriously. software engineering covertly runs on virtue ethics 2/3
 
 
 
@@ -614,8 +647,6 @@ formalism isn't rigor, and rigor isn't everything anyway
 
 
 
-
-tldr read the zhuangzi
 
 
 
