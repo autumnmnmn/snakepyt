@@ -297,7 +297,7 @@ function findClosingBracket(input, startIndex) {
 }
 
 function shouldParseContent(tag) {
-    return !verbatimTags.has(tag);
+    return !verbatimTags.has(tag.split("#")[0].split(".")[0]);
 }
 
 function dumpNodes(nodes, input) {

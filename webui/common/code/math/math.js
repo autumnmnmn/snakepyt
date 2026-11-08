@@ -20,21 +20,24 @@ $css(`
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        padding-left: 0.75rem;
         padding-top: 0.5rem;
-        border-left: 3px double var(--main-faded);
         max-width: 100%;
         overflow-x: auto;
+        padding-bottom: 0.5rem;
     }
 
     .math-block math {
         display: block;
-        width: fit-content;
-        max-width: 100%;
+        width: var(--content-width);
+        margin: auto;
+        border-left: 3px double var(--main-faded);
+        padding-left: 0.75rem;
     }
 
     .math-block math:not(last-child) {
+        /*
         padding-bottom: 0.5em;
+        */
     }
 
     @supports (display: math) {
@@ -440,15 +443,12 @@ export async function main(expression, inline=true) {
             }
             else if (token.type === "annoying") {
                 const row = groupStack.at(-1);
-                console.log(row);
                 if (row.type === "annoying_group") {
-                    console.log("here");
                     const r = groupStack.pop();
                     r.children.push(...(token.children ?? []));
                     groupStack[groupStack.length - 1].children.push(r);
                 }
                 else {
-                    console.log("there");
                     groupStack.push({
                         type: "annoying_group",
                         make: token.make,

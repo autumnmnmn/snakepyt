@@ -101,6 +101,8 @@ h2::before {
 
 hgroup {
     overflow: visible;
+    max-width: var(--content-width);
+    margin: auto;
 }
 
 hgroup:has(h1) p {
@@ -121,8 +123,10 @@ hgroup h2, hgroup p {
 }
 
 h3 {
+    margin: auto;
     margin-top: 1em;
     font-size: 1em;
+    width: var(--content-width);
 }
 
 hgroup p {
@@ -158,13 +162,13 @@ hgroup:has(h1) + hr::after {
 
 nav.contents {
     scroll-margin-top: calc(min(25em, 25vh));
-    width: fit-content;
+    width: var(--content-width);
     padding-right: 1em;
     line-height: 1.25em;
+    margin: auto;
 }
 
 nav.contents ol {
-    max-width: var(--content-width);
     list-style: none;
     counter-reset: roman;
     border-radius: 0.25em;
@@ -191,7 +195,9 @@ nav.contents ol li.numberless::marker {
 }
 
 details {
+    margin: auto;
     margin-top: 1em;
+    max-width: var(--content-width);
 }
 
 details.footnotes aside {
@@ -204,7 +210,6 @@ details.footnotes aside {
 
     scroll-margin-top: calc(min(25em, 25vh));
 
-    max-width: var(--content-width);
 }
 
 details.footnotes aside p {
@@ -271,6 +276,7 @@ p {
     margin-bottom: 1em;
     margin-top: 1em;
     max-width: var(--content-width);
+    margin: auto;
 }
 
 h3 + p {
@@ -380,6 +386,7 @@ thead th {
 
 figure {
     max-width: var(--content-width);
+    margin: auto;
 }
 
 figure img {
