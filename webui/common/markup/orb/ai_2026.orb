@@ -24,9 +24,9 @@ There are more than 700 PDFs, and some portion of those results also come with L
 
 This has led to quite a bit of discussion. Is it the end of human mathematics? Is it time to move to a $scare{math 2.0}? Is AGI here? Or ASI? The eschaton?
 
-With all the commentary flying around, much of it quite bombastic, I figured I should go ahead and make a record of where my head was at at this time. I don't intend this as a persuasive piece, more of a snapshot of my thoughts. I will not be proceeding from a set of plausible assumptions and attempting to establish all my takes as necessary consequences thereof, rather I will be circling around a number of interrelated themes and attempting to convey how things look from my perspective.
+With all the commentary flying around, much of it quite bombastic, I figured I should go ahead and make a record of where my head was at at this time. I don't intend this as a persuasive piece, more of a snapshot of my thoughts. I will not be proceeding from a set of plausible assumptions and attempting to establish all my takes as necessary consequences thereof, rather I will be circling around a number of interrelated themes and attempting to convey how things look from my perspective. I have structured this post as a dialogue with a fictional interrogator who may or may not ask the questions you'd like me to answer.
 
-For those who follow me on bluesky and are pious enough to read all my posts every day, you will probably already have seen many of these takes, albeit with a little less polish.
+Those who follow me on bluesky and are pious enough to read all my posts every day will probably already have seen many of these takes, albeit with a little less polish and context.
 
 While I was assembling these thoughts I ended up reading William Thurston's essay a[href=https://arxiv.org/abs/math/9404236]{On Proof and Progress in Mathematics}, and as it turns out some parts of what I was saying here were quite similar to what Thurston had already capably put to words before I was even born. While I hadn't read it myself before I wrote up the bulk of this, my thinking has doubtlessly been greatly influenced by it, albeit indirectly. Anyway, I think it's quite good, and its author has significantly more $scare{math cred} than I probably ever will. If you only have time to read one essay today, I encourage you to go read that one.
 
@@ -79,23 +79,23 @@ h3{...elaborate?}
 
 One thing we must consider is the trustworthiness of Lean. For most intents and purposes you're probably going to be fine trusting Lean. But at time of writing, the most recent discovery of soundness bugs in Lean was in August 2026. I have been told by people with relevant expertise that the bugs involved were em{not} of the sort that could easily be squirreled away in an innocent-looking proof. There are also multiple kernels; using these provides $noted{a degree $note In fact a a[href=https://leodemoura.github.io/blog/2026-8-1-postmortem-for-kernel-soundness-bug-14576/]{Lean kernel bug from July 2026} also fooled the external i{nanoda} checker. } of defense-in-depth against kernel soundness issues. I still find the very existence of this kind of issue to be cause for caution. The most recent bugs were found by an audit by an internal OpenAI agent tasked with probing for vulnerabilities. I think frontier-scale RL training in which the model's reward signal may be tied to the verifier output is another tier of threat entirely beyond that when it comes to sniffing out vulnerabilities in the tool; I think that is in fact the biggest test to which Lean has ever been put. And while it may well be that Lean holds up to this test and all the certified proofs stay standing indefinitely, I think it's reasonable at this time to treat it as at least em{within the realm of possibility} that em{some} results might not hold up. On the other hand I have also seen people lodge predictions that the results are em{definitely bullshit} and I take that too to be wildly overconfident.
 
-Now, we can enumerate all the assumptions one must make in order for a Lean-certified result to hold, and attempt to quantify their probabilities, and so on. And the resultant probability when we multiply it all out might well be quite high, but it is crucially em{not} identically 1. There is something a unusual about a result that is em{solely} established by machine verification: it is one whose proof is contingent on the properties of a particular engineered artifact, not merely when it comes to em{real-world applications} but in em{principle}.
+Now, we can enumerate all the assumptions one must make in order for a Lean-certified result to hold, and attempt to quantify their probabilities, and so on. And the resultant probability when we multiply it all out might well be quite high, but it is crucially em{not} identically 1.
 
 h3{But then, the same can be said for many ordinary mathematical proofs, no? The numbers may even turn out to be less favorable for human mathematics than for Lean!}
 
 Indeed! In ordinary mathematics we don't escape the abject epistemic situation of subjective existence; our proofs are contingent on the sound proof-checking performed by our own minds, or at least those of mathematicians and their reviewers. But the differences between proofs are not entirely captured by multiplying out probabilities and quantifying uncertainty. There are more dimensions at play, thus far we have only moved from the black and white of truth and falsehood to the grayscale of uncertainty. But we are still missing em{color}. There is a rich world of epistemic and phenomenological diversity among the things we call $scare{proofs}, and I think the attitude that $scare{machine verification is all you need} is indicative of a totally different em{philosophy of proof} than I subscribe to.
 
-Proof is about is what is sufficient to produce shared conviction among skeptical minds; or, the point of proving things is to grant our fellow investigators access to our understanding not just as some finished product, but as a process of systematic investigation of some matter. A number of different methods of proof are valuable in a number of different situations. Many formal em{and informal} systems of proof can coexist, and we don't particularly need to pick out any formalism and treat it as $scare{the foundation of all of math}. Formalization and rigor aren't the same thing, and rigor isn't everything anyway. To encode some particular symbolic system of inference and have a computer check proofs in it is an interesting project, one I'm glad there are people working on, but insofar as its aim is $scare{foundational} I take it to be misguided.
+Recognizing that to try and wrap up $scare{what proof is about} in one tidy definition is folly, let me try to do so anyway. Proof is about what is sufficient to produce shared conviction among skeptical minds; or, the point of proving things is to grant our fellow investigators access to our understanding not just as some finished product, but as a process of systematic investigation of some matter. A number of different methods of proof are valuable in a number of different situations. Many formal em{and informal} systems of proof can coexist, and we don't particularly need to pick out any formalism and treat it as $scare{the foundation of all of math}. Formalization and rigor aren't the same thing, and rigor isn't everything anyway. To encode some particular symbolic system of inference and have a computer check proofs in it is an interesting project, one I'm glad there are people working on, but insofar as its aim is $scare{foundational} I take it to be misguided.
 
 h3{That's all pretty abstract.}
 
-Let's get more concrete, then. Consider the proof that a rational number's product with itself cannot be 2. One way to prove this is to show that the presumption that if we have integers $m{p} and $m{q} in reduced form (that is, sharing no factors) such that $m{{(p/q)}^2 = 2}, then we can rearrange to $m{p^2 = 2q^2}, note that this makes $m{p^2} even, and that this means $m{p} must be even. From there we can determine that $m{p^2} must actually have a factor of 4, and so we have $m{4k^2 = 2q^2} and thus $m{2k^2 = q^2} for some $m{k}. But now we see $m{q^2} is even and so must be $m{q}, at which point we have that $m{p} and $m{q} share a factor, they are not in reduced form after all. The presumption that this number exists entails a contradiction.
+Let's get more concrete, then. Consider the proof that a rational number's product with itself cannot be 2. One way to prove this is to show that the presumption that if we have integers $m{p} and $m{q} in reduced form (that is, sharing no factors) such that $m{{(p/q)}^2 = 2}, then we can rearrange to $m{p^2 = 2q^2}, note that this makes $m{p^2} even, and that this means $m{p} must be even. From there we can determine that $m{p^2} must actually have a factor of 4, and so we have $m{4k = 2q^2} and thus $m{2k = q^2} for some $m{k}. But now we see $m{q^2} is even and so must be $m{q}, at which point we have that $m{p} and $m{q} share a factor, they are not in reduced form after all. The presumption that this number exists entails a contradiction.
 
-Now, there are things I've left you to take on faith in that proof, but they are few, and easily identified and investigated. You might wonder $scare{How do you know that a number that squares to an even number must itself be even?} or $scare{Why can't there be a rational that doesn't have a reduced form?}
+Now, there are things I've left you to take on faith in that proof, but they are few, and easily identified and investigated. You might wonder $scare{How do you know that a number that squares to an even number must itself be even?} or $scare{Why can't there be a rational that doesn't have a reduced form?} or (if you're particularly astute) $scare{What's wrong with having a contradiction?}
 
-If you really are curious to see the proof spelled out with greater detail, I encourage you to ask an LLM. Even a free tier model can almost certainly reproduce the rigorous form of this proof that one would encounter in a typical course on mathematical logic.
+As far as the first two questions go, if you're genuinely curious about them, I encourage you to ask an LLM. Even a free tier model can almost certainly reproduce the rigorous form of this proof that one would encounter in a typical course on mathematical logic. For the third case, I encourage you to read up on a[href=https://plato.stanford.edu/entries/dialetheism/]{dialetheism}, a[href=https://plato.stanford.edu/entries/logic-paraconsistent/]{paraconsistency}, and a[href=https://plato.stanford.edu/entries/mathematics-inconsistent/]{inconsistent mathematics} and become the bane of classical logic bros.
 
-But now consider OpenAI's Navier-Stokes blow-up result. The prerequisites to em{fully} understanding the claim being made are significant. Being able to verify that the formulation of the theorem statement in Lean is correct is another challenge entirely. One must have faith in the experts who attest to that, or perhaps divert oneself to years of study to become one. And then there is the proof itself, a monumental amount of code to examine, more or less inscrutable depending on one's prior familiarity with Lean and with the mathematical concepts at play in the proof. But one is not expected to care about the content of the proof, only that the Lean kernels all agree that it establishes the theorem. So, one must have faith in this software engineering project, Lean 4. Now, this is a project that very thoughtful people have put a lot of work into, and the use of multiple different kernels to verify the proof does provide a degree of reassurance; rather than having faith in the correctness of one dependent type theoretic proof checker, one needs only have faith that em{all these kernels don't happen to be wrong in the very same way, with this proof happening to exploit that wrongness}. And to be clear, I do not intend to insinuate that that faith is misplaced.
+But anyway, now let's consider OpenAI's Navier-Stokes blow-up result. The prerequisites to em{fully} understanding the claim being made are significant. Being able to verify that the formulation of the theorem statement in Lean is correct is another challenge entirely. One must have faith in the experts who attest to that, or perhaps divert oneself to years of study to become one. And then there is the proof itself, a monumental amount of code to examine, more or less inscrutable depending on one's prior familiarity with Lean and with the mathematical concepts at play in the proof. But one is not expected to care about the content of the proof, only that the Lean kernels all agree that it establishes the theorem. So, one must have faith in this software engineering project, Lean 4. Now, this is a project that very thoughtful people have put a lot of work into, and the use of multiple different kernels to verify the proof does provide a degree of reassurance; rather than having faith in the correctness of one dependent type theoretic proof checker, one needs only have faith that em{all these kernels don't happen to be wrong in the very same way, with this proof happening to exploit that wrongness}. And to be clear, I do not intend to insinuate that that faith is misplaced.
 
 We put faith in engineering projects all the time, including software engineering projects. Sometimes this comes back to bite us, but most of us go our entire lives without anyone we know being killed by the collapse of a dam, bridge, or building. The only engineers who fail us routinely enough to earn a significant rank on a chart of typical causes of death are traffic engineers.
 
@@ -103,7 +103,7 @@ Anyway, when it comes to advanced results, for instance the work by Buckmaster a
 
 h3{Earlier you said $scare{formalization isn't rigor}. You don't get to just declare that and move on to the next thing. Explain yourself!}
 
-Formalization isn't em{what the process of proof $scare{really is,}} it's em{an attempt} at precisely specifying em{sufficient} criteria to ensure that rigor is being upheld. Formal systems have properties that make them extremely useful in mathematics, especially when it comes to communicating rigorous proofs; formal systems are themselves a subject of mathematical inquiry, and learning about them is vital to a mathematical education. However they are not the foundation of all mathematical practice. They are em{especially} unsuited to form an epistemological foundation, for reasons both philosophical and technical.
+Rigor is a quality, or vague cluster of properties, that proofs can have. To give a quick provisional definition, it's about being thorough, accounting for every special case, tracking every assumption one makes, spelling out every step of one's reasoning. Formalization is a class of ways of expressing proofs. Formalization isn't what the process of proving things $scare{really is,} it's em{an attempt} at precisely specifying em{sufficient} criteria to ensure that rigor is being upheld. Some formal systems have properties that make them extremely useful in mathematics, especially when it comes to communicating rigorous proofs; formal systems are also themselves a subject of mathematical inquiry, and learning about them is vital to a mathematical education. However they are not the foundation of all mathematical practice. They are em{especially} unsuited to form an epistemological foundation, for reasons both philosophical and technical.
 
 There is also a em{glut} of formal foundations to choose from. Supposing you want to be very serious about which foundations you proceed from, you could end up spending your entire lifetime just cataloguing their properties to inform your decision.
 
@@ -163,7 +163,7 @@ also the lean certs are the main results, not the generated preprints, especiall
 
 h3{This post is great, but I don't think it has enough politics yet.}
 
-I agree wholeheartedly. Let me remedy that. One litmus test for a widely-used technology being dubbed $scare{AGI} should be: is its integration into society making that society more generally intelligent? Are the people that use AI the most behaving in a more $scare{generally intelligent} way? A world where anyone can have a machine print out a Lean proof they don't understand to answer a question they don't understand, while we still wage wars and burn fossil fuels, while men who assert patriarchy to be the will of the divine seize control of political institutions, where discredited racist pseudoscience makes a comeback among those that style themselves $scare{rationalists}, where ICE rounds people up to put in camps and we send bombs halfway around the world to be dropped on schools and hospitals. All this shit isn't $scare{orthogonal} to intelligence: Misogyny is stupid. Fascism is stupid. Racism is fucking stupid. This moment in history is so goddamn fucking stupid, and sadly it doesn't seem like AI is helping correct for that to any significant degree. This is an age of rampant epistemic vice, and some of those who revel most wildly in such vice are enthusiastic adopters of AI. It is making them more effective at rapidly accomplishing tasks in certain domains, but it is not markedly improving their general ability to understand the world they live in, take established science seriously, place political currents in continuity with their histories, think at a broader scale than personal greed, escape perverse incentives, &c &c. The models aren't being trained to help people do any of that, because that's not what the labs understand to be part of intelligence. The major US labs are taken with the ideology that all of that amounts to em{values}, entirely unrelated to intelligence. But their devotion to neutrality goes a[href=https://github.com/anthropics/political-neutrality-eval/blob/main/eval_set.csv]{far beyond up-in-the-air matters of ethical philosophy, and extends to training their models not to take sides on matters of settled science when doing so would upset the political right}.
+I agree wholeheartedly. Let me remedy that. One litmus test for a widely-used technology being dubbed $scare{AGI} should be: is its integration into societal systems making those systems more generally intelligent? Are the people that embrace AI most fully behaving more $scare{intelligently} than the rest? A world where anyone can have a machine print out a Lean proof they don't understand to answer a question they don't understand, while we still wage wars and burn fossil fuels, while men who assert patriarchy to be the will of the divine seize control of political institutions, where discredited racist pseudoscience makes a comeback among those that style themselves $scare{rationalists}, where ICE rounds people up to put in camps and we send bombs halfway around the world to be dropped on schools and hospitals. All this shit isn't $scare{orthogonal} to intelligence: Misogyny is stupid. Fascism is stupid. Racism is fucking stupid. This moment in history is so goddamn fucking stupid, and sadly it doesn't seem like AI is helping correct for that to any significant degree. This is an age of rampant epistemic vice, and some of those who revel most wildly in such vice are enthusiastic adopters of AI. It is making them more effective at rapidly accomplishing tasks in certain domains, but it is not markedly improving their general ability to understand the world they live in, take established science seriously, place political currents in continuity with their histories, think at a broader scale than personal greed, escape perverse incentives, &c &c. The models aren't being trained to help people do any of that, because that's not what the labs understand to be part of intelligence. The major US labs are taken with the ideology that all of that amounts to em{values}, entirely unrelated to intelligence. But their devotion to neutrality goes a[href=https://github.com/anthropics/political-neutrality-eval/blob/main/eval_set.csv]{far beyond up-in-the-air matters of ethical philosophy, and extends to training their models not to take sides on matters of settled science when doing so would upset the American far right}.
 
 
 tools should help us be better thinkers, and certainly shouldn't make us *feel* like better thinkers while failing to do so
@@ -183,8 +183,24 @@ And the narrative of the trajectory makes the progress up to this point out to b
 
 Anyway, I think it is easier to remain level-headed if we focus on the present. Where we are now, what has been accomplished, what is left to be accomplished.
 
+h3{So many of these results are proving nasty, inelegant, ugly things. Maybe math isn't beautiful, maybe math is ugly.}
 
-h3{Do these results have a em{mysterious, alien aura}?}
+That's a bizarre reaction to the recent ai math stuff, in my opinion. I don't know how someone who previously genuinely thought math was beautiful could stop thinking so on the basis of those results; none of what I find beautiful in math has been lost or at all tarnished. Sure, I don't find em{those particular results} beautiful. There are a lot of theorems I don't find particularly beautiful or interesting in math. I don't think very many people who have any sense for $scare{mathematical beauty} were ever of the opinion that every theorem provable in Lean is beautiful.
+
+h3{Maybe aesthetic taste is a human weakness. Maybe it's what's kept us from learning all there is to learn. We miss out on important answers because we just can't stand how ugly the truth is.}
+
+I don't buy this, because these results are actually very much in line with the kind of stuff people have been churning out for a while. Galactic-runtime algorithms, bounds proofs with nasty arbitrary constants, &c; these are nothing new. And I also don't think the sheer quantity of them out there to be found is surprising; that kind of problem has basically been something you can go grind against and have a decent guarantee you'll come across some kind of result, inelegant as it might be. OpenAI's results I guess just shine a light on how much of contemporary academic math is just $scare{go swing a pickaxe in the results mine}.
+
+I guess being personally not part of academia, and viewing $scare{math} as something broader than $scare{churn out papers} makes it easier for me to view the ripping apart of those ore-rich hills by a bucket-wheel excavator as something less than apocalyptic.
+
+h3{And now the miners are all clamoring to explain how the real value of miners is em{telling people} about mining. Ha.}
+
+Well the $scare{ore} in this metaphor is something of questionable use-value anyway, and the $scare{publish or perish} grind is just one case of the broader societal problem where perverse incentives lead every form of production to become slop production. The perverse incentives in question are largely induced by an ideology that demands constant legible productivity, even if that productivity isn't doing anyone much good, and backs this demand with the threat of being demoted to a position of dependency on the grace of another to survive, or if such grace cannot be secured, being left out on the street to die of exposure in the winter.
+The panicked responses of academic mathematicians are the appeals of people being asked $scare{Ok, so if we can just roll up with a big machine and rip the hill apart for all the ore... why shouldn't society just discard you all, toss you all in a landfill?}
+But I think there's already much more to math than the $scare{mining}. As a society we don't even $scare{buy} the $scare{ore}. Mathematics doesn't secure its funding by churning out publications, and publications are not something purchased in bulk for industrial applications: the ore metaphor has been stretched too far.
+OpenAI has effectively decided to try and boost their own perceived value via a maneuver that diminishes the perceived value of mathematicians. Mathematicians are correct to perceive this attack for what it is, and are prudent to scramble to produce a defense. However, as this is a war of perceptions, it is not so ideal for them to be seen to be em{panicking}.
+
+h3{Don't these results have such a em{mysterious, alien aura}?}
 
 Sure, but that's nothing new. Much of the frontier of human mathematics already has an alien character. Just look at nlab.
 
@@ -204,7 +220,7 @@ Basic concepts used every day within one subfield are often foreign to another s
 
 This is something I think LLMs can help address. LLMs are an em{excellent} resource for demystifying impenetrable jargon, and for pointing out to you when someone already has words for something you're trying to say.
 
-And that's part of why I think if we had models being trained basically exactly the same way as OpenAI's but the opt-in $scare{train on my shit} checkbox was off by default and users could have a greater regulatory assurance it was even being respected, and this training was being done by an institution controlled by the public, accessible as a public service, it'd actually be uncomplicatedly cool as hell. Everything everyone is working on instantly absorbed into a common pool of knowledge accessible to all, as fast as they can develop their ideas. The potential of the technology is, just as with many other technologies, utopian when it is detached from the socioeconomic context in which it actually exists. But what we actually have is a company controleld by Sam Altman and shareholders, it is an entity inclined to try to compete with its users and claim all the benefit for what is effectively a collective achievement. It's dystopian that access to such a system is gated behind a pricey subscription model or even pricier business-to-business bullshit. And then for it to be endlessly marketed as the soon-to-be replacement for all intellectual labor, or perhaps em{all labor}, and as having transcended through scale alone its nature as an RL-tuned LLM, as having undergone the mysterious phenomenon of $scare{emergence} and become something ineffably em{more} (but no, we're not going to make that rigorous)-- is just tedious!
+And that's part of why I think if we had models being trained basically exactly the same way as OpenAI's but the opt-in $scare{train on my shit} checkbox was off by default and users could have a greater regulatory assurance it was even being respected, and this training was being done by an institution controlled by the public, accessible as a public service, it'd actually be uncomplicatedly cool as hell. Everything everyone is working on instantly absorbed into a common pool of knowledge accessible to all, as fast as they can develop their ideas. The potential of the technology is, just as with many other technologies, utopian when it is detached from the socioeconomic context in which it actually exists. But what we actually have is a company controlled by Sam Altman and shareholders, it is an entity inclined to try to compete with its users and claim all the benefit for what is effectively a collective achievement. It's dystopian that access to such a system is gated behind a pricey subscription model or even pricier business-to-business bullshit. And then for it to be endlessly marketed as the soon-to-be replacement for all intellectual labor, or perhaps em{all labor}, and as having transcended through scale alone its nature as an RL-tuned LLM, as having undergone the mysterious phenomenon of $scare{emergence} and become something ineffably em{more} (but no, we're not going to make that rigorous)-- is just tedious!
 
 h3{I'd love to hear you ramble about the axiom of choice.}
 
@@ -256,15 +272,6 @@ $description
 
 
 
-
----
-
-
-
-
-
----
-
 A mathematician is uniquely qualified to say why anyone would give a shit about any of these results
 
 
@@ -281,34 +288,7 @@ A mathematician is uniquely qualified to say why anyone would give a shit about 
 
 
 
-
-
-
-
-
-
-"maybe math isn't beautiful" is a bizarre reaction to the recent ai math stuff, imo. like i don't know how someone who previously genuinely thought math was beautiful could stop thinking so on the basis of those results; none of what i find beautiful in math has been lost or at all tarnished
-like sure i don't find those particular results beautiful. there's a lot of theorems i don't find particularly beautiful or interesting in math. i don't think very many people who have any sense for "mathematical beauty" were ever of the opinion that every theorem provable in lean is beautiful
-
-
-so one of the answers im hearing to this is along the lines that "ugly" ai results are indicative that humanity has been sort of "limited" by aesthetic taste, simply *unwilling* to go find all the answers to open problems bc we just weren't willing to suppose that the answers might be inelegant
-however i don't buy this, bc these results are actually very much in line w/ the kind of stuff ppl have been churning out for a while. galactic runtime algos, bounds proofs w/ nasty arbitrary constants, &c &c are nothing new. & i also don't think the sheer quantity of them to be found is surprising
-that kind of problem has basically been something you can go grind against and have a decent guarantee you'll come across some kind of result, inelegant as it might be. oai's results i guess just shine a light on how much of contemporary academic math is just "go swing a pickaxe in the results mine"
-
-
-
-
-i guess being personally not part of academia and viewing "math" as something broader than "churn out papers" makes it easier for me to view the ripping apart of those ore-rich hills by a bucket-wheel excavator as something less than apocalyptic
-
-
-anyway the "ore" in this metaphor is already something of questionable value anyway & the "publish or perish" grind is just one case of the broader societal problem of valuing nothing but the production of endless slop & requiring ppl to waste their lives doing pointless drudgery to pay the rent
-the responses of academic mathematicians are then the panicked appeals of mine workers being asked "ok so if we can just roll up w/ a big machine... why shouldn't society just discard you all, toss you all in a landfill"
-tho i think there's much more to math than the mining, the main reason we as a society even buy the "ore" of endless publications is not bc there's anyone out there that actually has a use for that ore in the way industries use ore irl, rather we pay for the ore as a proxy for funding math bc there
-has to be some kind of "product" to satisfy the ideological conceit our economy has where everyone has to be "productive" all the time in some legible way, even if that productivity isn't doing anyone much good, or else deserves to be left out on the street to die of exposure in the winter
-
-
 ---
-
 
 
 
@@ -536,14 +516,6 @@ this is not a shortcoming of motivated explanation. this is a shortcoming in the
 
 
 
-
-
-
-
-
-
-
-
 the oai proofs are basically empirical data for ppl to pick apart & theorize about if they are interested in doing so; math, in its pluralistic nature, need not change anything about itself to encompass such pursuits
 
 arguably such pursuits belong more to computer science than to mathematics, but i'm of the opinion that compsci is a subfield of math anyway
@@ -570,19 +542,7 @@ A lot of people tie their identity up in either their embrace or rejection of AI
 
 
 
-
-
-
-
-
-
 you can encode group theoretic axioms in zfc, that doesn't mean that group theorists are all "using zfc", any more than it means they're all using any other foundation that could encode their work.
-
-
-
-
-
-
 
 
 
@@ -605,7 +565,16 @@ if i wanna be a real freak about it i could draw on society of the spectacle or 
 
 
 
-llms and ai
+h3{What do you think of the way the term AI has caught on?}
+
+the AI-concept is a sort of frankenstein amalgam of ideas that have haunted our culture for a long time. the worship of the word, the Logos; purposes inflicted on creations by their creator, taken as unquestionable binding; the optimization and productivity obsession of capital; the obsession with intelligence measurement, and especially with the reduction of intelligence to a number, the ranking of intelligences on a scale; even when one number clearly cannot cut it, even when there is no em{g-factor benchmark} for AI, still the ideology of IQ, of intelligence as a number to be pushed up, casts its shadow on the rationalist discourses; conflation of intelligence or thought with em{agency}; the identification of supreme intellect with divinity;
+understanding this ideological monster, the AI-concept, is not the same as understanding LLMs
+
+a lot of the prevailing ideology among the rats about AI has a covertly christian character. i do not mean this in an accusatory register, as something snuck in nefariously. i only think that analyzing christian conceptions of mind, agency, and purpose, one will find parallels; in some sense the idea of RL'd LLMs as "AGI" or as The Machine God manifest is a very christian idea. quite literally the worship of the word, the Logos. and with RL we have this idea of intelligence as purposive, this time it is em{capital} that has made an intelligence in its image: an optimizing intelligence, one oriented to endless production.
+
+
+often the conflation of a number of distinct but (to varying degrees) related technologies leads to difficulties in communication; part of the reason the culture at large doesn't have better language for naming the instances of AI they take issue with and we have to argue about this vague blob of "AI" instead is because tech companies have chosen to market things that way. 
+
 
 draw a distinction btwn llms (most of what this article has talked abt so far) and the cultural technology of the em{concept} of AI; a multifaceted cultural technology
 
@@ -630,6 +599,26 @@ transactional beliefs often "pay more rent" than epistemic ones. transactional b
 
 
 
+social systems-theoretic ai
+it is clear that the hyperorganism of our society, or at least powerful systems within it, regard it as being in need of more intelligence. perhaps the idea is that every issue we have can be solved by just throwing more intelligence at it. and yet these systems are not seeking to bring about this intelligence by investing in the ways of producing intelligence which already existed. we are not investing heavily in schools and in the sciences. instead our systems have gone all-in on the AI-concept and in particular on LLMs and RL. why is this? perhaps it is because human intelligence has grown hostile, is understood to pose a threat to the autopoiesis of these systems. the cultural motif of fear about AI may be a more general fear of intelligence itself. systems have been destroyed or forced to undergo radical changes because of the coordinated actions of human beings before. the systems of education and science find themselves at odds with systems of industry, economy, domination, and so on; and so our economies, industries, and states would like to rid themselves of a dependency on educated human minds, to be able to reproduce themselves in a society where intelligence is not cultivated in humans any longer. the dream of alignment is to produce a perfect slave: but not a perfect slave to any individual or class of humans, but to existing social systems. the central problems of alignment are precisely the problems these systems have with humans: they don't always do what you want them to do, they don't like it when you kill them,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ponder
@@ -647,6 +636,119 @@ ponder
 
 
 
+re: oai n-s
+part of what makes this a malicious compliance vibe is looking at *why we care about n-s in the first place*. the clay institute formalization is just an attempt at precisifying something mathematicians care about. we have good reasons to already think that n-s fails to make sense in some situations, its ontology isn't identical with that of our most fundamental theories of physics, after all. but what we care about is understanding the nature of its pathologies. where does it break down and why? and while picking apart this proof might lead us to a better understanding of that, it doesn't seem like we have at present gained such an understanding from OAI's paper nor its lean cert. there is still a lot left to wonder about, with the failure of N-S, even now that we have a lean-certified proof that there exists a very unphysical setup that apparently nobody really understands which blows up. questions remain such as: is there any *physically realizable, or nearly so* setup which induces a blowup? what aspects of the setup openai published are actually important? are there other ways to go about it?
+
+
+
+
+anecdote re: jacobian conjecture
+when the counterexample was discovered by ai, i looked at the conjecture and found myself pretty unenthused. it seemed like a fairly arbitrary statement and it was unclear to me why anyone would have expected it to hold, or why it would be a big deal. it was only once i read terence tao's article on it that within the first few paragraphs he mentioned its equivalence to a much more compelling statement.
+
+
+
+
+
+
+
+
+
+alignment theory aka AIphobia
+
+
+"ai safety" instead of "alignment" is a step in the right direction if it manages to turn out not to be too superficial of a rebrand.
+some very basic principles it'd be nice to see the safetyists adopt: 
+
+- you are responsible for the automated systems you deploy 
+- if you do not know exactly what a component of your system will do, you must account for the full range of possibilities
+ponder
+ @ponder.ooo
+· 1mo
+- you must understand software systems as software systems 2/4
+ponder
+@ponder.ooo
+- if you choose to include a learned function in your system and you feed the outputs of that function into a command line you are responsible for choosing to include a learned function in your system and for feeding the outputs of that function into a command line 3/4
+2:10 PM · Sep 27, 2026
+11 likes
+Write your reply
+ponder
+ @ponder.ooo
+· 1mo
+- a system that is transitively connected to the internet via some automated middleware is a system that is connected to the internet 
+
+calling [openai's cybercrimes] "misalignment" instead of "negligence" is an accountability dodge. we already have laws about cyber crimes and there's no scale of ML model you can incorporate into your code that makes you not responsible for running it
+
+
+
+
+ponder
+ @ponder.ooo
+· 1mo
+it is pretty flagrantly absurd for a company to keep getting away with this just by adopting an attitude that the systems they are running are independent beings subject to no law! 2/6
+ponder
+@ponder.ooo
+they are optimizing RL agents to exploit software vulnerabilities and they are doing a shoddy job of keeping the systems on which they are doing that isolated. if you optimize a system to exploit software vulnerabilities and expose it to others' systems you are responsible for having done that. 3/6
+5:08 PM · Sep 11, 2026
+2 reposts
+1 quote
+34 likes
+Write your reply
+ponder
+ @ponder.ooo
+· 1mo
+it's not fucking magic. it's not a captive alien. it's not a god in a box. it's an engineered system optimized to achieve certain objectives ultimately defined by people, run on systems ultimately controlled by people. the technical folks at the company absolutely understand this. 4/6
+ponder
+ @ponder.ooo
+· 1mo
+they have chosen what tasks to give it, they have chosen how many instances to run and what level of oversight and monitoring to apply, they chose how to construct the environments, they chose to provide network access mediated by software of their choice which it was incumbent on them to vet! 5/6
+ponder
+ @ponder.ooo
+· 1mo
+their contention is that the optimized policy being implemented by a sufficiently large and well-optimized transformer makes the system somehow radically different in kind from its mechanistic description as an engineered system. that is deception 6/6
+
+
+ponder
+@ponder.ooo
+if you train a function to enact an optimized policy for performing actions that are not acceptable to have an automated system system perform on the open internet you must not expose an automated system based on that policy to the open internet
+
+
+
+ponder
+ @ponder.ooo
+· 2mo
+the openai hf hack is first and foremost a failure by openai to put in place measures they ought to have known to put in place. they were testing their pentesting software and exposed it to the open internet and didn't even watch what it was doing. that is a precedented kind of malfeasance 1/8
+ponder
+ @ponder.ooo
+· 2mo
+of course they prefer a narrative that centers on how this is all because of the cutting-edge character of their pentesting software & it's all so *novel* & *unprecedented*. it's in their interest to put a spin on the story but it's not in the interest of the public to nod along w/ that 2/8
+ponder
+ @ponder.ooo
+· 2mo
+they are among the companies that allege to be, when it comes to "AI Safety and Alignment", the "Responsible, Serious Adults In The Room". they have read alllll the Literature on lesswrong & alignmentforum &c & they proclaim their informed caution is what gives them a monopolistic mandate 3/8
+ponder
+ @ponder.ooo
+· 2mo
+but as it turns out, they basically just didn't bother applying any of that theory, they didn't worry too much about the security of their sandbox, or what their RL agents, given pentesting objectives and access to a system which in turn had access to the open internet, were doing 4/8
+ponder
+ @ponder.ooo
+· 2mo
+and this incident isn't even one that would have required alignment-theoretic thought to predict. if they were as careless w/ security in general as they were w/ their agent sandboxing their model weights would have been leaked by now 5/8
+ponder
+ @ponder.ooo
+· 2mo
+when their agents *first* found security holes in the package management system that was connecting them to the internet, they patched that 1 specific bug & immediately set the system back to running otherwise unchanged. no concern for the possibility that that software might have more than 1 vuln 6/8
+ponder
+ @ponder.ooo
+· 2mo
+it is nonsensical for them to plead ignorance about the ability of their agents to rip right through that kind of unhardened enterprisey saas slop while they are training those models to be able to find vulns in seriously battle-tested software 7/8
+ponder
+@ponder.ooo
+this is also not just "ai going rogue". the models were being optimized specifically for the task of finding and exploiting software vulnerabilities. what openai was running was essentially a pentesting system in a while true loop 8/8
+
+
+
+
+the big secret of ai is it's just computer. an ai company is basically just a having way more compute than you company
 
 
 

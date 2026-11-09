@@ -27,7 +27,7 @@ export async function header(node, state, args) {
         upper: state.upper
     });
 
-    console.log(content);
+    //console.log(content);
 
     const description = descriptionSource === null ? null : (
         await build({
@@ -167,7 +167,7 @@ export async function contentsEntry(node, state, args) {
         upper: state.upper
     });
 
-    console.log(content);
+    //console.log(content);
 
     const description = descriptionSource === null ? null : (
         await build({
