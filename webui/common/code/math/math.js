@@ -21,15 +21,13 @@ $css(`
         flex-direction: column;
         justify-content: flex-start;
         padding-top: 0.5rem;
-        max-width: 100%;
         overflow-x: auto;
         padding-bottom: 0.5rem;
+        margin-left: calc(max((100% - var(--content-width)) / 2, 0px));
     }
 
     .math-block math {
         display: block;
-        width: var(--content-width);
-        margin: auto;
         border-left: 3px double var(--main-faded);
         padding-left: 0.75rem;
     }

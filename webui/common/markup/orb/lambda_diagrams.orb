@@ -87,13 +87,14 @@ $css {
     .carousel {
         display: flex;
         flex-direction: row;
-        width: 100%;
+        max-width: calc(min(var(--content-width) + 20vw, 100%));
         overflow-x: scroll;
         gap: 1em;
+        margin: auto;
     }
 
     .carousel img {
-        max-height: 35vh;
+        max-height: 10vh;
         flex-shrink: 0;
     }
 
@@ -123,7 +124,7 @@ article{
 hgroup {
     h1 { Notes on λ-Diagrams }
 
-    also called i{Lyapunov Fractals}
+    also called b{Lyapunov Fractals}
 }
 hr {}
 
@@ -329,6 +330,13 @@ While the first few of these can be worked out by hand (an exercise for the read
     img[src=/media/lyapunov/full/curve_d08.webp] {}
     img[src=/media/lyapunov/full/curve_d09.webp] {}
     img[src=/media/lyapunov/full/curve_d10.webp] {}
+}
+
+$multifigure {
+    [lyapunov | curve_composite]{ foo }
+    [lyapunov | curve_d01]{ bar }
+    [lyapunov | curve_d02]{ baz }
+    [lyapunov | curve_d03]{ buzz }
 }
 
 $comment {

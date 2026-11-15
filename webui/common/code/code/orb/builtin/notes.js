@@ -64,7 +64,7 @@ export async function footnotes(node, state) {
     const groupNumeral = roman(state.upper.noteGroup + 1).toLowerCase();
     state.upper.noteGroup += 1;
 
-    const notes = state.pendingFootnotes;
+    const notes = state.upper.pendingFootnotes;
     state.upper.pendingFootnotes = [];
     state.upper.noteIndex = 0;
 
