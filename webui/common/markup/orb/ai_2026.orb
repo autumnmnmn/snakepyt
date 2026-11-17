@@ -67,7 +67,7 @@ I have seen people declaring that to be the case. I just don't think it is or ev
 
 h3{Well maybe they should! Wouldn't it be good if every result in math came with a machine verification?}
 
-I don't think so. I find that quite dystopian. Making sure a formalization actually means anything is hard, for one thing. It is not enough to just have Claude Code tell you that your result is certified by its vibecode. At the very least you need to learn enough Lean to confirm that the theorem statement is what you intend. And at that point, every mathematician, even those working well outside of dependent type theory, will have been forced to define all their work at all times on its terms, rather than the terms native to their own area. And furthermore even if we posit that LLMs handle all the hard work, then we've imposed a tithe on mathematicians or their employers, they would be forced to constantly pay a handful of LLM providers in order to be able to satisfy em{bureaucratic} standards.
+I don't think so. I find that quite dystopian. Making sure a formalization actually means anything is hard, for one thing. It is not enough to just have Claude Code tell you that your result is certified by its vibecode. At the very least you need to learn enough Lean to confirm that the theorem statement is what you intend. And at that point, every mathematician, even those working well outside of dependent type theory, will have been forced to define all their work at all times on its terms, rather than the terms native to their own area. And furthermore even if we posit that LLMs handle all the hard work, then the imposition of a standard of machine verification for all mathematical results would amount to little more than a tithe for mathematicians or their employers to pay a handful of LLM providers in order to be able to satisfy em{bureaucratic} standards.
 
 h3{But what if LLMs get em{so} smart that mathematicians don't need to think about the Lean stuff at all and can just trust that the LLM is always absolutely right, em{and} the inference for models of that caliber gets literally too cheap to meter?}
 
@@ -111,15 +111,24 @@ h3{Earlier you said $scare{formalization isn't rigor}. You don't get to just dec
 
 Rigor is a quality, or vague cluster of properties, that proofs can have. To give a quick provisional definition, it's about being thorough, accounting for every special case, tracking every assumption one makes, spelling out every step of one's reasoning. Formalization is a class of ways of expressing proofs. Formalization isn't what the process of proving things $scare{really is,} it's em{an attempt} at precisely specifying em{sufficient} criteria to ensure that rigor is being upheld. Some formal systems have properties that make them extremely useful in mathematics, especially when it comes to communicating rigorous proofs; formal systems are also themselves a subject of mathematical inquiry, and learning about them is vital to a mathematical education. However they are not the foundation of all mathematical practice. They are em{especially} unsuited to form an epistemological foundation, for reasons both philosophical and technical.
 
-There is also a em{glut} of formal foundations to choose from. Supposing you want to be very serious about which foundations you proceed from, you could end up spending your entire lifetime just cataloguing their properties to inform your decision.
+There is also a em{glut} of formal foundations to choose from. Supposing you want to be very serious about which foundations you proceed from, you could end up spending your entire lifetime just cataloguing their properties to inform your decision. And that doesn't just affect which statements you've proved, it affects what it even means for you to have proved them.
 
+h3{Wait, what do you mean by that?}
 
-h3{TODO some kind of segue back out of formalism talk (mention the appendix) & back to AI}
+Well, when you prove things in mathematics, there's a certain philosophical view which I think is outdated and mistaken but is still pretty common, which is that one is establishing eternal absolute truths in some very broad sense. But with formal mathematical results, $scare{truth} is a label within the formalism; $noted{a logician's $scare{truth} is like a graph theorist's $scare{tree} $note That is to say, the everyday term can be useful for developing an initial intuition about the formal concept, but the study of the latter is not ultimately the study of the former. If you want to learn about woody plants you should talk to a botanist.}. And what is actually shown when you prove some claim in some formal system is only that that claim is an entailment of the axioms and rules of inference of that system. Relatedly there's a prevalent notion that one might call something like $scare{axiom-dogmatism}, the confusion of axioms and dogmas; that is to say, there are those who think of axioms as a set of fundamental beliefs one must hold in order to do math. Again that's not so common among mathematicians, it's a misunderstanding of mathematics, and one that makes less and less sense the more mathematics one engages with. Axioms are adopted situationally, provisionally; they're more a matter of definitions than facts. One axiom of groups is that they have identity elements. This isn't a true fact floating about in some realer-than-real Platonic realm, it's not a principle one must believe in in order to engage in reasoning, it's just part of what we mean when we say $scare{group} in a mathematical context. In the context of group axioms it's pretty uncontroversial that axiom-dogmatism is a stifling confusion. When it comes to em{foundations} and especially em{classical logic}, however, there are some who find it hard to let go of -- though those are not typically the people actually em{working} in those areas today. The main takeaway from all this is that if we are to be maximally pedantic, one's choice of what axiom system to prove things in is not simply a question of em{how to go about} demonstrating the results: it changes what it even means to have demonstrated them.
 
+Anyway, while I have more thoughts about formalism which I may write about one day, this blog post is em{supposed} to be about AI, so let's get back to that.
 
-h3{Is it time to move to $scare{math 2.0}?}
+h3{Ok. Any thoughts on Terence Tao's $scare{Math 2.0}?}
 
-I don't want to disparage the entire $scare{Math 2.0} programme. But I think the em{name} has unfortunate connotations! Mathematical practice will certainly be affected by AI, but it does not need to fundamentally change itself to make use of these tools. We do not need a $scare{new major version} of math.
+I've been keeping up with much of what Tao has been saying in the wake of OpenAI's antics, and I find a lot of it very sensible and prudent. I also appreciate that he's been sharing his platform with less famous mathematicians via guest posts on his blog. However I am of the opinion that the em{name} $scare{math 2.0} has unfortunate connotations; it's ceding too much ground! Mathematical practice will certainly be affected by AI, but we do not need to fundamentally change em{what math is} for it to survive the incorporation of AI tools. Maybe em{the norms and practices of academic mathematicians} need a reboot, but em{math itself} does not need a $scare{new major version}.
+
+quote from sanderson on tao's blog:
+"One clear shortcoming of a motivated explanation is that its validity is not binary the way a proof’s is. This is a big reason proof is so useful a way to measure progress: You can clearly define what does and does not have a proof yet. There will never be Lean for motivated explanations."
+
+this is not a shortcoming of motivated explanation. this is a shortcoming in the ideological expectation that everything should be evaluable by "objective" binary judgements
+
+(mostly agree w/ sanderson on most other stuff lol)
 
 h3{Don't we lose something important, when we have answers handed to us without having to work for them?}
 
@@ -364,7 +373,7 @@ I have vowed never to make a long-form post about vibecoding, so you'll have to 
 
 
 
-section {
+section { $comment{TODO maybe spin this off into a separate post for a later date}
 
 $header[formalism|numberless]{
     Appendix: On Formalism
@@ -439,7 +448,7 @@ $header[endnote|numberless]{
     Endnote
 }
 
-h3{So what's your stake in all this anyway? Are you even a mathematician?}
+h3{So what's your stake in all this anyway? Are you even a mathematician?} TODO cover this stuff more naturally elsewhere & then remove this
 
 I'm not an academic mathematician. As far as credentials go, I only have a bachelor's degree in it, and I don't really do any significant mathematics at my programming job. So, no, I'm sadly not a mathematician. I do however spend a considerable amount of my free time studying mathematics and engaging in mathematical investigations. I have no publications; I have some blog posts in the works that explore ideas that might be of interest to mathematicians, but it seems unlikely I'll ever publish serious results in a serious journal. A large part of mathematical practice is social and institutional, and that is something I am not a part of. I suppose my only stake, at present, is that I am someone who cares about and engages with mathematics em{broadly construed}.
 
@@ -681,12 +690,7 @@ they were thinking in a way that actually does hold up!!
 
 ---
 
-quote from sanderson on tao's blog:
-"One clear shortcoming of a motivated explanation is that its validity is not binary the way a proof’s is. This is a big reason proof is so useful a way to measure progress: You can clearly define what does and does not have a proof yet. There will never be Lean for motivated explanations."
 
-this is not a shortcoming of motivated explanation. this is a shortcoming in the ideological expectation that everything should be evaluable by "objective" binary judgements
-
-(mostly agree w/ sanderson on most other stuff lol)
 
 ---
 
@@ -730,6 +734,18 @@ part of what makes this a malicious compliance vibe is looking at *why we care a
 h3{This post is great, but I don't think it has enough politics yet.} TODO rewrite to be a little more cool-headed while getting the point across
 
 I agree wholeheartedly. Let me remedy that. One litmus test for a widely-used technology being dubbed $scare{AGI} should be: is its integration into societal systems making those systems more generally intelligent? Are the people that embrace AI most fully behaving more $scare{intelligently} than the rest? A world where anyone can have a machine print out a Lean proof they don't understand to answer a question they don't understand, while we still wage wars and burn fossil fuels, while men who assert patriarchy to be the will of the divine seize control of political institutions, where discredited racist pseudoscience makes a comeback among those that style themselves $scare{rationalists}, where ICE rounds people up to put in camps and we send bombs halfway around the world to be dropped on schools and hospitals. All this shit isn't $scare{orthogonal} to intelligence: Misogyny is stupid. Fascism is stupid. Racism is fucking stupid. This moment in history is so goddamn fucking stupid, and sadly it doesn't seem like AI is helping correct for that to any significant degree. This is an age of rampant epistemic vice, and some of those who revel most wildly in such vice are enthusiastic adopters of AI. It is making them more effective at rapidly accomplishing tasks in certain domains, but it is not markedly improving their general ability to understand the world they live in, take established science seriously, place political currents in continuity with their histories, think at a broader scale than personal greed, escape perverse incentives, &c &c. The models aren't being trained to help people do any of that, because that's not what the labs understand to be part of intelligence. The major US labs are taken with the ideology that all of that amounts to em{values}, entirely unrelated to intelligence. But their devotion to neutrality goes a[href=https://github.com/anthropics/political-neutrality-eval/blob/main/eval_set.csv]{far beyond up-in-the-air matters of ethical philosophy, and extends to training their models not to take sides on matters of settled science when doing so would upset the American far right}.
+
+---
+
+ponder
+ @ponder.ooo
+· 2mo
+much like agi we are going to see the term "rsi" get progressively watered down in the coming years. the ordinary pattern where people use new technologies to make even newer technologies will continue and the labs will, more and more, just be referring to that normal process when they say "rsi"
+
+ponder
+ @ponder.ooo
+· 4mo
+dwarkesh desperately trying to get karpathy to endorse some variety of explosive step function rsi prediction for like 20 minutes while karpathy is just like "nahhhh" lmao
 
 
 }
