@@ -194,6 +194,22 @@ nav.contents ol li.numberless::marker {
     content: "❖ ";
 }
 
+ul {
+    width: var(--content-width);
+    margin: auto;
+}
+
+ul li {
+    max-width: var(--content-width);
+    margin-left: 1.5em;
+    overflow: visible;
+}
+
+ul li::marker {
+    color: var(--main-faded);
+    content: "❖ ";
+}
+
 details {
     margin: auto;
     margin-top: 1em;
